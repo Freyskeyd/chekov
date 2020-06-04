@@ -50,7 +50,7 @@ mod unsaved {
 
         produces_events.push(UnsavedEvent::try_from(&next).unwrap());
 
-        let mut expected = vec![
+        let expected = vec![
             "MyEnumEvent::Created",
             "MyEnumEvent::Updated",
             "MyEnumEvent::Deleted",

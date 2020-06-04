@@ -3,6 +3,9 @@ use uuid::Uuid;
 use crate::storage::{
     inmemory::InMemoryBackend, Storage, StreamCreationError, StreamDeletionError,
 };
+use crate::stream::Stream;
+
+use std::str::FromStr;
 
 mod creation {
     use super::*;
@@ -12,7 +15,9 @@ mod creation {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
-        assert!(storage.create_stream(&uuid).is_ok());
+        assert!(storage
+            .create_stream(Stream::from_str(&uuid).unwrap())
+            .is_ok());
     }
 
     #[test]
@@ -21,20 +26,12 @@ mod creation {
 
         let uuid = Uuid::new_v4().to_string();
 
-        assert!(storage.create_stream(&uuid).is_ok());
+        assert!(storage
+            .create_stream(Stream::from_str(&uuid).unwrap())
+            .is_ok());
         assert_eq!(
-            storage.create_stream(&uuid),
+            storage.create_stream(Stream::from_str(&uuid).unwrap()),
             Err(StreamCreationError::AlreadyExists)
-        );
-    }
-
-    #[test]
-    fn fail_if_stream_uuid_malformed() {
-        let mut storage = InMemoryBackend::default();
-
-        assert_eq!(
-            storage.create_stream("an uuid"),
-            Err(StreamCreationError::MalformedStreamUUID)
         );
     }
 }
@@ -47,8 +44,12 @@ mod deletion {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
-        assert!(storage.create_stream(&uuid).is_ok());
-        assert!(storage.delete_stream(&uuid).is_ok());
+        assert!(storage
+            .create_stream(Stream::from_str(&uuid).unwrap())
+            .is_ok());
+        assert!(storage
+            .delete_stream(&Stream::from_str(&uuid).unwrap())
+            .is_ok());
     }
 
     #[test]
@@ -58,18 +59,8 @@ mod deletion {
         let uuid = Uuid::new_v4().to_string();
 
         assert_eq!(
-            storage.delete_stream(&uuid),
+            storage.delete_stream(&Stream::from_str(&uuid).unwrap()),
             Err(StreamDeletionError::DoesntExists)
-        );
-    }
-
-    #[test]
-    fn fail_if_stream_uuid_malformed() {
-        let mut storage = InMemoryBackend::default();
-
-        assert_eq!(
-            storage.delete_stream("an uuid"),
-            Err(StreamDeletionError::MalformedStreamUUID)
         );
     }
 }

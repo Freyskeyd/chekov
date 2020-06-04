@@ -8,8 +8,8 @@ pub trait Event: Serialize {
     fn event_type(&self) -> &'static str;
 }
 
-mod unsaved;
 mod recorded;
+mod unsaved;
 
 #[cfg(test)]
 mod test;
