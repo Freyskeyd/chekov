@@ -67,3 +67,10 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v1.1.1
