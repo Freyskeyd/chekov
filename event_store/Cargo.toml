@@ -16,5 +16,8 @@ futures = "0.3"
 log = {version = "0.4"}
 actix = "0.10.0-alpha.3"
 
+[dev-dependencies]
+rust_decimal = { version = "*", features = ["serde-float"] }
+
 [features]
 verbose = []

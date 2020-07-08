@@ -10,27 +10,31 @@ use std::str::FromStr;
 mod creation {
     use super::*;
 
-    #[test]
-    fn success() {
+    #[tokio::test]
+    async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
     }
 
-    #[test]
-    fn fail_if_stream_exists() {
+    #[tokio::test]
+    async fn fail_if_stream_exists() {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
         assert_eq!(
-            storage.create_stream(Stream::from_str(&uuid).unwrap()),
+            storage
+                .create_stream(Stream::from_str(&uuid).unwrap())
+                .await,
             Err(StreamCreationError::AlreadyExists)
         );
     }
@@ -39,27 +43,31 @@ mod creation {
 mod deletion {
     use super::*;
 
-    #[test]
-    fn success() {
+    #[tokio::test]
+    async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
         assert!(storage
             .delete_stream(&Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
     }
 
-    #[test]
-    fn fail_if_stream_doesnt_exists() {
+    #[tokio::test]
+    async fn fail_if_stream_doesnt_exists() {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
 
         assert_eq!(
-            storage.delete_stream(&Stream::from_str(&uuid).unwrap()),
+            storage
+                .delete_stream(&Stream::from_str(&uuid).unwrap())
+                .await,
             Err(StreamDeletionError::DoesntExists)
         );
     }
