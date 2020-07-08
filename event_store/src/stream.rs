@@ -1,10 +1,10 @@
 /// A `Stream` represents an `Event` stream
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Stream {
     /// The stream identifier which is unique
-    stream_uuid: String,
+    pub(crate) stream_uuid: String,
     /// The current stream version number
-    stream_version: i32,
+    pub(crate) stream_version: i32,
     /// The creation date of the stream
     created_at: String,
     /// The deletion date of the stream
@@ -12,10 +12,13 @@ pub struct Stream {
 }
 
 impl Stream {
+    #[must_use]
     pub fn stream_uuid(&self) -> &str {
         self.stream_uuid.as_ref()
     }
 }
+
+
 #[derive(Debug, PartialEq)]
 pub enum StreamError {
     MalformedStreamUUID,

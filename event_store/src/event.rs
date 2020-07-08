@@ -10,6 +10,9 @@ pub trait Event: Serialize {
 
 mod recorded;
 mod unsaved;
+pub use recorded::RecordedEvent;
+pub use unsaved::ParseEventError;
+pub use unsaved::UnsavedEvent;
 
 #[cfg(test)]
 mod test;
