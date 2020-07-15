@@ -1,6 +1,6 @@
 use super::Event;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
-
 /// An `UnsavedEvent` is created from a type that implement Event
 ///
 /// This kind of event represents an unsaved event, meaning that it has less information
@@ -20,8 +20,8 @@ pub struct UnsavedEvent {
     pub(crate) metadata: String,
     pub(crate) event_uuid: Uuid,
     pub(crate) stream_uuid: String,
-    pub(crate) stream_version: i32,
-    pub(crate) created_at: String,
+    pub(crate) stream_version: i64,
+    pub(crate) created_at: DateTime<chrono::offset::Utc>,
 }
 
 #[derive(Debug)]
@@ -42,11 +42,11 @@ impl UnsavedEvent {
             correlation_id: None,
             event_type: event.event_type().to_owned(),
             data: serde_json::to_string(&event)?,
-            metadata: String::new(),
+            metadata: String::from("{}"),
             event_uuid: Uuid::new_v4(),
             stream_uuid: String::new(),
             stream_version: 0,
-            created_at: String::new(),
+            created_at: Utc::now(),
         })
     }
 }

@@ -1,6 +1,8 @@
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
-use crate::storage::{AppendToStreamError, Storage, StreamCreationError, StreamDeletionError};
+use crate::storage::{
+    AppendToStreamError, Storage, StorageError, StreamCreationError, StreamDeletionError,
+};
 use crate::stream::Stream;
 use log::{debug, trace};
 use std::collections::HashMap;
@@ -18,7 +20,7 @@ impl Storage for InMemoryBackend {
         "InMemory"
     }
 
-    async fn create_stream(&mut self, stream: Stream) -> Result<&Stream, StreamCreationError> {
+    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StreamCreationError> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
@@ -32,7 +34,7 @@ impl Storage for InMemoryBackend {
 
         trace!("Created stream {}", stream_uuid);
 
-        Ok(self.streams.get(&stream_uuid).unwrap())
+        Ok(self.streams.get(&stream_uuid).unwrap().clone())
     }
 
     async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StreamDeletionError> {
@@ -92,12 +94,10 @@ impl Storage for InMemoryBackend {
         }
     }
 
-    async fn read_stream_info(
-        &mut self,
-        stream_uuid: String,
-    ) -> Result<&Stream, AppendToStreamError> {
+    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError> {
         self.streams
             .get(&stream_uuid)
-            .ok_or(AppendToStreamError::DoesntExists)
+            .cloned()
+            .ok_or(StorageError::StreamDoesntExists)
     }
 }

@@ -1,7 +1,5 @@
-use crate::{
-    event::UnsavedEvent, storage::Storage, stream::Stream, EventStoreError, ExpectedVersion,
-};
-use actix::{Actor, Context, Handler, Message, WrapFuture};
+use crate::{storage::Storage, stream::Stream, EventStoreError};
+use actix::{Actor, Context, Handler, WrapFuture};
 use log::{debug, trace};
 use std::borrow::Cow;
 use std::str::FromStr;
@@ -71,7 +69,7 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
         actix::AtomicResponse::new(Box::pin(
             async move {
                 match storage.lock().await.create_stream(stream).await {
-                    Ok(s) => Ok(Cow::Owned(s.clone())),
+                    Ok(s) => Ok(Cow::Owned(s)),
                     Err(_) => Err(EventStoreError::Any),
                 }
             }
@@ -91,12 +89,11 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
         actix::AtomicResponse::new(Box::pin(
             async move {
                 match storage.lock().await.read_stream_info(msg.0).await {
-                    Ok(s) => Ok(Cow::Owned(s.clone())),
-                    Err(_) => Err(EventStoreError::Any),
+                    Ok(s) => Ok(Cow::Owned(s)),
+                    Err(e) => Err(EventStoreError::Storage(e)),
                 }
             }
             .into_actor(self),
         ))
     }
 }
-

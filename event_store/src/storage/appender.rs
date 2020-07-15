@@ -1,11 +1,15 @@
 use crate::event::ParseEventError;
 use crate::event::UnsavedEvent;
+use crate::expected_version::ExpectedVersionResult;
+use crate::storage::StorageError;
+use crate::stream::Stream;
 use crate::Event;
 use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
-use log::trace;
+use log::{info, trace};
+use std::str::FromStr;
 use uuid::Uuid;
 
 /// An appender defines the parameter of an append action
@@ -99,30 +103,50 @@ impl Appender {
     ) -> Result<Vec<Uuid>, EventStoreError> {
         trace!("Appender[{}]: Attempting to execute", self.id);
         // Fetch stream informations
+        if !Stream::validates_stream_id(&self.stream) {
+            return Err(EventStoreError::Any);
+        }
+
         let stream = event_store.stream_info(&self.stream).await;
 
-        let stream = if stream.is_err() && self.expected_version == ExpectedVersion::AnyVersion {
-            trace!(
-                "Appender[{}]: Stream {} does not exists",
-                self.id,
-                self.stream
-            );
-            event_store.create_stream(&self.stream).await?
-        } else if stream.is_err() {
-            trace!(
-                "Appender[{}]: Stream {} does not exists",
-                self.id,
-                self.stream
-            );
+        let expected_version_result = match stream {
+            Ok(ref stream) => ExpectedVersion::verify(stream, &self.expected_version),
+            Err(EventStoreError::Storage(StorageError::StreamDoesntExists)) => {
+                ExpectedVersion::verify(
+                    &Stream::from_str(&self.stream).unwrap(),
+                    &self.expected_version,
+                )
+            }
+            _ => ExpectedVersionResult::WrongExpectedVersion,
+        };
 
-            return Err(EventStoreError::Any);
-        } else {
-            trace!(
-                "Appender[{}]: Fetched stream {} informations",
-                self.id,
-                self.stream,
-            );
-            stream.unwrap()
+        let stream = match expected_version_result {
+            ExpectedVersionResult::NeedCreation => {
+                trace!(
+                    "Appender[{}]: Stream {} does not exists",
+                    self.id,
+                    self.stream
+                );
+
+                event_store.create_stream(&self.stream).await?
+            }
+            ExpectedVersionResult::Ok => {
+                trace!(
+                    "Appender[{}]: Fetched stream {} informations",
+                    self.id,
+                    self.stream,
+                );
+                stream.unwrap()
+            }
+            _ => {
+                trace!(
+                    "Appender[{}]: Stream {} does not exists",
+                    self.id,
+                    self.stream
+                );
+
+                return Err(EventStoreError::Any);
+            }
         };
 
         let events: Vec<UnsavedEvent> = self
@@ -130,7 +154,7 @@ impl Appender {
             .into_iter()
             .enumerate()
             .map(|(index, mut event)| {
-                event.stream_version = stream.stream_version + (index + 1) as i32;
+                event.stream_version = stream.stream_version + (index + 1) as i64;
                 event.stream_uuid = stream.stream_uuid.clone();
                 event
             })

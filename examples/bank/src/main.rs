@@ -32,7 +32,9 @@ impl Event for MoneyMovementEvent {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     // Configure the storage (PG, InMemory,...)
-    let storage = InMemoryBackend::default();
+    let storage = PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store")
+        .await
+        .unwrap();
     // Configure the event bus (PG notify, kafka,...)
     // let event_bus = InMemoryEventBus::default();
 

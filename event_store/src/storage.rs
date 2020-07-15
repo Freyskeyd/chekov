@@ -13,7 +13,7 @@ pub trait Storage: Send + std::marker::Unpin + 'static {
     ///
     /// - pure storage failure (unable to create the stream on the backend)
     /// - The stream already exists
-    async fn create_stream(&mut self, stream: Stream) -> Result<&Stream, StreamCreationError>;
+    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StreamCreationError>;
 
     /// Delete a stream from the `Backend`
     ///
@@ -32,14 +32,12 @@ pub trait Storage: Send + std::marker::Unpin + 'static {
         events: &[UnsavedEvent],
     ) -> Result<Vec<Uuid>, AppendToStreamError>;
 
-    async fn read_stream_info(
-        &mut self,
-        stream_uuid: String,
-    ) -> Result<&Stream, AppendToStreamError>;
+    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError>;
 }
 
 pub mod appender;
 pub mod inmemory;
+pub mod postgres;
 
 #[cfg(test)]
 mod test;
@@ -84,5 +82,6 @@ impl std::convert::From<StreamError> for AppendToStreamError {
 }
 #[derive(Debug, PartialEq)]
 pub enum StorageError {
+    StreamDoesntExists,
     Unknown,
 }

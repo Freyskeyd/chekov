@@ -4,13 +4,13 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
-    pub(crate) event_number: i32,
+    pub(crate) event_number: i64,
     /// Unique identifier for this event
     pub(crate) event_uuid: Uuid,
     /// The stream identifier for thie event
     pub(crate) stream_uuid: String,
     /// The stream version when this event was appended
-    pub(crate) stream_version: i32,
+    pub(crate) stream_version: i64,
     /// a `causation_id` defines who caused this event
     pub(crate) causation_id: Option<Uuid>,
     /// a `correlation_id` correlates multiple events

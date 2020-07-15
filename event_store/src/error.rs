@@ -1,9 +1,11 @@
+use crate::storage::StorageError;
 use crate::ParseEventError;
 use std::fmt;
 
 #[derive(Debug)]
 pub enum EventStoreError {
     Any,
+    Storage(StorageError),
 }
 
 impl fmt::Display for EventStoreError {

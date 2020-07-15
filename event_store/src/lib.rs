@@ -137,7 +137,9 @@ where
 pub mod prelude {
     pub use crate::event::{Event, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;
-    pub use crate::storage::{inmemory::InMemoryBackend, AppendToStreamError, Storage};
+    pub use crate::storage::{
+        inmemory::InMemoryBackend, postgres::PostgresBackend, AppendToStreamError, Storage,
+    };
     pub use crate::stream::Stream;
     pub use crate::EventStore;
 }
