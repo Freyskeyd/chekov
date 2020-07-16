@@ -51,3 +51,23 @@ impl std::str::FromStr for Stream {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::str::FromStr;
+
+    #[test]
+    fn test_stream_from_str() {
+        assert_eq!(
+            Err(StreamError::MalformedStreamUUID),
+            Stream::from_str("unvalid stream name")
+        );
+    }
+
+    #[test]
+    fn test_stream_is_not_persisted_by_default() {
+        assert!(!Stream::from_str("unvalid").unwrap().is_persisted());
+    }
+}

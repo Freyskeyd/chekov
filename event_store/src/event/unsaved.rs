@@ -36,6 +36,8 @@ impl From<serde_json::Error> for ParseEventError {
 }
 
 impl UnsavedEvent {
+    /// # Errors
+    /// If `serde` isn't able to serialize the `Event`
     pub fn try_from<E: Event>(event: &E) -> Result<Self, ParseEventError> {
         Ok(Self {
             causation_id: None,

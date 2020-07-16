@@ -8,17 +8,47 @@ use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
-use log::{info, trace};
+use log::trace;
 use std::str::FromStr;
 use uuid::Uuid;
 
-/// An appender defines the parameter of an append action
+/// An Appender defines the parameters of an append action
 ///
-/// It defines:
-///     - which stream will receive the events
-///     - which version of this stream is expected
-///     - which events must be append
+/// An append action can succed or fail
 ///
+///
+/// # Examples
+///
+/// ```rust
+/// # use serde::Serialize;
+/// # use std::str::FromStr;
+/// use event_store::prelude::*;
+/// # #[derive(Serialize)]
+/// # struct MyEvent {}
+/// # impl Event for MyEvent {
+/// #   fn event_type(&self) -> &'static str {
+/// #      "MyEvent"
+/// #   }
+/// # }
+/// # #[actix_rt::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let eventstore = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap();
+/// let my_event = MyEvent{};
+/// let stream_name = "account-1";
+///
+/// event_store::append()
+///     // Add an event to the append list
+///     .event(&my_event)?
+///     // Define which stream will be appended
+///     .to(stream_name)?
+///     // Define that we expect the stream to be in version 1
+///     .expected_version(ExpectedVersion::Version(1))
+///     // Execute this appender on an eventstore
+///     .execute(&eventstore)
+///     .await;
+/// #   Ok(())
+/// # }
+/// ```
 pub struct Appender {
     id: Uuid,
     expected_version: ExpectedVersion,
@@ -45,6 +75,16 @@ impl Default for Appender {
 }
 
 impl Appender {
+    /// Add a list of `Event`s to the `Appender`
+    ///
+    /// Any struct that implement `Event` can be passed to this method.
+    /// Each event will be converted to an `UnsavedEvent` type and added to the pipe.
+    ///
+    /// The Event order are kept.Event
+    ///
+    /// # Errors
+    ///
+    /// This function can fail if one event can't be converted
     pub fn events<E: Event>(mut self, events: &[&E]) -> Result<Self, EventStoreError> {
         trace!(
             "Appender[{}]: Attemting to add {} event(s)",
@@ -72,6 +112,14 @@ impl Appender {
         Ok(self)
     }
 
+    /// Add a single `Event`s to the `Appender`
+    ///
+    /// Any struct that implement `Event` can be passed to this method.
+    /// This event will be converted to an `UnsavedEvent` type and added to the pipe.
+    ///
+    /// # Errors
+    ///
+    /// This function can fail if the event can't be converted
     pub fn event<E: Event>(mut self, event: &E) -> Result<Self, EventStoreError> {
         trace!("Appender[{}]: Attemting to add 1 event", self.id);
         self.events.push(UnsavedEvent::try_from(event)?);
@@ -80,23 +128,36 @@ impl Appender {
         Ok(self)
     }
 
-    pub fn to<S: Into<String>>(mut self, stream_id: S) -> Self {
-        self.stream = stream_id.into();
+    /// Define which stream we are appending to
+    ///
+    /// # Errors
+    ///
+    /// Can fail if the stream doesn't have the expected format
+    pub fn to<S: Into<String>>(mut self, stream: S) -> Result<Self, EventStoreError> {
+        // TODO: validate stream name format
+        self.stream = stream.into();
 
         trace!(
             "Appender[{}]: Defined stream {} as target",
             self.id,
             self.stream,
         );
-        self
+        Ok(self)
     }
 
+    /// Define the expected version of the stream we are appending to
+    #[must_use]
     pub fn expected_version(mut self, version: ExpectedVersion) -> Self {
         self.expected_version = version;
         trace!("Appender[{}]: Defined {:?}", self.id, self.expected_version,);
         self
     }
 
+    /// Execute the `Appender` against a `Storage` and returns the generated event ids
+    ///
+    /// # Errors
+    ///
+    /// The execution can fail in various cases such as `ExpectedVersionResult` failure
     pub async fn execute<S: Storage>(
         self,
         event_store: &EventStore<S>,
@@ -117,7 +178,7 @@ impl Appender {
                     &self.expected_version,
                 )
             }
-            _ => ExpectedVersionResult::WrongExpectedVersion,
+            Err(_) => ExpectedVersionResult::WrongExpectedVersion,
         };
 
         let stream = match expected_version_result {

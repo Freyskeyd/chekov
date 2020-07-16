@@ -20,6 +20,7 @@ chrono = "*"
 
 [dev-dependencies]
 rust_decimal = { version = "*", features = ["serde-float"] }
+actix-rt = "1.1"
 
 [features]
 verbose = []

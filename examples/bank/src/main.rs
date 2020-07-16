@@ -35,12 +35,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let storage = PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store")
         .await
         .unwrap();
-    // Configure the event bus (PG notify, kafka,...)
-    // let event_bus = InMemoryEventBus::default();
 
     let event_store = EventStore::builder()
         .storage(storage)
-        // .event_bus(event_bus)
         .build()
         .await
         .unwrap();
@@ -54,12 +51,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let uuid = Uuid::new_v4().to_string();
-    // let uuid2 = Uuid::new_v4().to_string();
 
     let result = event_store::append()
         .events(&[&account_opened])?
         .event(&money_deposited)?
-        .to(&uuid)
+        .to(&uuid)?
         .expected_version(ExpectedVersion::AnyVersion)
         .execute(&event_store)
         .await;

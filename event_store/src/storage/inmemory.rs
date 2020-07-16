@@ -1,8 +1,6 @@
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
-use crate::storage::{
-    AppendToStreamError, Storage, StorageError, StreamCreationError, StreamDeletionError,
-};
+use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use log::{debug, trace};
 use std::collections::HashMap;
@@ -20,13 +18,13 @@ impl Storage for InMemoryBackend {
         "InMemory"
     }
 
-    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StreamCreationError> {
+    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
 
         if self.streams.contains_key(&stream_uuid) {
-            return Err(StreamCreationError::AlreadyExists);
+            return Err(StorageError::StreamAlreadyExists);
         }
 
         self.streams.insert(stream_uuid.to_owned(), stream);
@@ -37,9 +35,9 @@ impl Storage for InMemoryBackend {
         Ok(self.streams.get(&stream_uuid).unwrap().clone())
     }
 
-    async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StreamDeletionError> {
+    async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StorageError> {
         if !self.streams.contains_key(stream.stream_uuid()) {
-            return Err(StreamDeletionError::DoesntExists);
+            return Err(StorageError::StreamDoesntExists);
         }
 
         self.streams.remove(stream.stream_uuid());
@@ -52,7 +50,7 @@ impl Storage for InMemoryBackend {
         &mut self,
         stream_uuid: &str,
         events: &[UnsavedEvent],
-    ) -> Result<Vec<Uuid>, AppendToStreamError> {
+    ) -> Result<Vec<Uuid>, StorageError> {
         trace!(
             "Attempting to append {} event(s) to stream {}",
             events.len(),
@@ -60,7 +58,7 @@ impl Storage for InMemoryBackend {
         );
         if !self.streams.contains_key(stream_uuid) {
             trace!("Stream {} does not exists", stream_uuid);
-            return Err(AppendToStreamError::DoesntExists);
+            return Err(StorageError::StreamDoesntExists);
         }
 
         if let Some(e) = self.events.get_mut(stream_uuid) {
@@ -90,7 +88,7 @@ impl Storage for InMemoryBackend {
 
             Ok(events_ids)
         } else {
-            Err(AppendToStreamError::DoesntExists)
+            Err(StorageError::StreamDoesntExists)
         }
     }
 

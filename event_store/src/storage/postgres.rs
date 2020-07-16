@@ -1,8 +1,5 @@
-use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
-use crate::storage::{
-    AppendToStreamError, Storage, StorageError, StreamCreationError, StreamDeletionError,
-};
+use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use log::{debug, info, trace};
 use sqlx::PgPool;
@@ -15,6 +12,9 @@ pub struct PostgresBackend {
 }
 
 impl PostgresBackend {
+    /// # Errors
+    ///
+    /// In case of Postgres connection error
     pub async fn with_url(url: &str) -> Result<Self, sqlx::Error> {
         Ok(Self {
             pool: PgPool::new(url).await?,
@@ -22,10 +22,9 @@ impl PostgresBackend {
     }
 }
 
-impl std::convert::From<sqlx::Error> for AppendToStreamError {
-    fn from(e: sqlx::Error) -> Self {
-        println!("{:?}", e);
-        Self::DoesntExists
+impl std::convert::From<sqlx::Error> for StorageError {
+    fn from(_: sqlx::Error) -> Self {
+        Self::StreamDoesntExists
     }
 }
 
@@ -35,12 +34,12 @@ impl Storage for PostgresBackend {
         "PostgresBackend"
     }
 
-    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StreamCreationError> {
+    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
         match sql::create_stream(&self.pool, &stream_uuid).await {
-            Err(_) => Err(StreamCreationError::AlreadyExists),
+            Err(_) => Err(StorageError::StreamAlreadyExists),
             Ok(s) => {
                 info!("Created stream {}", stream_uuid);
                 Ok(s)
@@ -48,7 +47,7 @@ impl Storage for PostgresBackend {
         }
     }
 
-    async fn delete_stream(&mut self, _stream: &Stream) -> Result<(), StreamDeletionError> {
+    async fn delete_stream(&mut self, _: &Stream) -> Result<(), StorageError> {
         unimplemented!()
     }
 
@@ -56,7 +55,7 @@ impl Storage for PostgresBackend {
         &mut self,
         stream_uuid: &str,
         events: &[UnsavedEvent],
-    ) -> Result<Vec<Uuid>, AppendToStreamError> {
+    ) -> Result<Vec<Uuid>, StorageError> {
         trace!(
             "Attempting to append {} event(s) to stream {}",
             events.len(),
@@ -80,7 +79,7 @@ impl Storage for PostgresBackend {
 
                 Ok(uuids)
             }
-            _ => Err(AppendToStreamError::DoesntExists),
+            Err(_) => Err(StorageError::StreamDoesntExists),
         }
     }
 

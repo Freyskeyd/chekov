@@ -1,8 +1,6 @@
 use uuid::Uuid;
 
-use crate::storage::{
-    inmemory::InMemoryBackend, Storage, StreamCreationError, StreamDeletionError,
-};
+use crate::storage::{inmemory::InMemoryBackend, Storage, StorageError};
 use crate::stream::Stream;
 
 use std::str::FromStr;
@@ -35,7 +33,7 @@ mod creation {
             storage
                 .create_stream(Stream::from_str(&uuid).unwrap())
                 .await,
-            Err(StreamCreationError::AlreadyExists)
+            Err(StorageError::StreamAlreadyExists)
         );
     }
 }
@@ -68,7 +66,7 @@ mod deletion {
             storage
                 .delete_stream(&Stream::from_str(&uuid).unwrap())
                 .await,
-            Err(StreamDeletionError::DoesntExists)
+            Err(StorageError::StreamDoesntExists)
         );
     }
 }

@@ -97,3 +97,15 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
         ))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn connection_can_be_created() {
+        let storage = crate::storage::inmemory::InMemoryBackend::default();
+        let _conn: Connection<crate::storage::inmemory::InMemoryBackend> =
+            Connection::make(storage);
+    }
+}

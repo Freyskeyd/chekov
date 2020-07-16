@@ -1,10 +1,15 @@
 use crate::stream::Stream;
 
+/// The `ExpectedVersion` used to define optimistic concurrency
 #[derive(Debug, PartialEq)]
 pub enum ExpectedVersion {
+    /// Define that we expect a stream in any version
     AnyVersion,
+    /// Define that we expect a non existing stream
     NoStream,
+    /// Define that we expect an existing stream
     StreamExists,
+    /// Define that we expect a stream in a particular version
     Version(i64),
 }
 
@@ -60,7 +65,6 @@ mod test {
     use super::*;
     use crate::stream::Stream;
     use chrono::Utc;
-    use std::borrow::Cow;
     use std::str::FromStr;
 
     #[test]

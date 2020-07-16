@@ -7,6 +7,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(dead_code)]
 
+//! The `event_store` crate
 mod connection;
 mod error;
 mod event;
@@ -24,6 +25,7 @@ use std::borrow::Cow;
 use storage::{appender::Appender, Storage};
 use uuid::Uuid;
 
+/// An `EventStore` that hold a storage connection
 pub struct EventStore<S: Storage> {
     connection: Addr<Connection<S>>,
 }
@@ -32,12 +34,13 @@ impl<S> EventStore<S>
 where
     S: 'static + Storage + std::marker::Unpin,
 {
+    /// Instanciate a new `EventStoreBuilder`
     #[must_use]
     pub fn builder() -> EventStoreBuilder<S> {
         EventStoreBuilder { storage: None }
     }
 
-    /// # Errors
+    #[doc(hidden)]
     pub(crate) async fn create_stream<T: Into<String> + Send>(
         &self,
         stream_uuid: T,
@@ -48,6 +51,7 @@ where
         self.connection.send(CreateStream(stream_uuid)).await?
     }
 
+    #[doc(hidden)]
     pub(crate) async fn stream_info<T: Into<String> + Send>(
         &self,
         stream_uuid: T,
@@ -58,8 +62,8 @@ where
         self.connection.send(StreamInfo(stream_uuid)).await?
     }
 
-    /// # Errors
-    pub async fn append_to_stream<T: Into<String> + Send>(
+    #[doc(hidden)]
+    pub(crate) async fn append_to_stream<T: Into<String> + Send>(
         &self,
         stream: T,
         expected_version: ExpectedVersion,
@@ -102,11 +106,14 @@ where
     }
 }
 
+/// Create an `Appender` to append events
+///
 #[must_use]
 pub fn append() -> Appender {
     Appender::default()
 }
 
+/// Builder use to simplify the `EventStore` creation
 pub struct EventStoreBuilder<S: Storage> {
     storage: Option<S>,
 }
@@ -115,13 +122,18 @@ impl<S> EventStoreBuilder<S>
 where
     S: Storage,
 {
+    /// Define which storage will be used by this building `EventStore`
     pub fn storage(mut self, storage: S) -> Self {
         self.storage = Some(storage);
 
         self
     }
 
+    /// Try to build the previously configured `EventStore`
+    ///
     /// # Errors
+    ///
+    /// For now this method can fail only if you haven't define a `Storage`
     pub async fn build(self) -> Result<EventStore<S>, ()> {
         if self.storage.is_none() {
             return Err(());
@@ -135,10 +147,12 @@ where
 }
 
 pub mod prelude {
+    pub use crate::error::EventStoreError;
     pub use crate::event::{Event, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;
     pub use crate::storage::{
-        inmemory::InMemoryBackend, postgres::PostgresBackend, AppendToStreamError, Storage,
+        appender::Appender, inmemory::InMemoryBackend, postgres::PostgresBackend, Storage,
+        StorageError,
     };
     pub use crate::stream::Stream;
     pub use crate::EventStore;
