@@ -8,5 +8,6 @@
 #![allow(dead_code)]
 
 mod event;
+mod expected_version;
 mod storage;
 mod stream;
