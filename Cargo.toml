@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+	"chekov",
 	"event_store",
 	"examples/bank"
 ]
