@@ -3,23 +3,24 @@ name = "event_store"
 version = "0.1.0"
 authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 edition = "2018"
+description = "Crate to deal with every aspect of an eventstore"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 uuid = { version = "0.8", features = ["serde", "v4"] }
-serde = "*"
-serde_json = "*"
+serde = "1.0"
+serde_json = "1.0"
 async-trait = "0.1.36"
-tokio = {version = "*", features = ["time", "stream", "macros", "rt-threaded"]}
+tokio = {version = "0.2", features = ["time", "stream", "macros", "rt-threaded"]}
 futures = "0.3"
 log = {version = "0.4"}
 actix = "0.10.0-alpha.3"
 sqlx = {version = "0.3", features = ["postgres", "chrono", "time", "uuid", "json"]}
-chrono = "*"
+chrono = "0.4"
 
 [dev-dependencies]
-rust_decimal = { version = "*", features = ["serde-float"] }
 actix-rt = "1.1"
 
 [features]
