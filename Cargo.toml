@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-	"event_store"
+	"event_store",
+	"examples/bank"
 ]

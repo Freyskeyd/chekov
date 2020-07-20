@@ -1,0 +1,19 @@
+[package]
+name = "bank"
+version = "0.1.0"
+authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+event_store = { path = "../../event_store", features = ["verbose"] }
+
+tokio = {version = "*", features = ["macros", "rt-threaded"]}
+uuid = { version = "0.8", features = ["serde", "v4"] }
+serde = "*"
+serde_json = "*"
+async-trait = "0.1.36"
+
+actix-rt = "1.1"
+env_logger = "0.7.1"

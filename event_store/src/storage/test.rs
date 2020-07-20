@@ -1,8 +1,6 @@
 use uuid::Uuid;
 
-use crate::storage::{
-    inmemory::InMemoryBackend, Storage, StreamCreationError, StreamDeletionError,
-};
+use crate::storage::{inmemory::InMemoryBackend, Storage, StorageError};
 use crate::stream::Stream;
 
 use std::str::FromStr;
@@ -10,28 +8,32 @@ use std::str::FromStr;
 mod creation {
     use super::*;
 
-    #[test]
-    fn success() {
+    #[tokio::test]
+    async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
     }
 
-    #[test]
-    fn fail_if_stream_exists() {
+    #[tokio::test]
+    async fn fail_if_stream_exists() {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
         assert_eq!(
-            storage.create_stream(Stream::from_str(&uuid).unwrap()),
-            Err(StreamCreationError::AlreadyExists)
+            storage
+                .create_stream(Stream::from_str(&uuid).unwrap())
+                .await,
+            Err(StorageError::StreamAlreadyExists)
         );
     }
 }
@@ -39,28 +41,32 @@ mod creation {
 mod deletion {
     use super::*;
 
-    #[test]
-    fn success() {
+    #[tokio::test]
+    async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
 
         assert!(storage
             .create_stream(Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
         assert!(storage
             .delete_stream(&Stream::from_str(&uuid).unwrap())
+            .await
             .is_ok());
     }
 
-    #[test]
-    fn fail_if_stream_doesnt_exists() {
+    #[tokio::test]
+    async fn fail_if_stream_doesnt_exists() {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
 
         assert_eq!(
-            storage.delete_stream(&Stream::from_str(&uuid).unwrap()),
-            Err(StreamDeletionError::DoesntExists)
+            storage
+                .delete_stream(&Stream::from_str(&uuid).unwrap())
+                .await,
+            Err(StorageError::StreamDoesntExists)
         );
     }
 }

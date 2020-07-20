@@ -1,25 +1,26 @@
 use uuid::Uuid;
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
+#[derive(Debug)]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
-    event_number: i32,
+    pub(crate) event_number: i64,
     /// Unique identifier for this event
-    event_uuid: Uuid,
+    pub(crate) event_uuid: Uuid,
     /// The stream identifier for thie event
-    stream_uuid: Uuid,
+    pub(crate) stream_uuid: String,
     /// The stream version when this event was appended
-    stream_version: i32,
+    pub(crate) stream_version: i64,
     /// a `causation_id` defines who caused this event
-    causation_id: Option<Uuid>,
+    pub(crate) causation_id: Option<Uuid>,
     /// a `correlation_id` correlates multiple events
-    correlation_id: Option<Uuid>,
+    pub(crate) correlation_id: Option<Uuid>,
     /// Human readable event type
-    event_type: String,
+    pub(crate) event_type: String,
     /// Payload of this event
-    data: String,
+    pub(crate) data: String,
     /// Metadata defined for this event
-    metadata: String,
+    pub(crate) metadata: String,
     /// Event time creation
-    created_at: String,
+    pub(crate) created_at: String,
 }

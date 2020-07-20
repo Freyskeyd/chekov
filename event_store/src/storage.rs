@@ -1,7 +1,11 @@
-use crate::stream::{Stream, StreamError};
+use crate::event::UnsavedEvent;
+use crate::stream::Stream;
+use uuid::Uuid;
 
 /// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`
-pub trait Storage {
+#[async_trait::async_trait]
+pub trait Storage: Send + std::marker::Unpin + 'static {
+    fn storage_name() -> &'static str;
     /// Create a new stream with an identifier
     ///
     /// # Errors
@@ -9,7 +13,7 @@ pub trait Storage {
     ///
     /// - pure storage failure (unable to create the stream on the backend)
     /// - The stream already exists
-    fn create_stream(&mut self, stream: Stream) -> Result<&Stream, StreamCreationError>;
+    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError>;
 
     /// Delete a stream from the `Backend`
     ///
@@ -20,41 +24,27 @@ pub trait Storage {
     ///
     /// - pure storage failure (unable to delete the stream on the backend)
     /// - The stream doesn't exists
-    fn delete_stream(&mut self, stream: &Stream) -> Result<(), StreamDeletionError>;
+    async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StorageError>;
+
+    async fn append_to_stream(
+        &mut self,
+        stream_uud: &str,
+        events: &[UnsavedEvent],
+    ) -> Result<Vec<Uuid>, StorageError>;
+
+    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError>;
 }
 
-mod inmemory;
+pub mod appender;
+pub mod inmemory;
+pub mod postgres;
 
 #[cfg(test)]
 mod test;
 
 #[derive(Debug, PartialEq)]
-pub enum StreamCreationError {
-    AlreadyExists,
-    StreamError(StreamError),
-    StorageError(StorageError),
-}
-
-impl std::convert::From<StreamError> for StreamCreationError {
-    fn from(e: StreamError) -> Self {
-        Self::StreamError(e)
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum StreamDeletionError {
-    DoesntExists,
-    StreamError(StreamError),
-    StorageError(StorageError),
-}
-
-impl std::convert::From<StreamError> for StreamDeletionError {
-    fn from(e: StreamError) -> Self {
-        Self::StreamError(e)
-    }
-}
-
-#[derive(Debug, PartialEq)]
 pub enum StorageError {
+    StreamDoesntExists,
+    StreamAlreadyExists,
     Unknown,
 }
