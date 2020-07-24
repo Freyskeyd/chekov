@@ -9,7 +9,7 @@ pub struct Stream {
     /// The current stream version number
     pub(crate) stream_version: i64,
     /// The creation date of the stream
-    pub(crate) created_at: Option<DateTime<chrono::offset::Utc>>,
+    pub(crate) created_at: DateTime<chrono::offset::Utc>,
     /// The deletion date of the stream
     pub(crate) deleted_at: Option<DateTime<chrono::offset::Utc>>,
 }
@@ -46,7 +46,7 @@ impl std::str::FromStr for Stream {
             stream_id: 0,
             stream_uuid: s.into(),
             stream_version: 0,
-            created_at: None,
+            created_at: chrono::Utc::now(),
             deleted_at: None,
         })
     }
@@ -56,6 +56,7 @@ impl std::str::FromStr for Stream {
 mod test {
     use super::*;
 
+    use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     #[test]

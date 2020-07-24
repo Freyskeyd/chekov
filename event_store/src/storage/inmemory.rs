@@ -2,6 +2,7 @@ use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
+use chrono::Utc;
 use log::{debug, trace};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -46,6 +47,15 @@ impl Storage for InMemoryBackend {
         Ok(())
     }
 
+    async fn read_stream(
+        &mut self,
+        _: &str,
+        _: usize,
+        _: usize,
+    ) -> Result<Vec<RecordedEvent>, StorageError> {
+        Ok(vec![])
+    }
+
     async fn append_to_stream(
         &mut self,
         stream_uuid: &str,
@@ -68,13 +78,13 @@ impl Storage for InMemoryBackend {
                     event_number: 0,
                     event_uuid: Uuid::new_v4(),
                     stream_uuid: event.stream_uuid.clone(),
-                    stream_version: event.stream_version,
+                    stream_version: Some(event.stream_version),
                     causation_id: event.causation_id,
                     correlation_id: event.correlation_id,
                     event_type: event.event_type.clone(),
-                    data: event.data.clone(),
-                    metadata: String::new(),
-                    created_at: String::new(),
+                    data: serde_json::to_value(&event.data).unwrap(),
+                    metadata: None,
+                    created_at: Utc::now(),
                 })
                 .collect();
 
@@ -107,5 +117,10 @@ mod test {
     #[test]
     fn test_storage_name() {
         assert_eq!("InMemory", InMemoryBackend::storage_name());
+    }
+
+    #[test]
+    fn can_be_instantiate() {
+        let _storage = InMemoryBackend::default();
     }
 }

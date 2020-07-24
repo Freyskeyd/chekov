@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use uuid::Uuid;
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
@@ -10,7 +11,7 @@ pub struct RecordedEvent {
     /// The stream identifier for thie event
     pub(crate) stream_uuid: String,
     /// The stream version when this event was appended
-    pub(crate) stream_version: i64,
+    pub(crate) stream_version: Option<i64>,
     /// a `causation_id` defines who caused this event
     pub(crate) causation_id: Option<Uuid>,
     /// a `correlation_id` correlates multiple events
@@ -18,9 +19,27 @@ pub struct RecordedEvent {
     /// Human readable event type
     pub(crate) event_type: String,
     /// Payload of this event
-    pub(crate) data: String,
+    pub(crate) data: serde_json::Value,
     /// Metadata defined for this event
-    pub(crate) metadata: String,
+    pub(crate) metadata: Option<String>,
     /// Event time creation
-    pub(crate) created_at: String,
+    pub(crate) created_at: DateTime<chrono::offset::Utc>,
+}
+
+impl RecordedEvent {
+    pub fn try_deserialize<
+        'de,
+        T: serde::Deserialize<'de> + crate::Event + serde::de::Deserialize<'de>,
+    >(
+        &'de self,
+    ) -> Result<T, ()> {
+        match T::deserialize(&self.data) {
+            Ok(e) => Ok(e),
+            Err(e) => {
+                println!("{:?}", e);
+
+                Err(())
+            }
+        }
+    }
 }

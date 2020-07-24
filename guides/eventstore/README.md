@@ -20,3 +20,21 @@ event_store::append()
   .execute(&event_store)
   .await;
 ```
+
+## Reading from stream
+
+
+A `Stream` can be read with the fluent API exposed at the root level of the event_store crate:
+
+```rust
+use event_store::prelude::*;
+
+let stream_uuid = Uuid::new_v4().to_string();
+
+event_store::read()
+  .stream(&stream_uuid)
+  .from(ReadVersion::Origin)
+  .limit(10)
+  .execute(&event_store)
+  .await;
+```

@@ -1,3 +1,4 @@
+use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
@@ -17,13 +18,14 @@ impl PostgresBackend {
     /// In case of Postgres connection error
     pub async fn with_url(url: &str) -> Result<Self, sqlx::Error> {
         Ok(Self {
-            pool: PgPool::new(url).await?,
+            pool: PgPool::connect(url).await?,
         })
     }
 }
 
 impl std::convert::From<sqlx::Error> for StorageError {
-    fn from(_: sqlx::Error) -> Self {
+    fn from(e: sqlx::Error) -> Self {
+        println!("{:?}", e);
         Self::StreamDoesntExists
     }
 }
@@ -51,6 +53,20 @@ impl Storage for PostgresBackend {
         unimplemented!()
     }
 
+    async fn read_stream(
+        &mut self,
+        stream_uuid: &str,
+        version: usize,
+        limit: usize,
+    ) -> Result<Vec<RecordedEvent>, StorageError> {
+        match sql::read_stream(&self.pool, stream_uuid, version, limit).await {
+            Err(_) => Err(StorageError::StreamAlreadyExists),
+            Ok(s) => {
+                info!("Read stream {} {}", stream_uuid, s.len());
+                Ok(s)
+            }
+        }
+    }
     async fn append_to_stream(
         &mut self,
         stream_uuid: &str,

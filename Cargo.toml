@@ -1,9 +1,8 @@
 [workspace]
-
 members = [
 	".",
 	"event_store",
-	"examples/bank"
+	"examples/*"
 ]
 
 [package]

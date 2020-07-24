@@ -1,3 +1,4 @@
+use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
 use actix::{Actor, Context, Handler, WrapFuture};
 use log::{debug, trace};
@@ -9,7 +10,7 @@ use uuid::Uuid;
 
 mod messaging;
 
-pub use messaging::{Append, CreateStream, StreamInfo};
+pub use messaging::{Append, CreateStream, Read, StreamInfo};
 
 pub struct Connection<S: Storage> {
     storage: Arc<Mutex<S>>,
@@ -28,6 +29,34 @@ impl<S: Storage> Actor for Connection<S> {
 
     fn started(&mut self, _ctx: &mut Self::Context) {
         debug!("Starting with {} storage", S::storage_name());
+    }
+}
+
+impl<S: Storage> Handler<Read> for Connection<S> {
+    type Result = actix::AtomicResponse<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
+
+    fn handle(&mut self, msg: Read, _ctx: &mut Context<Self>) -> Self::Result {
+        let stream = msg.stream;
+        let limit = msg.limit;
+        let version = msg.version;
+
+        trace!("Reading {} event(s)", stream);
+        let storage = self.storage.clone();
+
+        actix::AtomicResponse::new(Box::pin(
+            async move {
+                match storage
+                    .lock()
+                    .await
+                    .read_stream(&stream, version, limit)
+                    .await
+                {
+                    Ok(events) => Ok(events),
+                    Err(_) => Err(EventStoreError::Any),
+                }
+            }
+            .into_actor(self),
+        ))
     }
 }
 

@@ -1,4 +1,6 @@
-use crate::{event::UnsavedEvent, stream::Stream, EventStoreError, ExpectedVersion};
+use crate::{
+    event::RecordedEvent, event::UnsavedEvent, stream::Stream, EventStoreError, ExpectedVersion,
+};
 use actix::Message;
 use std::borrow::Cow;
 use uuid::Uuid;
@@ -17,4 +19,12 @@ pub struct Append {
     pub(crate) stream: String,
     pub(crate) expected_version: ExpectedVersion,
     pub(crate) events: Vec<UnsavedEvent>,
+}
+
+#[derive(Message)]
+#[rtype(result = "Result<Vec<RecordedEvent>, EventStoreError>")]
+pub struct Read {
+    pub(crate) stream: String,
+    pub(crate) version: usize,
+    pub(crate) limit: usize,
 }

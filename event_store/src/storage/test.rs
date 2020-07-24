@@ -8,6 +8,8 @@ use std::str::FromStr;
 mod creation {
     use super::*;
 
+    use pretty_assertions::{assert_eq, assert_ne};
+
     #[tokio::test]
     async fn success() {
         let mut storage = InMemoryBackend::default();
@@ -40,6 +42,8 @@ mod creation {
 
 mod deletion {
     use super::*;
+
+    use pretty_assertions::{assert_eq, assert_ne};
 
     #[tokio::test]
     async fn success() {
