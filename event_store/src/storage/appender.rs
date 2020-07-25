@@ -236,3 +236,36 @@ impl Appender {
         res
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[derive(serde::Serialize)]
+    struct MyEvent {}
+    impl Event for MyEvent {
+        fn event_type(&self) -> &'static str {
+            "MyEvent"
+        }
+    }
+
+    #[test]
+    fn that_an_appender_can_be_configured() {
+        let mut appender = Appender::default();
+
+        appender = appender.to("stream_name").unwrap();
+        assert_eq!(appender.stream, "stream_name");
+
+        appender = appender.event(&MyEvent {}).unwrap();
+
+        assert_eq!(appender.events.len(), 1);
+
+        appender = appender.events(&[&MyEvent {}]).unwrap();
+
+        assert_eq!(appender.events.len(), 2);
+
+        appender = appender.expected_version(ExpectedVersion::AnyVersion);
+
+        assert_eq!(appender.expected_version, ExpectedVersion::AnyVersion);
+    }
+}

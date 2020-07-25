@@ -52,3 +52,16 @@ impl UnsavedEvent {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_that_serde_error_are_handled() {
+        use serde::ser::Error;
+        let err = ParseEventError::from(serde_json::Error::custom("test"));
+
+        let _: ParseEventError = err.into();
+    }
+}

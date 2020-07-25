@@ -99,3 +99,13 @@ impl Storage for InMemoryBackend {
             .ok_or(StorageError::StreamDoesntExists)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_storage_name() {
+        assert_eq!("InMemory", InMemoryBackend::storage_name());
+    }
+}
