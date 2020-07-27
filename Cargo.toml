@@ -1,7 +1,23 @@
 [workspace]
 
 members = [
-	"chekov",
+	".",
 	"event_store",
 	"examples/bank"
 ]
+
+[package]
+name = "chekov"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/freyskeyd/chekov"
+documentation = "https://docs.rs/chekov"
+description = "CQRS/ES Framework"
+edition = "2018"
+keywords = []
+categories = []
+authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
+
+[dependencies]
+event_store = { version = "0.1.0", path = "event_store" }

@@ -26,3 +26,27 @@ impl std::convert::From<ParseEventError> for EventStoreError {
         Self::Any
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn testing_that_error_can_be_displayed() {
+        println!("{}", EventStoreError::Any);
+    }
+
+    #[test]
+    fn testing_that_a_mailboxerror_can_be_converted() {
+        let err = actix::MailboxError::Closed;
+
+        let _c: EventStoreError = err.into();
+    }
+
+    #[test]
+    fn testing_that_a_parse_event_error_can_be_converted() {
+        let err = crate::ParseEventError::UnknownFailure;
+
+        let _: EventStoreError = err.into();
+    }
+}

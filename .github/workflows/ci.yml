@@ -27,6 +27,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
         with:
           command: check
+          args: --all
 
   test:
     name: Test Suite
@@ -64,6 +65,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
         with:
           command: test
+          args: --all
 
   # lints:
   #   name: Lints
@@ -115,7 +117,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-features --no-fail-fast
+          args: --all-features --no-fail-fast --all
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
           CARGO_INCREMENTAL: '0'

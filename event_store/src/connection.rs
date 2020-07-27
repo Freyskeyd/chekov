@@ -102,10 +102,101 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
 mod test {
     use super::*;
 
+    use crate::storage::inmemory::InMemoryBackend;
+    use crate::Event;
+    use crate::ExpectedVersion;
+    use crate::UnsavedEvent;
+    use serde::Serialize;
+
+    async fn init_with_stream(name: &str) -> (actix::Addr<Connection<InMemoryBackend>>, Stream) {
+        let mut storage = InMemoryBackend::default();
+        let stream = Stream::from_str(name).unwrap();
+        let _ = storage.create_stream(stream.clone()).await;
+
+        let conn: Connection<crate::storage::inmemory::InMemoryBackend> = Connection::make(storage);
+
+        let addr = conn.start();
+
+        (addr, stream)
+    }
+
+    #[derive(Serialize)]
+    struct MyEvent {}
+    impl Event for MyEvent {
+        fn event_type(&self) -> &'static str {
+            "MyEvent"
+        }
+    }
     #[test]
     fn connection_can_be_created() {
-        let storage = crate::storage::inmemory::InMemoryBackend::default();
-        let _conn: Connection<crate::storage::inmemory::InMemoryBackend> =
-            Connection::make(storage);
+        let storage = InMemoryBackend::default();
+        let _conn: Connection<InMemoryBackend> = Connection::make(storage);
+    }
+
+    #[actix_rt::test]
+    async fn asking_for_stream_info() {
+        let (connection, stream) = init_with_stream("stream_name").await;
+
+        let result = connection
+            .send(StreamInfo("stream_name".into()))
+            .await
+            .unwrap();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().into_owned(), stream);
+    }
+
+    #[actix_rt::test]
+    async fn creating_stream() {
+        let storage = InMemoryBackend::default();
+
+        let conn: Connection<InMemoryBackend> = Connection::make(storage);
+
+        let connection = conn.start();
+
+        let result = connection
+            .send(CreateStream("stream_name".into()))
+            .await
+            .unwrap();
+
+        assert!(result.is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn appending_to_stream() {
+        let (connection, _) = init_with_stream("stream_name").await;
+
+        let event = UnsavedEvent::try_from(&MyEvent {}).unwrap();
+
+        let result = connection
+            .send(Append {
+                stream: "stream_name".into(),
+                expected_version: ExpectedVersion::AnyVersion,
+                events: vec![event],
+            })
+            .await
+            .unwrap();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn appending_to_stream_failed() {
+        let (connection, _) = init_with_stream("stream_name").await;
+
+        let event = UnsavedEvent::try_from(&MyEvent {}).unwrap();
+
+        let result = connection
+            .send(Append {
+                stream: "stream_name".into(),
+                expected_version: ExpectedVersion::Version(2),
+                events: vec![event],
+            })
+            .await
+            .unwrap();
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 1);
     }
 }
