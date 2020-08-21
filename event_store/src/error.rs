@@ -2,7 +2,7 @@ use crate::storage::StorageError;
 use crate::ParseEventError;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum EventStoreError {
     Any,
     Storage(StorageError),

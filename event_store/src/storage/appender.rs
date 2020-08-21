@@ -9,6 +9,7 @@ use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
 use log::trace;
+use std::convert::TryInto;
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -133,9 +134,9 @@ impl Appender {
     /// # Errors
     ///
     /// Can fail if the stream doesn't have the expected format
-    pub fn to<S: Into<String>>(mut self, stream: S) -> Result<Self, EventStoreError> {
+    pub fn to<S: ToString>(mut self, stream: S) -> Result<Self, EventStoreError> {
         // TODO: validate stream name format
-        self.stream = stream.into();
+        self.stream = stream.to_string();
 
         trace!(
             "Appender[{}]: Defined stream {} as target",
@@ -240,6 +241,8 @@ impl Appender {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::storage::inmemory::InMemoryBackend;
+    use uuid::Uuid;
 
     #[derive(serde::Serialize)]
     struct MyEvent {}
@@ -267,5 +270,36 @@ mod test {
         appender = appender.expected_version(ExpectedVersion::AnyVersion);
 
         assert_eq!(appender.expected_version, ExpectedVersion::AnyVersion);
+    }
+
+    #[actix_rt::test]
+    async fn that_an_appender_can_be_executed() -> Result<(), EventStoreError> {
+        let es = EventStore::builder()
+            .storage(InMemoryBackend::default())
+            .build()
+            .await
+            .unwrap();
+
+        let uuid = Uuid::new_v4();
+
+        let event = MyEvent {};
+
+        let res = Appender::default()
+            .to(uuid)?
+            .event(&event)?
+            .expected_version(ExpectedVersion::StreamExists)
+            .execute(&es)
+            .await;
+
+        assert_eq!(res, Err(EventStoreError::Any));
+
+        let res = Appender::default()
+            .to(uuid)?
+            .event(&event)?
+            .execute(&es)
+            .await;
+
+        assert!(res.is_ok());
+        Ok(())
     }
 }

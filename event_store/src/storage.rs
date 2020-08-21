@@ -1,3 +1,4 @@
+use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::stream::Stream;
 use uuid::Uuid;
@@ -32,12 +33,20 @@ pub trait Storage: Send + std::marker::Unpin + 'static {
         events: &[UnsavedEvent],
     ) -> Result<Vec<Uuid>, StorageError>;
 
+    async fn read_stream(
+        &mut self,
+        stream_uud: &str,
+        version: usize,
+        limit: usize,
+    ) -> Result<Vec<RecordedEvent>, StorageError>;
+
     async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError>;
 }
 
 pub mod appender;
 pub mod inmemory;
 pub mod postgres;
+pub mod reader;
 
 #[cfg(test)]
 mod test;

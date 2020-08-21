@@ -5,27 +5,30 @@
     // clippy::cargo
 )]
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::toplevel_ref_arg)]
 #![allow(dead_code)]
-
 //! The `event_store` crate
 mod connection;
 mod error;
 mod event;
 mod expected_version;
+mod read_version;
 mod storage;
 mod stream;
 
 use actix::{Actor, Addr};
-use connection::{Append, Connection, CreateStream, StreamInfo};
+use connection::{Append, Connection, CreateStream, Read, StreamInfo};
 use error::EventStoreError;
-use event::{Event, ParseEventError, UnsavedEvent};
+use event::{Event, ParseEventError, RecordedEvent, UnsavedEvent};
 use expected_version::ExpectedVersion;
 use log::{debug, info, trace, warn};
+use read_version::ReadVersion;
 use std::borrow::Cow;
-use storage::{appender::Appender, Storage};
+use storage::{appender::Appender, reader::Reader, Storage};
 use uuid::Uuid;
 
 /// An `EventStore` that hold a storage connection
+#[derive(Clone)]
 pub struct EventStore<S: Storage> {
     connection: Addr<Connection<S>>,
 }
@@ -34,6 +37,11 @@ impl<S> EventStore<S>
 where
     S: 'static + Storage + std::marker::Unpin,
 {
+    pub(crate) fn duplicate(&self) -> Self {
+        Self {
+            connection: self.connection.clone(),
+        }
+    }
     /// Instanciate a new `EventStoreBuilder`
     #[must_use]
     pub fn builder() -> EventStoreBuilder<S> {
@@ -63,6 +71,43 @@ where
     }
 
     #[doc(hidden)]
+    pub(crate) async fn read_stream<T: Into<String> + Send>(
+        &self,
+        stream: T,
+        version: usize,
+        limit: usize,
+    ) -> Result<Vec<RecordedEvent>, EventStoreError> {
+        let stream: String = stream.into();
+
+        #[cfg(feature = "verbose")]
+        info!("Attempting to read {} stream event(s)", stream);
+
+        match self
+            .connection
+            .send(Read {
+                #[cfg(feature = "verbose")]
+                stream: stream.clone(),
+                #[cfg(not(feature = "verbose"))]
+                stream,
+                version,
+                limit,
+            })
+            .await?
+        {
+            Ok(events) => {
+                #[cfg(feature = "verbose")]
+                info!("Read {} event(s) to {}", events.len(), stream);
+                Ok(events)
+            }
+            Err(e) => {
+                #[cfg(feature = "verbose")]
+                info!("Failed to read event(s) from {}", stream);
+                Err(e)
+            }
+        }
+    }
+
+    #[doc(hidden)]
     pub(crate) async fn append_to_stream<T: Into<String> + Send>(
         &self,
         stream: T,
@@ -83,7 +128,7 @@ where
             events.len()
         };
 
-        let res = self
+        match self
             .connection
             .send(Append {
                 #[cfg(feature = "verbose")]
@@ -93,24 +138,32 @@ where
                 expected_version,
                 events,
             })
-            .await?;
-
-        #[cfg(feature = "verbose")]
-        if let Ok(ref events_ids) = res {
-            info!("Appended {} event(s) to {}", events_ids.len(), stream)
-        } else {
-            info!("Failed to append {} event(s) to {}", events_number, stream)
+            .await?
+        {
+            Ok(events) => {
+                #[cfg(feature = "verbose")]
+                info!("Appended {} event(s) to {}", events.len(), stream);
+                Ok(events)
+            }
+            Err(e) => {
+                #[cfg(feature = "verbose")]
+                info!("Failed to append {} event(s) to {}", events_number, stream);
+                Err(e)
+            }
         }
-
-        res
     }
 }
 
 /// Create an `Appender` to append events
-///
 #[must_use]
 pub fn append() -> Appender {
     Appender::default()
+}
+
+/// Create a `Reader` to read a stream
+#[must_use]
+pub fn read() -> Reader {
+    Reader::default()
 }
 
 /// Builder use to simplify the `EventStore` creation
@@ -150,6 +203,7 @@ pub mod prelude {
     pub use crate::error::EventStoreError;
     pub use crate::event::{Event, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;
+    pub use crate::read_version::ReadVersion;
     pub use crate::storage::{
         appender::Appender, inmemory::InMemoryBackend, postgres::PostgresBackend, Storage,
         StorageError,

@@ -31,6 +31,8 @@ impl Event for MyStructEvent {
 mod unsaved {
     use super::*;
 
+    use pretty_assertions::{assert_eq, assert_ne};
+
     #[test]
     fn must_have_a_valide_event_type() {
         let source_events = vec![
@@ -56,6 +58,8 @@ mod unsaved {
             "MyEnumEvent::Deleted",
             "MyStructEvent",
         ];
+
+        assert_eq!(expected.len(), produces_events.len());
         expected
             .into_iter()
             .zip(produces_events)

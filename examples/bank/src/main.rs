@@ -1,8 +1,10 @@
 use event_store::prelude::*;
+use serde::Deserialize;
 use serde::Serialize;
+use tokio::stream::StreamExt;
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 struct AccountOpened {
     account_id: Uuid,
 }
@@ -13,7 +15,7 @@ impl Event for AccountOpened {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 enum MoneyMovementEvent {
     MoneyDeposited { account_id: Uuid },
     // MoneyWithdrawn { account_id: Uuid },
@@ -25,6 +27,20 @@ impl Event for MoneyMovementEvent {
             // MoneyMovementEvent::MoneyWithdrawn { .. } => "MoneyMovementEvent::MoneyWithdrawn",
             MoneyMovementEvent::MoneyDeposited { .. } => "MoneyMovementEvent::MoneyDeposited",
         }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct UserRegistered {
+    email: String,
+    hashed_password: String,
+    user_uuid: Uuid,
+    username: String,
+}
+
+impl Event for UserRegistered {
+    fn event_type(&self) -> &'static str {
+        "Elixir.Conduit.Accounts.Events.UserRegistered"
     }
 }
 
@@ -61,6 +77,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await;
 
     println!("{:?}", result);
+
+    let result = event_store::read()
+        .stream(&uuid)?
+        .from(ReadVersion::Origin)
+        .limit(10)
+        .execute(&event_store)
+        .await?;
+
+    let _ = result
+        .first()
+        .unwrap()
+        .try_deserialize::<AccountOpened>()
+        .unwrap();
+
+    let mut stream = event_store::read()
+        .stream(&uuid)?
+        .from(ReadVersion::Origin)
+        .limit(2)
+        .into_stream()
+        .chunk_by(1)
+        .execute(&event_store)
+        .await;
+
+    // while let Some(notification) = stream.try_next().await? {
+    while let Some(notification) = stream.try_next().await? {
+        println!("[from stream]: {:?}", notification);
+    }
 
     Ok(())
 }

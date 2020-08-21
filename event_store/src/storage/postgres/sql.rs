@@ -1,36 +1,74 @@
+use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::stream::Stream;
 use sqlx::postgres::PgRow;
+use sqlx::Done;
 use sqlx::Row;
+use std::convert::TryInto;
 use uuid::Uuid;
 
-pub async fn stream_info<'c, C>(conn: C, stream_uuid: &str) -> Result<Stream, sqlx::Error>
-where
-    C: sqlx::Executor<Database = sqlx::Postgres>
-        + sqlx::executor::RefExecutor<'c, Database = sqlx::Postgres>,
-{
+pub async fn read_stream(
+    conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    stream_uuid: &str,
+    version: usize,
+    limit: usize,
+) -> Result<Vec<RecordedEvent>, sqlx::Error> {
+    let version: i64 = version.try_into().unwrap();
+    let limit: i64 = limit.try_into().unwrap();
+    #[allow(clippy::used_underscore_binding)]
+    sqlx::query_as!(
+        RecordedEvent,
+        r#"SELECT
+        stream_events.stream_version as event_number,
+        events.event_id as event_uuid,
+        streams.stream_uuid,
+        stream_events.original_stream_version as stream_version,
+        events.event_type::text,
+        events.correlation_id,
+        events.causation_id,
+        events.data::jsonb,
+        events.metadata as "metadata: String",
+        events.created_at
+    FROM
+	events
+	inner JOIN stream_events ON stream_events.event_id = events.event_id
+	inner JOIN streams ON streams.stream_id = stream_events.original_stream_id
+    WHERE
+	streams.stream_uuid = $1 AND stream_events.stream_version >=$2
+	ORDER BY stream_events.stream_version ASC
+        LIMIT $3;
+         "#,
+        &stream_uuid,
+        &version,
+        &limit,
+    )
+    .fetch_all(conn)
+    .await
+}
+pub async fn stream_info(
+    conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    stream_uuid: &str,
+) -> Result<Stream, sqlx::Error> {
+    #[allow(clippy::used_underscore_binding)]
     sqlx::query_as!(
         Stream,
         "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1",
-        stream_uuid
+        &stream_uuid
     )
         .fetch_one(conn)
         .await
 }
 
 pub async fn create_stream(pool: &sqlx::PgPool, stream_uuid: &str) -> Result<Stream, sqlx::Error> {
-    sqlx::query_as!(Stream, "INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at", stream_uuid).fetch_one(pool).await
+    #[allow(clippy::used_underscore_binding)]
+    sqlx::query_as!(Stream, "INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at", &stream_uuid).fetch_one(pool).await
 }
 
-pub async fn insert_stream_events<'c, C>(
-    tx: C,
+pub async fn insert_stream_events<'c>(
+    tx: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     events: &[UnsavedEvent],
     stream_id: i64,
-) -> Result<u64, sqlx::Error>
-where
-    C: sqlx::Executor<Database = sqlx::Postgres>
-        + sqlx::executor::RefExecutor<'c, Database = sqlx::Postgres>,
-{
+) -> Result<u64, sqlx::Error> {
     let params = (0..events.len())
         .map(|i| match i {
             0 => "($3::uuid, $4::bigint)".to_string(),
@@ -77,7 +115,9 @@ where
         query = query.bind(event.event_uuid).bind(&event.stream_version);
     }
 
-    query.execute(tx).await
+    let done = query.execute(tx).await?;
+
+    Ok(done.rows_affected())
 }
 
 pub async fn insert_link_events<'t, C>(
@@ -86,13 +126,13 @@ pub async fn insert_link_events<'t, C>(
     _stream_uuid: &str,
 ) -> Result<(), sqlx::Error>
 where
-    C: sqlx::Executor<Database = sqlx::Postgres>,
+    C: sqlx::Executor<'t, Database = sqlx::Postgres>,
 {
     Ok(())
 }
 
 pub async fn transactional_insert_events(
-    tx: &mut sqlx::Transaction<sqlx::pool::PoolConnection<sqlx::postgres::PgConnection>>,
+    tx: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     events: &[UnsavedEvent],
 ) -> Result<Vec<Uuid>, sqlx::Error> {
     let q = format!("
@@ -116,7 +156,10 @@ pub async fn transactional_insert_events(
             .bind(&event.created_at);
     }
 
-    query.map(|row: PgRow| row.get(0)).fetch_all(tx).await
+    query
+        .try_map(|row: PgRow| row.try_get(0))
+        .fetch_all(tx)
+        .await
 }
 
 fn create_append_indexes(events: usize) -> String {
@@ -143,6 +186,8 @@ mod test {
     use super::create_append_indexes;
     use crate::prelude::*;
     use serde::Serialize;
+
+    use pretty_assertions::{assert_eq, assert_ne};
 
     #[derive(Serialize)]
     struct MyEvent {}
