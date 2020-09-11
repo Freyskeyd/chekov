@@ -8,7 +8,7 @@ use std::str::FromStr;
 mod creation {
     use super::*;
 
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
 
     #[tokio::test]
     async fn success() {
@@ -43,7 +43,7 @@ mod creation {
 mod deletion {
     use super::*;
 
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
 
     #[tokio::test]
     async fn success() {

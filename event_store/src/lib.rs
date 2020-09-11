@@ -19,9 +19,14 @@ mod stream;
 use actix::{Actor, Addr};
 use connection::{Append, Connection, CreateStream, Read, StreamInfo};
 use error::EventStoreError;
-use event::{Event, ParseEventError, RecordedEvent, UnsavedEvent};
+pub use event::Event;
+use event::{ParseEventError, RecordedEvent, UnsavedEvent};
 use expected_version::ExpectedVersion;
-use log::{debug, info, trace, warn};
+use log::{debug, trace, warn};
+
+#[cfg(feature = "verbose")]
+use log::info;
+
 use read_version::ReadVersion;
 use std::borrow::Cow;
 use storage::{appender::Appender, reader::Reader, Storage};
@@ -37,7 +42,8 @@ impl<S> EventStore<S>
 where
     S: 'static + Storage + std::marker::Unpin,
 {
-    pub(crate) fn duplicate(&self) -> Self {
+    #[must_use]
+    pub fn duplicate(&self) -> Self {
         Self {
             connection: self.connection.clone(),
         }
@@ -201,7 +207,7 @@ where
 
 pub mod prelude {
     pub use crate::error::EventStoreError;
-    pub use crate::event::{Event, UnsavedEvent};
+    pub use crate::event::{Event, RecordedEvent, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;
     pub use crate::read_version::ReadVersion;
     pub use crate::storage::{

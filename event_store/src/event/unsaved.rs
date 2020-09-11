@@ -67,7 +67,7 @@ mod test {
         let _: ParseEventError = err.into();
     }
 
-    #[derive(serde::Serialize)]
+    #[derive(serde::Serialize, serde::Deserialize)]
     struct MyEvent(pub String);
 
     impl Event for MyEvent {
@@ -76,10 +76,17 @@ mod test {
         }
     }
 
+    impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {
+        type Error = ();
+        fn try_from(e: crate::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+            serde_json::from_value(e.data).map_err(|_| ())
+        }
+    }
+
     #[test]
     fn test_that_ids_can_be_setted() {
         let event = MyEvent("Hello".into());
-        let unsaved = match UnsavedEvent::try_from(&event) {
+        let _unsaved = match UnsavedEvent::try_from(&event) {
             Ok(unsaved) => {
                 assert!(unsaved.causation_id.is_none());
                 assert!(unsaved.correlation_id.is_none());
@@ -92,7 +99,7 @@ mod test {
             Err(_) => panic!("Couldnt convert into UnsavedEvent"),
         };
 
-        let expected = UnsavedEvent {
+        let _expected = UnsavedEvent {
             causation_id: None,
             correlation_id: None,
             event_type: "MyEvent".into(),
