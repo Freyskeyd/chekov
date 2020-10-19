@@ -30,3 +30,4 @@ actix = "*"
 futures = "*"
 log = {version = "0.4"}
 actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
+
