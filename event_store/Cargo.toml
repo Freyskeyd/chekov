@@ -17,7 +17,7 @@ tokio = {version = "0.2", features = ["time", "stream", "macros", "rt-threaded"]
 futures = "0.3"
 log = {version = "0.4"}
 actix = "0.10.0-alpha.3"
-sqlx = {version = "0.4.0-beta.1", features = ["postgres", "chrono", "time", "uuid", "json"]}
+sqlx = {version = "0.4.0-beta.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
 chrono = "0.4"
 
 [dev-dependencies]

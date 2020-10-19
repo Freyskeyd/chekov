@@ -185,17 +185,25 @@ mod test {
 
     use super::create_append_indexes;
     use crate::prelude::*;
-    use serde::Serialize;
+    use serde::{Deserialize, Serialize};
 
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
 
-    #[derive(Serialize)]
+    #[derive(Serialize, Deserialize)]
     struct MyEvent {}
     impl Event for MyEvent {
         fn event_type(&self) -> &'static str {
             "MyEvent"
         }
     }
+
+    impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {
+        type Error = ();
+        fn try_from(e: crate::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+            serde_json::from_value(e.data).map_err(|_| ())
+        }
+    }
+
     #[test]
     fn should_produce_the_right_number_of_arguments() {
         let e = MyEvent {};

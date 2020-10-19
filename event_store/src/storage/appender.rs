@@ -9,7 +9,6 @@ use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
 use log::trace;
-use std::convert::TryInto;
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -24,13 +23,21 @@ use uuid::Uuid;
 /// # use serde::Serialize;
 /// # use std::str::FromStr;
 /// use event_store::prelude::*;
-/// # #[derive(Serialize)]
+/// # #[derive(serde::Deserialize, Serialize)]
 /// # struct MyEvent {}
 /// # impl Event for MyEvent {
 /// #   fn event_type(&self) -> &'static str {
 /// #      "MyEvent"
 /// #   }
 /// # }
+/// #
+/// # impl std::convert::TryFrom<event_store::prelude::RecordedEvent> for MyEvent {
+/// #   type Error = ();
+/// #   fn try_from(e: event_store::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+/// #      serde_json::from_value(e.data).map_err(|_| ())
+/// #   }
+/// # }
+/// #
 /// # #[actix_rt::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let eventstore = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap();
@@ -244,11 +251,18 @@ mod test {
     use crate::storage::inmemory::InMemoryBackend;
     use uuid::Uuid;
 
-    #[derive(serde::Serialize)]
+    #[derive(serde::Serialize, serde::Deserialize)]
     struct MyEvent {}
     impl Event for MyEvent {
         fn event_type(&self) -> &'static str {
             "MyEvent"
+        }
+    }
+
+    impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {
+        type Error = ();
+        fn try_from(e: crate::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+            serde_json::from_value(e.data).map_err(|_| ())
         }
     }
 

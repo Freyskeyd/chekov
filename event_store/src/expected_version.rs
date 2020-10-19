@@ -65,7 +65,7 @@ mod test {
     use super::*;
     use crate::stream::Stream;
     use chrono::Utc;
-    use pretty_assertions::{assert_eq, assert_ne};
+    use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     #[test]

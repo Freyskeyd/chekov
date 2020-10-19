@@ -135,6 +135,7 @@ mod test {
     use crate::Event;
     use crate::ExpectedVersion;
     use crate::UnsavedEvent;
+    use serde::Deserialize;
     use serde::Serialize;
 
     async fn init_with_stream(name: &str) -> (actix::Addr<Connection<InMemoryBackend>>, Stream) {
@@ -149,13 +150,21 @@ mod test {
         (addr, stream)
     }
 
-    #[derive(Serialize)]
+    #[derive(Deserialize, Serialize)]
     struct MyEvent {}
     impl Event for MyEvent {
         fn event_type(&self) -> &'static str {
             "MyEvent"
         }
     }
+
+    impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {
+        type Error = ();
+        fn try_from(e: crate::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+            serde_json::from_value(e.data).map_err(|_| ())
+        }
+    }
+
     #[test]
     fn connection_can_be_created() {
         let storage = InMemoryBackend::default();
