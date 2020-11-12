@@ -67,7 +67,7 @@ pub fn generate_command(
         impl chekov::Command for #struct_name {
             type Event = #event;
             type Executor = #executor;
-            type ExecutorRegistry = ::chekov::AggregateInstanceRegistry<#executor>;
+            type ExecutorRegistry = ::chekov::aggregate_registry::AggregateInstanceRegistry<#executor>;
 
             fn identifier(&self) -> ::std::string::String {
                 self.#identifier_value.to_string()
