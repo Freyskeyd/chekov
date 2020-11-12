@@ -1,6 +1,4 @@
-use chekov::Aggregate;
-use chekov::CommandExecutor;
-use chekov::EventApplier;
+use chekov::prelude::*;
 use event_store::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -37,7 +35,7 @@ impl CommandExecutor<DeleteAccount> for Account {
     fn execute(
         cmd: DeleteAccount,
         _state: &Self,
-    ) -> Result<Vec<AccountDeleted>, chekov::CommandExecutorError> {
+    ) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
         Ok(vec![AccountDeleted {
             account_id: cmd.account_id,
         }])
@@ -45,22 +43,19 @@ impl CommandExecutor<DeleteAccount> for Account {
 }
 
 impl CommandExecutor<OpenAccount> for Account {
-    fn execute(
-        cmd: OpenAccount,
-        state: &Self,
-    ) -> Result<Vec<AccountOpened>, chekov::CommandExecutorError> {
+    fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
         match state.status {
             AccountStatus::Initialized => Ok(vec![AccountOpened {
                 account_id: cmd.account_id,
                 name: cmd.name,
             }]),
-            _ => Err(chekov::CommandExecutorError::Any),
+            _ => Err(CommandExecutorError::Any),
         }
     }
 }
 
 impl EventApplier<AccountOpened> for Account {
-    fn apply(&mut self, event: &AccountOpened) -> Result<(), chekov::ApplyError> {
+    fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
         self._account_id = Some(event.account_id);
         self.status = AccountStatus::Active;
 
@@ -69,7 +64,7 @@ impl EventApplier<AccountOpened> for Account {
 }
 
 impl EventApplier<AccountDeleted> for Account {
-    fn apply(&mut self, _event: &AccountDeleted) -> Result<(), chekov::ApplyError> {
+    fn apply(&mut self, _event: &AccountDeleted) -> Result<(), ApplyError> {
         self.status = AccountStatus::Deleted;
 
         Ok(())
@@ -82,10 +77,10 @@ struct DeleteAccount {
 }
 
 #[async_trait::async_trait]
-impl chekov::Command for DeleteAccount {
+impl Command for DeleteAccount {
     type Event = AccountDeleted;
     type Executor = Account;
-    type ExecutorRegistry = ::chekov::AggregateInstanceRegistry<Account>;
+    type ExecutorRegistry = AggregateInstanceRegistry<Account>;
 
     fn identifier(&self) -> ::std::string::String {
         self.account_id.to_string()
@@ -137,7 +132,7 @@ struct UserRegistered {
     username: String,
 }
 
-type PGChekov = chekov::Chekov<PostgresBackend>;
+type PGChekov = Chekov<PostgresBackend>;
 
 use actix_web::{delete, get, post, put, Responder};
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
@@ -198,7 +193,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .unwrap();
 
-    let app = ::chekov::Chekov::with_storage(storage).await;
+    let app = Chekov::with_storage(storage).await;
 
     let chekov = std::sync::Arc::new(app);
     HttpServer::new(move || {

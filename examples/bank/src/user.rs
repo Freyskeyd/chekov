@@ -1,8 +1,5 @@
-use chekov::Aggregate;
-use chekov::CommandExecutor;
-use chekov::EventApplier;
-use serde::Deserialize;
-use serde::Serialize;
+use chekov::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Default, chekov::macros::Aggregate)]
@@ -47,10 +44,7 @@ struct PrefUpdated {
 }
 
 impl CommandExecutor<CreateUser> for User {
-    fn execute(
-        cmd: CreateUser,
-        _state: &Self,
-    ) -> Result<Vec<UserCreated>, chekov::CommandExecutorError> {
+    fn execute(cmd: CreateUser, _state: &Self) -> Result<Vec<UserCreated>, CommandExecutorError> {
         Ok(vec![UserCreated {
             user_id: cmd.user_id,
             account_id: cmd.account_id,
@@ -59,16 +53,13 @@ impl CommandExecutor<CreateUser> for User {
 }
 
 impl EventApplier<UserCreated> for User {
-    fn apply(&mut self, _event: &UserCreated) -> Result<(), chekov::ApplyError> {
+    fn apply(&mut self, _event: &UserCreated) -> Result<(), ApplyError> {
         Ok(())
     }
 }
 
 impl CommandExecutor<UpdatePref> for UserPreferences {
-    fn execute(
-        cmd: UpdatePref,
-        _state: &Self,
-    ) -> Result<Vec<PrefUpdated>, chekov::CommandExecutorError> {
+    fn execute(cmd: UpdatePref, _state: &Self) -> Result<Vec<PrefUpdated>, CommandExecutorError> {
         Ok(vec![PrefUpdated {
             user_id: cmd.user_id,
         }])
@@ -76,7 +67,7 @@ impl CommandExecutor<UpdatePref> for UserPreferences {
 }
 
 impl EventApplier<PrefUpdated> for UserPreferences {
-    fn apply(&mut self, _event: &PrefUpdated) -> Result<(), chekov::ApplyError> {
+    fn apply(&mut self, _event: &PrefUpdated) -> Result<(), ApplyError> {
         Ok(())
     }
 }
