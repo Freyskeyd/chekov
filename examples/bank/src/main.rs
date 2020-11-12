@@ -1,26 +1,87 @@
+use actix_web::{Error, HttpRequest, HttpResponse, Responder};
 use chekov::prelude::*;
+use chekov::EventHandler;
 use event_store::prelude::*;
+use futures::future::{ready, Ready};
+use futures::TryFutureExt;
 use serde::Deserialize;
 use serde::Serialize;
+use sqlx::postgres::PgRow;
+use sqlx::{FromRow, PgPool, Row};
 use uuid::Uuid;
+// mod user;
 
-mod user;
-
+#[derive(Serialize)]
 enum AccountStatus {
     Initialized,
     Active,
     Deleted,
 }
 
+#[derive(Serialize)]
 struct Account {
-    _account_id: Option<Uuid>,
+    account_id: Option<Uuid>,
     status: AccountStatus,
+}
+
+impl Account {
+    pub async fn find_all(pool: &PgPool) -> Result<Vec<Account>, sqlx::Error> {
+        let mut accounts = vec![];
+        let recs = sqlx::query!(
+            r#"
+                SELECT account_id
+                    FROM accounts
+                ORDER BY account_id
+            "#
+        )
+        .fetch_all(pool)
+        .await?;
+
+        for rec in recs {
+            accounts.push(Account {
+                account_id: Some(rec.account_id),
+                status: AccountStatus::Initialized,
+            });
+        }
+
+        Ok(accounts)
+    }
+
+    pub async fn create(account: &AccountOpened, pool: &PgPool) -> Result<Account, sqlx::Error> {
+        let mut tx = pool.begin().await?;
+        let todo =
+            sqlx::query("INSERT INTO accounts (account_id) VALUES ($1) RETURNING account_id")
+                .bind(&account.account_id)
+                .map(|row: PgRow| Account {
+                    account_id: row.get(0),
+                    status: AccountStatus::Active,
+                })
+                .fetch_one(&mut tx)
+                .await?;
+
+        tx.commit().await?;
+        Ok(todo)
+    }
+}
+
+// implementation of Actix Responder for Todo struct so we can return Todo from action handler
+impl Responder for Account {
+    type Error = Error;
+    type Future = Ready<Result<HttpResponse, Error>>;
+
+    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
+        let body = serde_json::to_string(&self).unwrap();
+        // create response and set content type
+        ready(Ok(HttpResponse::Ok()
+            .content_type("application/json")
+            .body(body)))
+    }
 }
 
 impl std::default::Default for Account {
     fn default() -> Self {
         Self {
-            _account_id: None,
+            account_id: None,
             status: AccountStatus::Initialized,
         }
     }
@@ -56,7 +117,7 @@ impl CommandExecutor<OpenAccount> for Account {
 
 impl EventApplier<AccountOpened> for Account {
     fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
-        self._account_id = Some(event.account_id);
+        self.account_id = Some(event.account_id);
         self.status = AccountStatus::Active;
 
         Ok(())
@@ -134,14 +195,17 @@ struct UserRegistered {
 
 type PGChekov = Chekov<PostgresBackend>;
 
-use actix_web::{delete, get, post, put, Responder};
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_web::{delete, get, post, put};
+use actix_web::{middleware, web, App, HttpServer};
 
 #[get("/accounts")]
-async fn find_all(_chekov: web::Data<std::sync::Arc<PGChekov>>) -> impl Responder {
-    HttpResponse::InternalServerError().body("Unimplemented")
+async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
+    let result = Account::find_all(db_pool.get_ref()).await;
+    match result {
+        Ok(todos) => HttpResponse::Ok().json(todos),
+        _ => HttpResponse::BadRequest().body("Error trying to read all todos from database"),
+    }
 }
-
 #[get("/accounts/{id}")]
 async fn find(_id: web::Path<i32>, _chekov: web::Data<std::sync::Arc<PGChekov>>) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
@@ -161,7 +225,7 @@ async fn create(
 #[put("/accounts/{id}")]
 async fn update(
     _id: web::Path<i32>,
-    _account: web::Json<OpenAccount>,
+    account: web::Json<OpenAccount>,
     _chekov: web::Data<std::sync::Arc<PGChekov>>,
 ) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
@@ -185,6 +249,21 @@ pub fn init<S: event_store::prelude::Storage>(cfg: &mut web::ServiceConfig) {
     cfg.service(update);
     cfg.service(delete);
 }
+
+struct AccountProjector {
+    pool: PgPool,
+}
+
+impl chekov::EventHandler for AccountProjector {}
+
+#[async_trait::async_trait]
+impl chekov::event::Handler<AccountOpened> for AccountProjector {
+    async fn handle(&self, event: &AccountOpened) -> Result<(), ()> {
+        let _result = Account::create(event, &self.pool).await;
+        Ok(())
+    }
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -195,11 +274,24 @@ async fn main() -> std::io::Result<()> {
 
     let app = Chekov::with_storage(storage).await;
 
+    let db_pool = PgPool::connect("postgresql://postgres:postgres@localhost/bank")
+        .await
+        .unwrap();
+
+    AccountProjector {
+        pool: db_pool.clone(),
+    }
+    .builder()
+    .name("AccountProjector")
+    .register(&app)
+    .await;
     let chekov = std::sync::Arc::new(app);
+
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .data(chekov.clone())
+            .data(db_pool.clone())
             .data(web::JsonConfig::default().limit(4096))
             .configure(init::<PostgresBackend>)
     })
@@ -207,66 +299,3 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
-// async fn main_event() -> Result<(), Box<dyn std::error::Error>> {
-//     env_logger::init();
-//     // Configure the storage (PG, InMemory,...)
-//     let storage = PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store")
-//         .await
-//         .unwrap();
-
-//     let event_store = EventStore::builder()
-//         .storage(storage)
-//         .build()
-//         .await
-//         .unwrap();
-
-//     let account_opened = AccountOpened {
-//         account_id: Uuid::new_v4(),
-//     };
-
-//     let money_deposited = MoneyMovementEvent::MoneyDeposited {
-//         account_id: Uuid::new_v4(),
-//     };
-
-//     let uuid = Uuid::new_v4().to_string();
-
-//     let result = event_store::append()
-//         .events(&[&account_opened])?
-//         .event(&money_deposited)?
-//         .to(&uuid)?
-//         .expected_version(ExpectedVersion::AnyVersion)
-//         .execute(&event_store)
-//         .await;
-
-//     println!("{:?}", result);
-
-//     let result = event_store::read()
-//         .stream(&uuid)?
-//         .from(ReadVersion::Origin)
-//         .limit(10)
-//         .execute(&event_store)
-//         .await?;
-
-//     let _ = result
-//         .first()
-//         .unwrap()
-//         .try_deserialize::<AccountOpened>()
-//         .unwrap();
-
-//     let mut stream = event_store::read()
-//         .stream(&uuid)?
-//         .from(ReadVersion::Origin)
-//         .limit(2)
-//         .into_stream()
-//         .chunk_by(1)
-//         .execute(&event_store)
-//         .await;
-
-//     // while let Some(notification) = stream.try_next().await? {
-//     while let Some(notification) = stream.try_next().await? {
-//         println!("[from stream]: {:?}", notification);
-//     }
-
-//     Ok(())
-// }

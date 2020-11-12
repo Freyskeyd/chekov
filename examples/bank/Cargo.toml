@@ -8,7 +8,7 @@ workspace = "../../"
 [dependencies]
 event_store = { path = "../../event_store", features = ["verbose"] }
 chekov = { path = "../../"  }
-tokio = {version = "*", features = ["macros", "rt-threaded"]}
+tokio = {version = "0.3", features = ["macros", "rt"]}
 uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = "*"
 serde_json = "*"
@@ -20,6 +20,6 @@ log = "*"
 futures = "*"
 actix-web = "3"
 
-sqlx = {version = "0.4.0-beta.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
+sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
 chrono = "0.4"
 

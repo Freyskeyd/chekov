@@ -13,11 +13,11 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = "1.0"
 serde_json = "1.0"
 async-trait = "0.1.36"
-tokio = {version = "0.2", features = ["time", "stream", "macros", "rt-threaded"]}
+tokio = {version = "0.3", features = ["rt", "sync", "time", "stream", "macros"]}
 futures = "0.3"
 log = {version = "0.4"}
 actix = "0.10.0-alpha.3"
-sqlx = {version = "0.4.0-beta.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
+sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-async-std-native-tls"]}
 chrono = "0.4"
 
 [dev-dependencies]
