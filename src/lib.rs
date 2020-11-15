@@ -90,15 +90,7 @@ where
     }
 
     pub async fn register_event_handler<E: EventHandler>(&self, handler: EventHandlerBuilder<E>) {
-        EventHandlerInstance::create(move |ctx| {
-            trace!("Register a new EventHandler instance with {}", handler.name);
-            let ctx_address = ctx.address();
-
-            EventHandlerInstance {
-                _subscribtion: Subscriber::new(ctx_address.recipient(), "$all"),
-                _handler: handler.handler,
-            }
-        });
+        EventHandlerInstance::from_builder(handler);
     }
 }
 

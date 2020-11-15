@@ -2,6 +2,7 @@ use crate::message::EventEnvelope;
 use crate::subscriber::Subscriber;
 use crate::Chekov;
 use actix::prelude::*;
+use log::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {
     pub(crate) handler: E,
@@ -41,6 +42,19 @@ pub struct EventHandlerInstance<E: EventHandler> {
     pub(crate) _subscribtion: Addr<Subscriber>,
 }
 
+impl<E: EventHandler> EventHandlerInstance<E> {
+    pub fn from_builder(builder: EventHandlerBuilder<E>) -> Addr<Self> {
+        Self::create(move |ctx| {
+            trace!("Register a new EventHandler instance with {}", builder.name);
+            let ctx_address = ctx.address();
+
+            EventHandlerInstance {
+                _subscribtion: Subscriber::new(ctx_address.recipient(), "$all"),
+                _handler: builder.handler,
+            }
+        })
+    }
+}
 impl<E: EventHandler> actix::Actor for EventHandlerInstance<E> {
     type Context = Context<Self>;
 }
