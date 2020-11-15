@@ -75,33 +75,10 @@ impl<C: Command, S: event_store::prelude::Storage> ::actix::Handler<Dispatch<C, 
                         for event in result {
                             let _res = match C::Event::try_from(event.clone()) {
                                 Ok(parsed_event) => inner.apply(&parsed_event).map_err(|_| ()),
-                                _ => {
-                                    // println!(
-                                    //     "ERROR PARSING EVENT for {:?} on {:?}",
-                                    //     self.instance, msg
-                                    // );
-                                    Err(())
-                                }
+                                _ => Err(()),
                             };
                         }
-                        AggregateInstance {
-                            // subscribtion: Subscriber::create(move |ctx| Subscriber {
-                            //     stream: "account".to_string(),
-                            //     aggr: ctx_address,
-                            // }),
-                            inner,
-                        }
-
-                        // let fut = Registry::from_registry()
-                        //     .send(Register {
-                        //         stream: "account".to_string(),
-                        //         addr: ctx_agg.address(),
-                        //     })
-                        // .into_actor(&instance)
-                        //     .map(|_, _, _| ());
-
-                        // ctx_agg.wait(fut);
-                        // instance
+                        AggregateInstance { inner }
                     })
                 };
 
