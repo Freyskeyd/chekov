@@ -1,6 +1,5 @@
 use actix_web::{Error, HttpRequest, HttpResponse, Responder};
 use chekov::prelude::*;
-use chekov::EventHandler;
 use event_store::prelude::*;
 use futures::future::{ready, Ready};
 use futures::TryFutureExt;
@@ -9,7 +8,6 @@ use serde::Serialize;
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, PgPool, Row};
 use uuid::Uuid;
-// mod user;
 
 #[derive(Serialize)]
 enum AccountStatus {
@@ -254,7 +252,7 @@ struct AccountProjector {
     pool: PgPool,
 }
 
-impl chekov::EventHandler for AccountProjector {}
+impl EventHandler for AccountProjector {}
 
 #[async_trait::async_trait]
 impl chekov::event::Handler<AccountOpened> for AccountProjector {

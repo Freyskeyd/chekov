@@ -6,4 +6,5 @@ pub use crate::command::Dispatchable;
 pub use crate::command_executor::CommandExecutor;
 pub use crate::error::{ApplyError, CommandExecutorError};
 pub use crate::event_applier::EventApplier;
+pub use crate::event_handler::EventHandler;
 pub use crate::Chekov;

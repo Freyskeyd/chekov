@@ -12,9 +12,11 @@ mod command_executor;
 mod command_handler;
 mod error;
 mod event_applier;
+mod event_handler;
 mod message;
 mod registry;
 mod router;
+mod subscriber;
 
 pub mod prelude;
 
@@ -23,41 +25,12 @@ pub use command::Command;
 use command_executor::CommandExecutor;
 use error::CommandExecutorError;
 use event_applier::EventApplier;
+use event_handler::EventHandler;
+use event_handler::EventHandlerBuilder;
+use event_handler::EventHandlerInstance;
 use message::Dispatch;
 use router::Router;
-
-pub struct EventHandlerBuilder<E: EventHandler> {
-    handler: E,
-    name: String,
-}
-
-impl<E> EventHandlerBuilder<E>
-where
-    E: EventHandler,
-{
-    pub fn new(handler: E) -> Self {
-        Self {
-            handler,
-            name: std::any::type_name::<E>().into(),
-        }
-    }
-
-    pub fn name(mut self, name: &str) -> Self {
-        self.name = name.into();
-
-        self
-    }
-
-    pub async fn register<T: event_store::prelude::Storage>(self, app: &Chekov<T>) {
-        app.register_event_handler(self).await
-    }
-}
-
-pub trait EventHandler: Sized + std::marker::Unpin + 'static {
-    fn builder(self) -> EventHandlerBuilder<Self> {
-        EventHandlerBuilder::new(self)
-    }
-}
+use subscriber::Subscriber;
 
 pub mod event {
     #[async_trait::async_trait]
@@ -66,44 +39,9 @@ pub mod event {
     }
 }
 
-struct EventHandlerInstance<E: EventHandler> {
-    handler: E,
-    subscribtion: Addr<Subscriber>,
-}
-
-impl<E: EventHandler> actix::Actor for EventHandlerInstance<E> {
-    type Context = Context<Self>;
-}
-
 pub struct Chekov<B: event_store::prelude::Storage> {
     pub _event_store: event_store::EventStore<B>,
     _router: Addr<router::Router<B>>,
-}
-
-pub struct Subscriber {
-    stream: String,
-    subscriber: Recipient<message::EventEnvelope>,
-}
-
-impl Subscriber {
-    fn new(subscriber: Recipient<message::EventEnvelope>, stream: &str) -> Addr<Self> {
-        trace!("Create a new Subscriber for {}", stream);
-        Subscriber::create(move |ctx| Subscriber {
-            stream: stream.to_string(),
-            subscriber,
-        })
-    }
-}
-
-impl actix::Actor for Subscriber {
-    type Context = Context<Self>;
-}
-
-impl<E: EventHandler> actix::Handler<message::EventEnvelope> for EventHandlerInstance<E> {
-    type Result = actix::ResponseActFuture<Self, Result<usize, ()>>;
-    fn handle(&mut self, _event: message::EventEnvelope, _: &mut Self::Context) -> Self::Result {
-        Box::pin(async { Ok(1) }.into_actor(self))
-    }
 }
 
 impl<B> Chekov<B>
@@ -157,8 +95,8 @@ where
             let ctx_address = ctx.address();
 
             EventHandlerInstance {
-                subscribtion: Subscriber::new(ctx_address.recipient(), "$all"),
-                handler: handler.handler,
+                _subscribtion: Subscriber::new(ctx_address.recipient(), "$all"),
+                _handler: handler.handler,
             }
         });
     }
