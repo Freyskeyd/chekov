@@ -22,8 +22,11 @@ authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 [dependencies]
 event_store = { version = "0.1.0", path = "event_store" }
 chekov_macros = { version = "0.1.0", path = "chekov_macros" }
-
-async-trait = "0.1.36"
+fnv = "1.0.3"
+chrono = "0.4"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
+async-trait = "0.1"
 serde = "*"
 serde_json = "*"
 actix = "*"
@@ -31,3 +34,4 @@ futures = "*"
 log = {version = "0.4"}
 actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
 
+lazy_static = "1.4.0"

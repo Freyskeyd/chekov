@@ -1,8 +1,10 @@
+use actix::Message;
 use chrono::DateTime;
 use uuid::Uuid;
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Message)]
+#[rtype("()")]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
     pub(crate) event_number: i64,
@@ -44,4 +46,10 @@ impl RecordedEvent {
             }
         }
     }
+}
+
+#[derive(Debug, Clone, Message)]
+#[rtype("()")]
+pub struct RecordedEvents {
+    events: Vec<RecordedEvent>,
 }

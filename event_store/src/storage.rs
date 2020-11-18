@@ -1,11 +1,11 @@
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::stream::Stream;
+use futures::Future;
 use uuid::Uuid;
 
 /// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`
-#[async_trait::async_trait]
-pub trait Storage: Send + std::marker::Unpin + 'static {
+pub trait Storage: Default + Send + std::marker::Unpin + 'static {
     fn storage_name() -> &'static str;
     /// Create a new stream with an identifier
     ///
@@ -14,7 +14,10 @@ pub trait Storage: Send + std::marker::Unpin + 'static {
     ///
     /// - pure storage failure (unable to create the stream on the backend)
     /// - The stream already exists
-    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError>;
+    fn create_stream(
+        &mut self,
+        stream: Stream,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>>;
 
     /// Delete a stream from the `Backend`
     ///
@@ -25,22 +28,29 @@ pub trait Storage: Send + std::marker::Unpin + 'static {
     ///
     /// - pure storage failure (unable to delete the stream on the backend)
     /// - The stream doesn't exists
-    async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StorageError>;
+    fn delete_stream(
+        &mut self,
+        stream: &Stream,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), StorageError>> + Send>>;
 
-    async fn append_to_stream(
+    fn append_to_stream(
         &mut self,
         stream_uud: &str,
         events: &[UnsavedEvent],
-    ) -> Result<Vec<Uuid>, StorageError>;
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Uuid>, StorageError>> + Send>>;
 
-    async fn read_stream(
-        &mut self,
-        stream_uud: &str,
+    // async fn read_stream(
+    fn read_stream(
+        &self,
+        stream_uud: String,
         version: usize,
         limit: usize,
-    ) -> Result<Vec<RecordedEvent>, StorageError>;
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>;
 
-    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError>;
+    fn read_stream_info(
+        &mut self,
+        stream_uuid: String,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>>;
 }
 
 pub mod appender;

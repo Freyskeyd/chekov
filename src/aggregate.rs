@@ -1,6 +1,7 @@
 use super::{CommandExecutor, CommandExecutorError};
 use crate::command::Command;
 use crate::message::Dispatch;
+use crate::Application;
 use log::trace;
 
 pub trait Aggregate: Default + std::marker::Unpin + 'static {
@@ -16,11 +17,11 @@ impl<A: Aggregate> ::actix::Actor for AggregateInstance<A> {
     type Context = ::actix::Context<Self>;
 }
 
-impl<C: Command, S: event_store::prelude::Storage> ::actix::Handler<Dispatch<C, S>>
+impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
     for AggregateInstance<C::Executor>
 {
     type Result = Result<Vec<C::Event>, CommandExecutorError>;
-    fn handle(&mut self, cmd: Dispatch<C, S>, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
         trace!(
             "Executing command {:?} from {} {:?}",
             std::any::type_name::<C>(),

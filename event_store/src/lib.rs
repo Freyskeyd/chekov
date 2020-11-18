@@ -15,12 +15,13 @@ mod expected_version;
 mod read_version;
 mod storage;
 mod stream;
+mod subscriptions;
 
-use actix::{Actor, Addr};
+use actix::prelude::*;
 use connection::{Append, Connection, CreateStream, Read, StreamInfo};
 use error::EventStoreError;
 pub use event::Event;
-use event::{ParseEventError, RecordedEvent, UnsavedEvent};
+use event::{ParseEventError, RecordedEvent};
 use expected_version::ExpectedVersion;
 use log::{debug, trace, warn};
 
@@ -38,125 +39,166 @@ pub struct EventStore<S: Storage> {
     connection: Addr<Connection<S>>,
 }
 
-impl<S> EventStore<S>
+impl<S: Storage> std::default::Default for EventStore<S> {
+    fn default() -> Self {
+        unimplemented!()
+    }
+}
+
+impl<S> ::actix::registry::SystemService for EventStore<S> where
+    S: 'static + Storage + std::marker::Unpin + std::default::Default
+{
+}
+
+// impl<S> ::actix::registry::ArbiterService for EventStore<S> where
+//     S: 'static + Storage + std::marker::Unpin + std::default::Default
+// {
+// }
+impl<S> ::actix::Supervised for EventStore<S> where S: 'static + Storage + std::marker::Unpin {}
+impl<S> ::actix::Actor for EventStore<S>
 where
     S: 'static + Storage + std::marker::Unpin,
 {
-    #[must_use]
-    pub fn duplicate(&self) -> Self {
-        Self {
-            connection: self.connection.clone(),
-        }
-    }
-    /// Instanciate a new `EventStoreBuilder`
-    #[must_use]
-    pub fn builder() -> EventStoreBuilder<S> {
-        EventStoreBuilder { storage: None }
-    }
+    type Context = ::actix::Context<Self>;
+}
 
-    #[doc(hidden)]
-    pub(crate) async fn create_stream<T: Into<String> + Send>(
-        &self,
-        stream_uuid: T,
-    ) -> Result<Cow<'static, crate::stream::Stream>, EventStoreError> {
-        let stream_uuid: String = stream_uuid.into();
-        debug!("Creating stream {}", stream_uuid);
+impl<S: Storage> Handler<storage::reader::ReadStreamRequest> for EventStore<S> {
+    type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
 
-        self.connection.send(CreateStream(stream_uuid)).await?
-    }
-
-    #[doc(hidden)]
-    pub(crate) async fn stream_info<T: Into<String> + Send>(
-        &self,
-        stream_uuid: T,
-    ) -> Result<Cow<'static, crate::stream::Stream>, EventStoreError> {
-        let stream_uuid: String = stream_uuid.into();
-        debug!("Asking for stream {} infos", stream_uuid);
-
-        self.connection.send(StreamInfo(stream_uuid)).await?
-    }
-
-    #[doc(hidden)]
-    pub(crate) async fn read_stream<T: Into<String> + Send>(
-        &self,
-        stream: T,
-        version: usize,
-        limit: usize,
-    ) -> Result<Vec<RecordedEvent>, EventStoreError> {
-        let stream: String = stream.into();
+    fn handle(
+        &mut self,
+        e: storage::reader::ReadStreamRequest,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
+        let stream: String = e.stream.to_string();
 
         #[cfg(feature = "verbose")]
         info!("Attempting to read {} stream event(s)", stream);
 
-        match self
-            .connection
-            .send(Read {
-                #[cfg(feature = "verbose")]
-                stream: stream.clone(),
-                #[cfg(not(feature = "verbose"))]
-                stream,
-                version,
-                limit,
-            })
-            .await?
-        {
-            Ok(events) => {
-                #[cfg(feature = "verbose")]
-                info!("Read {} event(s) to {}", events.len(), stream);
-                Ok(events)
-            }
-            Err(e) => {
-                #[cfg(feature = "verbose")]
-                info!("Failed to read event(s) from {}", stream);
-                Err(e)
+        let connection = self.connection.clone();
+
+        let fut = async move {
+            match connection
+                .send(Read {
+                    #[cfg(feature = "verbose")]
+                    stream: stream.clone(),
+                    #[cfg(not(feature = "verbose"))]
+                    stream,
+                    version: e.version,
+                    limit: e.limit,
+                })
+                .await?
+            {
+                Ok(events) => {
+                    #[cfg(feature = "verbose")]
+                    info!("Read {} event(s) to {}", events.len(), stream);
+                    Ok(events)
+                }
+                Err(e) => {
+                    #[cfg(feature = "verbose")]
+                    info!("Failed to read event(s) from {}", stream);
+                    Err(e)
+                }
             }
         }
-    }
+        .into_actor(self);
 
-    #[doc(hidden)]
-    pub(crate) async fn append_to_stream<T: Into<String> + Send>(
-        &self,
-        stream: T,
-        expected_version: ExpectedVersion,
-        events: Vec<UnsavedEvent>,
-    ) -> Result<Vec<Uuid>, EventStoreError> {
-        let stream: String = stream.into();
+        Box::pin(fut)
+    }
+}
+
+impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
+    type Result = actix::ResponseActFuture<
+        Self,
+        Result<Cow<'static, crate::stream::Stream>, EventStoreError>,
+    >;
+
+    fn handle(&mut self, e: StreamInfo, _ctx: &mut Self::Context) -> Self::Result {
+        debug!("Asking for stream {} infos", e.0);
+
+        let connection = self.connection.clone();
+        let fut = async move { connection.send(e).await? }.into_actor(self);
+
+        Box::pin(fut)
+    }
+}
+
+impl<S: Storage> Handler<CreateStream> for EventStore<S> {
+    type Result = actix::ResponseActFuture<
+        Self,
+        Result<Cow<'static, crate::stream::Stream>, EventStoreError>,
+    >;
+
+    fn handle(&mut self, e: CreateStream, _ctx: &mut Self::Context) -> Self::Result {
+        debug!("Creating stream {}", e.0);
+
+        let connection = self.connection.clone();
+        let fut = async move { connection.send(e).await? }.into_actor(self);
+
+        Box::pin(fut)
+    }
+}
+
+impl<S: Storage> Handler<storage::appender::AppendToStreamRequest> for EventStore<S> {
+    type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
+
+    fn handle(
+        &mut self,
+        e: storage::appender::AppendToStreamRequest,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
+        let stream: String = e.stream.to_string();
 
         #[cfg(feature = "verbose")]
         let events_number = {
             info!(
                 "Attempting to append {} event(s) to {} with ExpectedVersion::{:?}",
-                events.len(),
-                stream,
-                expected_version
+                e.events.len(),
+                e.stream,
+                e.expected_version
             );
 
-            events.len()
+            e.events.len()
         };
 
-        match self
-            .connection
-            .send(Append {
-                #[cfg(feature = "verbose")]
-                stream: stream.clone(),
-                #[cfg(not(feature = "verbose"))]
-                stream,
-                expected_version,
-                events,
-            })
-            .await?
-        {
-            Ok(events) => {
-                #[cfg(feature = "verbose")]
-                info!("Appended {} event(s) to {}", events.len(), stream);
-                Ok(events)
-            }
-            Err(e) => {
-                #[cfg(feature = "verbose")]
-                info!("Failed to append {} event(s) to {}", events_number, stream);
-                Err(e)
+        let connection = self.connection.clone();
+        let fut = async move {
+            match connection
+                .send(Append {
+                    #[cfg(feature = "verbose")]
+                    stream: stream.clone(),
+                    #[cfg(not(feature = "verbose"))]
+                    stream,
+                    expected_version: e.expected_version,
+                    events: e.events,
+                })
+                .await?
+            {
+                Ok(events) => {
+                    #[cfg(feature = "verbose")]
+                    info!("Appended {} event(s) to {}", events.len(), stream);
+                    Ok(events)
+                }
+                Err(e) => {
+                    #[cfg(feature = "verbose")]
+                    info!("Failed to append {} event(s) to {}", events_number, stream);
+                    Err(e)
+                }
             }
         }
+        .into_actor(self);
+
+        Box::pin(fut)
+    }
+}
+
+impl<S> EventStore<S>
+where
+    S: 'static + Storage + std::marker::Unpin,
+{
+    #[must_use]
+    pub fn builder() -> EventStoreBuilder<S> {
+        EventStoreBuilder { storage: None }
     }
 }
 
@@ -207,7 +249,7 @@ where
 
 pub mod prelude {
     pub use crate::error::EventStoreError;
-    pub use crate::event::{Event, RecordedEvent, UnsavedEvent};
+    pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;
     pub use crate::read_version::ReadVersion;
     pub use crate::storage::{

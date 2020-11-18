@@ -23,8 +23,8 @@ jobs:
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
+        # env:
+        #   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
         with:
           command: check
           args: --all
@@ -48,8 +48,8 @@ jobs:
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
+        # env:
+        #   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/event_store
         with:
           command: test
           args: --all

@@ -1,10 +1,12 @@
 pub use crate::aggregate::Aggregate;
 pub use crate::aggregate::AggregateInstance;
 pub use crate::aggregate_registry::AggregateInstanceRegistry;
+pub use crate::application::Application;
 pub use crate::command::Command;
 pub use crate::command::Dispatchable;
 pub use crate::command_executor::CommandExecutor;
 pub use crate::error::{ApplyError, CommandExecutorError};
 pub use crate::event_applier::EventApplier;
 pub use crate::event_handler::EventHandler;
-pub use crate::Chekov;
+pub use crate::router::Router;
+// pub use crate::Chekov;
