@@ -1,11 +1,10 @@
 use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
-use actix::{Actor, Context, Handler, WrapFuture};
+use actix::{Actor, Context, Handler};
+use actix_interop::{with_ctx, FutureInterop};
 use log::{debug, trace};
 use std::borrow::Cow;
 use std::str::FromStr;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 mod messaging;
@@ -13,13 +12,15 @@ mod messaging;
 pub use messaging::{Append, CreateStream, Read, StreamInfo};
 
 pub struct Connection<S: Storage> {
-    storage: Arc<Mutex<S>>,
+    // storage: Arc<Mutex<S>>,
+    storage: S,
 }
 
 impl<S: Storage> Connection<S> {
     pub fn make(storage: S) -> Self {
         Self {
-            storage: Arc::new(Mutex::new(storage)),
+            // storage: Arc::new(Mutex::new(storage)),
+            storage: storage,
         }
     }
 }
@@ -33,7 +34,8 @@ impl<S: Storage> Actor for Connection<S> {
 }
 
 impl<S: Storage> Handler<Read> for Connection<S> {
-    type Result = actix::AtomicResponse<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
+    // type Result = actix::AtomicResponse<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
 
     fn handle(&mut self, msg: Read, _ctx: &mut Context<Self>) -> Self::Result {
         let stream = msg.stream;
@@ -41,89 +43,83 @@ impl<S: Storage> Handler<Read> for Connection<S> {
         let version = msg.version;
 
         trace!("Reading {} event(s)", stream);
-        let storage = self.storage.clone();
+        // let storage = self.storage.clone();
 
-        actix::AtomicResponse::new(Box::pin(
-            async move {
-                match storage
-                    .lock()
-                    .await
-                    .read_stream(&stream, version, limit)
-                    .await
-                {
-                    Ok(events) => Ok(events),
-                    Err(_) => Err(EventStoreError::Any),
-                }
+        //         actix::AtomicResponse::new(Box::pin(
+        // Box::pin(
+        async move {
+            let res =
+                with_ctx(|actor: &mut Self, _| actor.storage.read_stream(stream, version, limit));
+            // match storage
+            //     // .lock()
+            //     // .await
+            //     .read_stream(&stream, version, limit)
+            //     .await
+            match res.await {
+                Ok(events) => Ok(events),
+                Err(_) => Err(EventStoreError::Any),
             }
-            .into_actor(self),
-        ))
+        }
+        .interop_actor_boxed(self)
+        // )
+        // ))
     }
 }
 
 impl<S: Storage> Handler<Append> for Connection<S> {
-    type Result = actix::AtomicResponse<Self, Result<Vec<Uuid>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
 
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
         let events = msg.events;
         let stream = msg.stream;
 
         trace!("Appending {} event(s) to {}", events.len(), stream);
-        let storage = self.storage.clone();
 
-        actix::AtomicResponse::new(Box::pin(
-            async move {
-                match storage
-                    .lock()
-                    .await
-                    .append_to_stream(&stream, &events)
-                    .await
-                {
-                    Ok(events_ids) => Ok(events_ids),
-                    Err(_) => Err(EventStoreError::Any),
-                }
+        async move {
+            match with_ctx(|actor: &mut Self, _| actor.storage.append_to_stream(&stream, &events))
+                .await
+            {
+                Ok(events_ids) => Ok(events_ids),
+                Err(_) => Err(EventStoreError::Any),
             }
-            .into_actor(self),
-        ))
+        }
+        .interop_actor_boxed(self)
     }
 }
 
 impl<S: Storage> Handler<CreateStream> for Connection<S> {
-    type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    // type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
     fn handle(&mut self, msg: CreateStream, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Creating {} stream", msg.0);
-        let storage = self.storage.clone();
 
         let stream = Stream::from_str(&msg.0).unwrap();
-        actix::AtomicResponse::new(Box::pin(
-            async move {
-                match storage.lock().await.create_stream(stream).await {
-                    Ok(s) => Ok(Cow::Owned(s)),
-                    Err(_) => Err(EventStoreError::Any),
-                }
+        async move {
+            match with_ctx(|actor: &mut Self, _| actor.storage.create_stream(stream)).await {
+                Ok(s) => Ok(Cow::Owned(s)),
+                Err(_) => Err(EventStoreError::Any),
             }
-            .into_actor(self),
-        ))
+        }
+        .interop_actor_boxed(self)
     }
 }
 
 impl<S: Storage> Handler<StreamInfo> for Connection<S> {
-    type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    // type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Execute StreamInfo for {}", msg.0);
 
-        let storage = self.storage.clone();
-
-        actix::AtomicResponse::new(Box::pin(
-            async move {
-                match storage.lock().await.read_stream_info(msg.0).await {
-                    Ok(s) => Ok(Cow::Owned(s)),
-                    Err(e) => Err(EventStoreError::Storage(e)),
-                }
+        async move {
+            let res = with_ctx(|actor: &mut Self, _| actor.storage.read_stream_info(msg.0));
+            match res.await {
+                Ok(s) => Ok(Cow::Owned(s)),
+                Err(e) => Err(EventStoreError::Storage(e)),
             }
-            .into_actor(self),
-        ))
+        }
+        .interop_actor_boxed(self)
     }
 }
 
@@ -131,10 +127,10 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
 mod test {
     use super::*;
 
+    use crate::event::UnsavedEvent;
     use crate::storage::inmemory::InMemoryBackend;
     use crate::Event;
     use crate::ExpectedVersion;
-    use crate::UnsavedEvent;
     use serde::Deserialize;
     use serde::Serialize;
 

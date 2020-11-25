@@ -2,8 +2,10 @@ use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
+use futures::Future;
 use log::{debug, info, trace};
 use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, Acquire};
 use uuid::Uuid;
 
 mod sql;
@@ -12,13 +14,24 @@ pub struct PostgresBackend {
     pool: PgPool,
 }
 
+impl std::default::Default for PostgresBackend {
+    fn default() -> Self {
+        unimplemented!()
+    }
+}
+
 impl PostgresBackend {
     /// # Errors
     ///
     /// In case of Postgres connection error
     pub async fn with_url(url: &str) -> Result<Self, sqlx::Error> {
+        trace!("Connecting a new PostgresBackend");
+
         Ok(Self {
-            pool: PgPool::connect(url).await?,
+            pool: PgPoolOptions::new()
+                .min_connections(40)
+                .connect(url)
+                .await?,
         })
     }
 }
@@ -30,80 +43,115 @@ impl std::convert::From<sqlx::Error> for StorageError {
     }
 }
 
-#[async_trait::async_trait]
 impl Storage for PostgresBackend {
     fn storage_name() -> &'static str {
         "PostgresBackend"
     }
 
-    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError> {
+    fn create_stream(
+        &mut self,
+        stream: Stream,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
-        match sql::create_stream(&self.pool, &stream_uuid).await {
-            Err(_) => Err(StorageError::StreamAlreadyExists),
-            Ok(s) => {
-                info!("Created stream {}", stream_uuid);
-                Ok(s)
+
+        let mut pool = self.pool.try_acquire().unwrap();
+        Box::pin(async move {
+            match sql::create_stream(&mut pool, &stream_uuid).await {
+                Err(_) => Err(StorageError::StreamAlreadyExists),
+                Ok(s) => {
+                    info!("Created stream {}", stream_uuid);
+                    Ok(s)
+                }
             }
-        }
+        })
     }
 
-    async fn delete_stream(&mut self, _: &Stream) -> Result<(), StorageError> {
+    fn delete_stream(
+        &mut self,
+        _: &Stream,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), StorageError>> + Send>> {
         unimplemented!()
     }
 
-    async fn read_stream(
-        &mut self,
-        stream_uuid: &str,
+    fn read_stream(
+        &self,
+        stream_uuid: String,
         version: usize,
         limit: usize,
-    ) -> Result<Vec<RecordedEvent>, StorageError> {
-        match sql::read_stream(&self.pool, stream_uuid, version, limit).await {
-            Err(_) => Err(StorageError::StreamAlreadyExists),
-            Ok(s) => {
-                info!("Read stream {} {}", stream_uuid, s.len());
-                Ok(s)
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
+    {
+        let pool = self.pool.acquire();
+        Box::pin(async move {
+            match pool.await {
+                Ok(mut conn) => {
+                    match sql::read_stream(&mut conn, &stream_uuid, version, limit).await {
+                        Err(_) => Err(StorageError::StreamAlreadyExists),
+                        Ok(s) => {
+                            info!("Read stream {} {}", stream_uuid, s.len());
+                            Ok(s)
+                        }
+                    }
+                }
+                _ => Err(StorageError::Unknown),
             }
-        }
+        })
     }
-    async fn append_to_stream(
+    fn append_to_stream(
         &mut self,
         stream_uuid: &str,
         events: &[UnsavedEvent],
-    ) -> Result<Vec<Uuid>, StorageError> {
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Uuid>, StorageError>> + Send>> {
         trace!(
             "Attempting to append {} event(s) to stream {}",
             events.len(),
             stream_uuid,
         );
 
-        match self.pool.begin().await {
-            Ok(mut tx) => {
-                let stream = sql::stream_info(&mut tx, stream_uuid).await?;
-                let uuids = sql::transactional_insert_events(&mut tx, events).await?;
-                sql::insert_stream_events(&mut tx, events, stream.stream_id).await?;
-                sql::insert_link_events(&mut tx, &uuids, "$all").await?;
+        let pool = self.pool.acquire();
+        let stream_uuid = stream_uuid.to_string();
+        let events = events.to_vec();
 
-                tx.commit().await?;
+        Box::pin(async move {
+            match pool.await {
+                Ok(mut conn) => match conn.begin().await {
+                    Ok(mut tx) => {
+                        let stream = sql::stream_info(&mut tx, &stream_uuid).await?;
+                        let uuids = sql::transactional_insert_events(&mut tx, &events).await?;
+                        sql::insert_stream_events(&mut tx, &events, stream.stream_id).await?;
+                        // 0 -> is $all stream
+                        sql::insert_link_events(&mut tx, &uuids, 0).await?;
 
-                debug!(
-                    "Successfully append {} event(s) to stream {}",
-                    uuids.len(),
-                    stream_uuid
-                );
+                        tx.commit().await?;
 
-                Ok(uuids)
+                        debug!(
+                            "Successfully append {} event(s) to stream {}",
+                            uuids.len(),
+                            stream_uuid
+                        );
+
+                        Ok(uuids)
+                    }
+                    Err(_) => Err(StorageError::StreamDoesntExists),
+                },
+                Err(_) => Err(StorageError::StreamDoesntExists),
             }
-            Err(_) => Err(StorageError::StreamDoesntExists),
-        }
+        })
     }
 
-    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError> {
-        match sql::stream_info(&self.pool, &stream_uuid).await {
-            Err(sqlx::Error::RowNotFound) => Err(StorageError::StreamDoesntExists),
-            Err(_) => Err(StorageError::Unknown),
-            Ok(s) => Ok(s),
-        }
+    fn read_stream_info(
+        &mut self,
+        stream_uuid: String,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>> {
+        let mut pool = self.pool.try_acquire().unwrap();
+
+        Box::pin(async move {
+            match sql::stream_info(&mut pool, &stream_uuid).await {
+                Err(sqlx::Error::RowNotFound) => Err(StorageError::StreamDoesntExists),
+                Err(_) => Err(StorageError::Unknown),
+                Ok(s) => Ok(s),
+            }
+        })
     }
 }

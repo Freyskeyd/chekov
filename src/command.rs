@@ -11,12 +11,12 @@ pub trait Command: std::fmt::Debug + Send + 'static {
 }
 
 #[async_trait::async_trait]
-pub trait Dispatchable<C, S>
+pub trait Dispatchable<C, A>
 where
     C: Command,
-    S: event_store::prelude::Storage,
+    A: Application,
 {
     async fn dispatch(&self, cmd: C) -> Result<Vec<C::Event>, CommandExecutorError>
     where
-        <C as Command>::ExecutorRegistry: actix::Handler<Dispatch<C, S>>;
+        <C as Command>::ExecutorRegistry: actix::Handler<Dispatch<C, A>>;
 }

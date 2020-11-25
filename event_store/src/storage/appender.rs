@@ -22,6 +22,7 @@ use uuid::Uuid;
 /// ```rust
 /// # use serde::Serialize;
 /// # use std::str::FromStr;
+/// # use actix::prelude::*;
 /// use event_store::prelude::*;
 /// # #[derive(serde::Deserialize, Serialize)]
 /// # struct MyEvent {}
@@ -40,7 +41,11 @@ use uuid::Uuid;
 /// #
 /// # #[actix_rt::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// # let eventstore = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap();
+/// # let es = EventStore::builder()
+/// #   .storage(InMemoryBackend::default())
+/// #   .build()
+/// #   .await
+/// #   .unwrap();
 /// let my_event = MyEvent{};
 /// let stream_name = "account-1";
 ///
@@ -52,7 +57,7 @@ use uuid::Uuid;
 ///     // Define that we expect the stream to be in version 1
 ///     .expected_version(ExpectedVersion::Version(1))
 ///     // Execute this appender on an eventstore
-///     .execute(&eventstore)
+///     .execute::<InMemoryBackend>()
 ///     .await;
 /// #   Ok(())
 /// # }
@@ -166,17 +171,16 @@ impl Appender {
     /// # Errors
     ///
     /// The execution can fail in various cases such as `ExpectedVersionResult` failure
-    pub async fn execute<S: Storage>(
-        self,
-        event_store: &EventStore<S>,
-    ) -> Result<Vec<Uuid>, EventStoreError> {
+    pub async fn execute<S: Storage>(self) -> Result<Vec<Uuid>, EventStoreError> {
         trace!("Appender[{}]: Attempting to execute", self.id);
         // Fetch stream informations
         if !Stream::validates_stream_id(&self.stream) {
             return Err(EventStoreError::Any);
         }
 
-        let stream = event_store.stream_info(&self.stream).await;
+        let stream = EventStore::<S>::from_registry()
+            .send(crate::connection::StreamInfo(self.stream.to_string()))
+            .await?;
 
         let expected_version_result = match stream {
             Ok(ref stream) => ExpectedVersion::verify(stream, &self.expected_version),
@@ -197,7 +201,9 @@ impl Appender {
                     self.stream
                 );
 
-                event_store.create_stream(&self.stream).await?
+                EventStore::<S>::from_registry()
+                    .send(crate::connection::CreateStream(self.stream.to_string()))
+                    .await??
             }
             ExpectedVersionResult::Ok => {
                 trace!(
@@ -235,9 +241,13 @@ impl Appender {
             events.len(),
         );
 
-        let res = event_store
-            .append_to_stream(&self.stream, self.expected_version, events)
-            .await;
+        let res = EventStore::<S>::from_registry()
+            .send(AppendToStreamRequest {
+                stream: self.stream.to_string(),
+                expected_version: self.expected_version,
+                events: events,
+            })
+            .await?;
 
         trace!("Appender[{}]: Successfully executed", self.id);
 
@@ -245,6 +255,14 @@ impl Appender {
     }
 }
 
+use actix::prelude::*;
+#[derive(Debug, Message)]
+#[rtype(result = "Result<Vec<Uuid>, EventStoreError>")]
+pub struct AppendToStreamRequest {
+    pub stream: String,
+    pub expected_version: ExpectedVersion,
+    pub events: Vec<UnsavedEvent>,
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -294,6 +312,10 @@ mod test {
             .await
             .unwrap();
 
+        let addr = es.start();
+
+        ::actix::SystemRegistry::set(addr.clone());
+
         let uuid = Uuid::new_v4();
 
         let event = MyEvent {};
@@ -302,7 +324,7 @@ mod test {
             .to(uuid)?
             .event(&event)?
             .expected_version(ExpectedVersion::StreamExists)
-            .execute(&es)
+            .execute::<InMemoryBackend>()
             .await;
 
         assert_eq!(res, Err(EventStoreError::Any));
@@ -310,7 +332,7 @@ mod test {
         let res = Appender::default()
             .to(uuid)?
             .event(&event)?
-            .execute(&es)
+            .execute::<InMemoryBackend>()
             .await;
 
         assert!(res.is_ok());

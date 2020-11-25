@@ -59,7 +59,11 @@ pub async fn stream_info(
         .await
 }
 
-pub async fn create_stream(pool: &sqlx::PgPool, stream_uuid: &str) -> Result<Stream, sqlx::Error> {
+pub async fn create_stream(
+    pool: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    // pool: &sqlx::PgPool,
+    stream_uuid: &str,
+) -> Result<Stream, sqlx::Error> {
     #[allow(clippy::used_underscore_binding)]
     sqlx::query_as!(Stream, "INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at", &stream_uuid).fetch_one(pool).await
 }
@@ -120,15 +124,67 @@ pub async fn insert_stream_events<'c>(
     Ok(done.rows_affected())
 }
 
-pub async fn insert_link_events<'t, C>(
-    _tx: C,
-    _events: &[Uuid],
-    _stream_uuid: &str,
-) -> Result<(), sqlx::Error>
-where
-    C: sqlx::Executor<'t, Database = sqlx::Postgres>,
-{
-    Ok(())
+pub async fn insert_link_events<'t>(
+    tx: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    events: &[Uuid],
+    stream_id: i64,
+) -> Result<u64, sqlx::Error> {
+    let params = (0..events.len())
+        .map(|i| match i {
+            0 => "($3::bigint, $4::uuid)".to_string(),
+            event_number => {
+                let index = event_number * 2 + 2;
+                format!("(${}, ${})", index + 1, index + 2)
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(",");
+
+    let q = format!(
+        "
+WITH
+  stream AS (
+    UPDATE streams
+    SET stream_version = stream_version + $2::bigint
+    WHERE stream_id = $1::bigint
+    RETURNING stream_version - $2 as initial_stream_version
+  ),
+  linked_events (index, event_id) AS (
+    VALUES
+    {}
+  )
+INSERT INTO stream_events
+  (
+    stream_id,
+    stream_version,
+    event_id,
+    original_stream_id,
+    original_stream_version
+  )
+SELECT
+  $1,
+  stream.initial_stream_version + linked_events.index,
+  linked_events.event_id,
+  original_stream_events.original_stream_id,
+  original_stream_events.stream_version
+FROM linked_events
+CROSS JOIN stream
+INNER JOIN stream_events as original_stream_events
+  ON original_stream_events.event_id = linked_events.event_id
+    AND original_stream_events.stream_id = original_stream_events.original_stream_id;
+    ",
+        params
+    );
+
+    let mut query = sqlx::query(&q).bind(stream_id).bind(events.len() as i64);
+
+    for (index, event) in events.iter().enumerate() {
+        query = query.bind(index as i64).bind(event);
+    }
+
+    let done = query.execute(tx).await?;
+
+    Ok(done.rows_affected())
 }
 
 pub async fn transactional_insert_events(
@@ -143,6 +199,7 @@ pub async fn transactional_insert_events(
 
                     RETURNING event_id
                     ", create_append_indexes(events.len()));
+
     let mut query = sqlx::query(&q);
 
     for event in events {

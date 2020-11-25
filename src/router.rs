@@ -1,54 +1,42 @@
-use crate::{command::Command, command::Dispatchable, message::Dispatch, CommandExecutorError};
+use crate::{command::Command, message::Dispatch, Application, CommandExecutorError};
 use actix::prelude::{ArbiterService, WrapFuture};
 
-pub struct Router<S: event_store::prelude::Storage> {
-    pub(crate) _event_store: event_store::EventStore<S>,
+#[derive(Default)]
+pub struct Router<A: Application> {
+    pub(crate) _app: std::marker::PhantomData<A>,
     pub(crate) _before_dispatch: Vec<String>,
 }
 
-impl<S: event_store::prelude::Storage> std::default::Default for Router<S> {
-    fn default() -> Self {
-        unimplemented!()
-    }
-}
-impl<S: event_store::prelude::Storage> ::actix::Actor for Router<S> {
+impl<A: Application> ::actix::Actor for Router<A> {
     type Context = ::actix::Context<Self>;
 }
 
-impl<S: event_store::prelude::Storage> ::actix::registry::ArbiterService for Router<S> {}
-impl<S: event_store::prelude::Storage> ::actix::Supervised for Router<S> {}
+impl<A: Application> ::actix::registry::ArbiterService for Router<A> {}
+impl<A: Application> ::actix::Supervised for Router<A> {}
 
-#[async_trait::async_trait]
-impl<S: event_store::prelude::Storage, C: Command> Dispatchable<C, S> for Router<S> {
-    async fn dispatch(&self, cmd: C) -> Result<Vec<C::Event>, CommandExecutorError>
-    where
-        <C as Command>::ExecutorRegistry: actix::Handler<Dispatch<C, S>>,
-    {
-        Self::from_registry()
-            .send(Dispatch::<C, S> {
-                storage: std::marker::PhantomData,
-                // to: <C::ExecutorRegistry as ArbiterService>::from_registry()
-                //     .recipient::<Dispatch<C, S>>(),
-                command: cmd,
-            })
-            .await?
-        // // Execute before_dispatch middleware
-        // // Open aggregate
-        // // Create ExecutionContext
-        // // Execute after_dispatch middleware
-    }
-}
-impl<S: event_store::prelude::Storage, T: Command> ::actix::Handler<Dispatch<T, S>> for Router<S>
+impl<A: Application, T: Command> ::actix::Handler<Dispatch<T, A>> for Router<A>
 where
-    <T as Command>::ExecutorRegistry: actix::Handler<Dispatch<T, S>>,
+    <T as Command>::ExecutorRegistry: actix::Handler<Dispatch<T, A>>,
 {
     type Result = actix::ResponseActFuture<Self, Result<Vec<T::Event>, CommandExecutorError>>;
 
-    fn handle(&mut self, msg: Dispatch<T, S>, _ctx: &mut Self::Context) -> Self::Result {
-        // let to = msg.to.clone();
-
+    fn handle(&mut self, msg: Dispatch<T, A>, _ctx: &mut Self::Context) -> Self::Result {
         let to =
-            <T::ExecutorRegistry as ArbiterService>::from_registry().recipient::<Dispatch<T, S>>();
+            <T::ExecutorRegistry as ArbiterService>::from_registry().recipient::<Dispatch<T, A>>();
         Box::pin(async move { to.send(msg).await? }.into_actor(self))
+    }
+}
+
+impl<A: Application> Router<A> {
+    pub async fn dispatch<C: Command>(cmd: C) -> Result<Vec<C::Event>, CommandExecutorError>
+    where
+        <C as Command>::ExecutorRegistry: actix::Handler<Dispatch<C, A>>,
+    {
+        Self::from_registry()
+            .send(Dispatch::<C, A> {
+                storage: std::marker::PhantomData,
+                command: cmd,
+            })
+            .await?
     }
 }
