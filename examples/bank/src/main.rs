@@ -1,15 +1,27 @@
 use actix_web::{Error, HttpRequest, HttpResponse, Responder};
 use chekov::prelude::*;
-use chekov::EventHandler;
+
+use log;
+use tracing_log::LogTracer;
+
+use actix_web::{delete, get, post, put};
+use actix_web::{middleware, web, App, HttpServer};
+
+use std::any::TypeId;
+use std::collections::HashMap;
+
+use actix::prelude::*;
 use event_store::prelude::*;
 use futures::future::{ready, Ready};
-use futures::TryFutureExt;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
-// mod user;
+
+use tracing::{error, info, Level};
+use tracing_error::ErrorLayer;
+use tracing_subscriber::prelude::*;
 
 #[derive(Serialize)]
 enum AccountStatus {
@@ -105,6 +117,7 @@ impl CommandExecutor<DeleteAccount> for Account {
 
 impl CommandExecutor<OpenAccount> for Account {
     fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
+        log::trace!("NEW ACCOUNT CREATED");
         match state.status {
             AccountStatus::Initialized => Ok(vec![AccountOpened {
                 account_id: cmd.account_id,
@@ -112,6 +125,18 @@ impl CommandExecutor<OpenAccount> for Account {
             }]),
             _ => Err(CommandExecutorError::Any),
         }
+    }
+}
+
+impl CommandExecutor<UpdateAccount> for Account {
+    fn execute(
+        _cmd: UpdateAccount,
+        _state: &Self,
+    ) -> Result<Vec<AccountUpdated>, CommandExecutorError> {
+        Ok(vec![
+            AccountUpdated::Deleted,
+            AccountUpdated::Forced { why: "duno".into() },
+        ])
     }
 }
 
@@ -124,6 +149,11 @@ impl EventApplier<AccountOpened> for Account {
     }
 }
 
+impl EventApplier<AccountUpdated> for Account {
+    fn apply(&mut self, _event: &AccountUpdated) -> Result<(), ApplyError> {
+        Ok(())
+    }
+}
 impl EventApplier<AccountDeleted> for Account {
     fn apply(&mut self, _event: &AccountDeleted) -> Result<(), ApplyError> {
         self.status = AccountStatus::Deleted;
@@ -159,6 +189,14 @@ struct OpenAccount {
     name: String,
 }
 
+#[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+#[command(event = "AccountUpdated", aggregate = "Account")]
+struct UpdateAccount {
+    #[command(identifier)]
+    account_id: Uuid,
+    name: String,
+}
+
 #[derive(chekov::macros::Event, Deserialize, Serialize)]
 #[event(event_type = "MoneyMovement")]
 enum MoneyMovementEvent {
@@ -178,10 +216,19 @@ struct AccountDeleted {
     account_id: Uuid,
 }
 
-#[derive(Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[rtype(result = "()")]
 struct AccountOpened {
     account_id: Uuid,
     name: String,
+}
+
+#[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[rtype(result = "()")]
+enum AccountUpdated {
+    Deleted,
+    Forced { why: String },
+    Disabled(String),
 }
 
 #[derive(chekov::macros::Event, Debug, Deserialize, Serialize)]
@@ -193,11 +240,6 @@ struct UserRegistered {
     username: String,
 }
 
-type PGChekov = Chekov<PostgresBackend>;
-
-use actix_web::{delete, get, post, put};
-use actix_web::{middleware, web, App, HttpServer};
-
 #[get("/accounts")]
 async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
     let result = Account::find_all(db_pool.get_ref()).await;
@@ -207,36 +249,36 @@ async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
     }
 }
 #[get("/accounts/{id}")]
-async fn find(_id: web::Path<i32>, _chekov: web::Data<std::sync::Arc<PGChekov>>) -> impl Responder {
+async fn find(_id: web::Path<i32>) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
 }
 
 #[post("/accounts")]
-async fn create(
-    account: web::Json<OpenAccount>,
-    chekov: web::Data<std::sync::Arc<PGChekov>>,
-) -> impl Responder {
-    match chekov.dispatch(account.clone()).await {
+async fn create(account: web::Json<OpenAccount>) -> impl Responder {
+    // Router::<DefaultApp>::dispatch(account.clone()).await;
+    // let cmd = UpdateAccount {
+    //     account_id: account.account_id,
+    //     name: "DELETED".into(),
+    // };
+    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
         Ok(res) => HttpResponse::Ok().json(res), // <- send response
         Err(e) => HttpResponse::Ok().json(e),    // <- send response
     }
 }
 
 #[put("/accounts/{id}")]
-async fn update(
-    _id: web::Path<i32>,
-    account: web::Json<OpenAccount>,
-    _chekov: web::Data<std::sync::Arc<PGChekov>>,
-) -> impl Responder {
+async fn update(_id: web::Path<i32>, _account: web::Json<OpenAccount>) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
 }
 
 #[delete("/accounts/{id}")]
-async fn delete(
-    id: web::Path<uuid::Uuid>,
-    chekov: web::Data<std::sync::Arc<PGChekov>>,
-) -> impl Responder {
-    match chekov.dispatch(DeleteAccount { account_id: id.0 }).await {
+async fn delete(id: web::Path<uuid::Uuid>) -> impl Responder {
+    match Router::<DefaultApp>::dispatch(
+        DeleteAccount { account_id: id.0 },
+        CommandMetadatas::default(),
+    )
+    .await
+    {
         Ok(res) => HttpResponse::Ok().json(res),
         Err(e) => HttpResponse::Ok().json(e),
     }
@@ -254,7 +296,17 @@ struct AccountProjector {
     pool: PgPool,
 }
 
-impl chekov::EventHandler for AccountProjector {}
+impl EventHandler for AccountProjector {
+    fn started<A: Application>(
+        &mut self,
+        ctx: &mut actix::Context<chekov::event_handler::EventHandlerInstance<A, Self>>,
+    ) {
+        self.listen::<_, AccountOpened>(ctx);
+        self.listen::<_, AccountUpdated>(ctx);
+    }
+}
+
+impl chekov::event_handler::Listening for AccountProjector {}
 
 #[async_trait::async_trait]
 impl chekov::event::Handler<AccountOpened> for AccountProjector {
@@ -264,33 +316,83 @@ impl chekov::event::Handler<AccountOpened> for AccountProjector {
     }
 }
 
+#[derive(Default)]
+struct DefaultApp {}
+impl chekov::Application for DefaultApp {
+    type Storage = PostgresBackend;
+}
+
+#[derive(Default)]
+struct UnstartedApp {}
+impl chekov::Application for UnstartedApp {
+    type Storage = PostgresBackend;
+}
+#[allow(dead_code)]
+fn configure_events() -> HashMap<String, TypeId> {
+    let mut hash = HashMap::new();
+
+    hash.insert("AccountOpened".into(), TypeId::of::<AccountOpened>());
+    hash.insert(
+        "AccountUpdated::Forced".into(),
+        TypeId::of::<AccountUpdated>(),
+    );
+    hash.insert(
+        "AccountUpdated::Deleted".into(),
+        TypeId::of::<AccountUpdated>(),
+    );
+    hash.insert(
+        "AccountUpdated::Disabled".into(),
+        TypeId::of::<AccountUpdated>(),
+    );
+
+    hash
+}
+
+use std::{fs::File, io::BufWriter};
+use tracing_flame::FlameLayer;
+use tracing_subscriber::{fmt, prelude::*, registry::Registry};
+fn setup_global_subscriber() -> impl Drop {
+    let fmt_layer = fmt::Layer::default();
+
+    let (flame_layer, _guard) = FlameLayer::with_file("./tracing.folded").unwrap();
+
+    let x = tracing_subscriber::registry()
+        .with(fmt_layer)
+        .with(flame_layer)
+        .with(tracing_subscriber::filter::EnvFilter::DEFAULT_ENV)
+        .with(tracing_subscriber::filter::LevelFilter::from(
+            tracing::Level::TRACE,
+        ));
+
+    tracing::subscriber::set_global_default(x);
+    _guard
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
-    // Configure the storage (PG, InMemory,...)
-    let storage = PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store")
-        .await
-        .unwrap();
+    // tracing_subscriber::fmt::init();
 
-    let app = Chekov::with_storage(storage).await;
-
+    setup_global_subscriber();
     let db_pool = PgPool::connect("postgresql://postgres:postgres@localhost/bank")
         .await
         .unwrap();
 
-    AccountProjector {
-        pool: db_pool.clone(),
-    }
-    .builder()
-    .name("AccountProjector")
-    .register(&app)
-    .await;
-    let chekov = std::sync::Arc::new(app);
+    // Configure the storage (PG, InMemory,...)
+    DefaultApp::with_default()
+        .storage(PostgresBackend::with_url(
+            "postgresql://postgres:postgres@localhost/event_store_bank",
+        ))
+        // .events(configure_events())
+        // .event_handler(AccountProjector {
+        //     pool: db_pool.clone(),
+        // })
+        .launch()
+        .await;
 
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            .data(chekov.clone())
+            // .data(chekov.clone())
             .data(db_pool.clone())
             .data(web::JsonConfig::default().limit(4096))
             .configure(init::<PostgresBackend>)

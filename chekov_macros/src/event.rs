@@ -97,15 +97,6 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
         impl std::convert::TryFrom<event_store::prelude::RecordedEvent> for #struct_name {
             type Error = ();
             fn try_from(e: event_store::prelude::RecordedEvent) -> Result<Self, Self::Error> {
-                // match e.stream.as_ref() {
-                    // "account" =>
-                    // match e.event_type.as_ref() {
-                        // "AccountCreated" => Ok(Self::AccountCreated(AccountCreated(e.data))),
-                        // "UsernameUpdated" => Ok(Self::UsernameUpdated(UsernameUpdated {})),
-                        // _ => Err(()),
-                    // }
-                    // _ => Err(()),
-                // }
                 #try_from
             }
         }

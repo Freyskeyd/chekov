@@ -7,6 +7,7 @@ use crate::Storage;
 use log::trace;
 use uuid::Uuid;
 
+use actix::prelude::*;
 use futures::task::Poll;
 pub struct Reader {
     id: Uuid,
@@ -26,8 +27,8 @@ struct StreamItemState<S: Storage> {
     chunk: usize,
     stream: String,
     pending_size: usize,
-    event_store: EventStore<S>,
     buffer: Vec<RecordedEvent>,
+    _phantom: std::marker::PhantomData<S>,
 }
 
 use futures::Future;
@@ -50,12 +51,16 @@ where
         mut state: StreamItemState<S>,
     ) -> (StreamItemState<S>, Option<StreamItem>) {
         println!("compute version: {}, chunk: {}", state.version, state.chunk);
-        match state
-            .event_store
-            .read_stream(&state.stream, state.version, state.chunk as usize)
+
+        match EventStore::<S>::from_registry()
+            .send(ReadStreamRequest {
+                stream: state.stream.to_string(),
+                version: state.version,
+                limit: state.chunk as usize,
+            })
             .await
         {
-            Ok(events) if !events.is_empty() => {
+            Ok(Ok(events)) if !events.is_empty() => {
                 // Update stream version target
                 state.version += events.len();
 
@@ -72,21 +77,15 @@ where
     }
 
     /// Create a new instance of this amazing stream.
-    pub fn new(
-        event_store: EventStore<S>,
-        stream: String,
-        version: usize,
-        limit: usize,
-        chunk: usize,
-    ) -> Self {
+    pub fn new(stream: String, version: usize, limit: usize, chunk: usize) -> Self {
         let init_state = StreamItemState::<S> {
             version,
             limit,
             chunk,
             stream,
             pending_size: limit,
-            event_store,
             buffer: vec![],
+            _phantom: std::marker::PhantomData,
         };
         Self {
             aggregation_state: None,
@@ -164,11 +163,10 @@ impl StreamReader {
 
     pub async fn execute<S: Storage>(
         self,
-        event_store: &EventStore<S>,
     ) -> impl futures::Stream<Item = Result<Option<StreamItem>, EventStoreError>> {
         trace!("Reader[{}]: Attempting to execute", self.id);
         let s = self.stream.clone();
-        ReadStream::new(event_store.duplicate(), s, 1, self.limit, self.chunk_by)
+        ReadStream::<S>::new(s, 1, self.limit, self.chunk_by)
     }
 }
 
@@ -223,15 +221,26 @@ impl Reader {
         self.into()
     }
 
-    pub async fn execute<S: Storage>(
-        self,
-        event_store: &EventStore<S>,
-    ) -> Result<Vec<RecordedEvent>, EventStoreError> {
+    pub async fn execute_async<S: Storage>(self) -> Result<Vec<RecordedEvent>, EventStoreError> {
         trace!("Reader[{}]: Attempting to execute", self.id);
         if !Stream::validates_stream_id(&self.stream) {
             return Err(EventStoreError::Any);
         }
 
-        event_store.read_stream(&self.stream, 0, self.limit).await
+        EventStore::<S>::from_registry()
+            .send(ReadStreamRequest {
+                stream: self.stream,
+                version: 0,
+                limit: self.limit,
+            })
+            .await?
     }
+}
+
+#[derive(Debug, Message)]
+#[rtype(result = "Result<Vec<RecordedEvent>, EventStoreError>")]
+pub struct ReadStreamRequest {
+    pub stream: String,
+    pub version: usize,
+    pub limit: usize,
 }

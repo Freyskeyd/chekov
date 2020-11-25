@@ -13,8 +13,10 @@ function create_user_and_database() {
 EOSQL
 }
 
-create_user_and_database "event_store"
+create_user_and_database "event_store_bank"
 create_user_and_database "bank"
+create_user_and_database "event_store_subscriber"
 
-psql -v ON_ERROR_STOP=1 --dbname=event_store --username "$POSTGRES_USER" -f /docker-entrypoint-initdb.d/setup_event_store.sql
+psql -v ON_ERROR_STOP=1 --dbname=event_store_bank --username "$POSTGRES_USER" -f /docker-entrypoint-initdb.d/setup_event_store.sql
+psql -v ON_ERROR_STOP=1 --dbname=event_store_subscriber --username "$POSTGRES_USER" -f /docker-entrypoint-initdb.d/setup_event_store.sql
 psql -v ON_ERROR_STOP=1 --dbname=bank --username "$POSTGRES_USER" -f /docker-entrypoint-initdb.d/setup_bank.sql

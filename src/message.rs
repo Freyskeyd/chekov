@@ -1,14 +1,15 @@
+use super::Application;
 use super::Command;
 use super::CommandExecutorError;
 use actix::prelude::*;
 use event_store::prelude::*;
 
 #[derive(Debug, Clone, Message)]
-#[rtype(result = "Result<Vec<T::Event>, CommandExecutorError>")]
-pub struct Dispatch<T: Command, S: event_store::prelude::Storage> {
-    pub storage: std::marker::PhantomData<S>,
+#[rtype(result = "Result<Vec<C::Event>, CommandExecutorError>")]
+pub struct Dispatch<C: Command, A: Application> {
+    pub storage: std::marker::PhantomData<A>,
     // pub to: actix::Recipient<Dispatch<T, S>>,
-    pub command: T,
+    pub command: C,
 }
 
 #[derive(Debug, Clone, Message)]

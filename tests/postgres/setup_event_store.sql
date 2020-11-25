@@ -7,7 +7,6 @@ CREATE TABLE streams (
 	deleted_at timestamp WITH time zone
 );
 
-CREATE UNIQUE INDEX ix_streams_stream_uuid ON streams (stream_uuid);
 
 CREATE TABLE events (
 	event_id uuid PRIMARY KEY NOT NULL,
@@ -29,4 +28,35 @@ CREATE TABLE stream_events (
 	PRIMARY KEY (event_id, stream_id)
 );
 
+
+CREATE OR REPLACE FUNCTION notify_events()
+	RETURNS trigger AS $$
+DECLARE
+	payload text;
+BEGIN
+	-- Payload text contains:
+	--  * `stream_uuid`
+	--  * `stream_id`
+	--  * first `stream_version`
+	--  * last `stream_version`
+	-- Each separated by a comma (e.g. 'stream-12345,1,1,5')
+	payload := NEW.stream_uuid || ',' || NEW.stream_id || ',' || (OLD.stream_version + 1) || ',' || NEW.stream_version;
+	-- Notify events to listeners
+	PERFORM pg_notify('events', payload);
+	RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER event_notification AFTER UPDATE ON streams FOR EACH ROW EXECUTE PROCEDURE notify_events();
+
+/* CREATE UNIQUE INDEX ix_subscriptions_stream_uuid_subscription_name ON subscriptions (stream_uuid, subscription_name); */
 CREATE UNIQUE INDEX ix_stream_events ON stream_events (stream_id, stream_version);
+CREATE UNIQUE INDEX ix_streams_stream_uuid ON streams (stream_uuid);
+
+CREATE RULE no_update_stream_events AS ON UPDATE TO stream_events DO INSTEAD NOTHING;
+CREATE RULE no_delete_stream_events AS ON DELETE TO stream_events DO INSTEAD NOTHING;
+CREATE RULE no_update_events AS ON UPDATE TO events DO INSTEAD NOTHING;
+CREATE RULE no_delete_events AS ON DELETE TO events DO INSTEAD NOTHING;
+
+INSERT INTO streams (stream_id, stream_uuid, stream_version) VALUES (0, '$all', 0);

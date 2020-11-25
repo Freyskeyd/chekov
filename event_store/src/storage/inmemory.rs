@@ -3,6 +3,7 @@ use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use chrono::Utc;
+use futures::Future;
 use log::{debug, trace};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -13,19 +14,20 @@ pub struct InMemoryBackend {
     events: HashMap<String, Vec<RecordedEvent>>,
 }
 
-#[async_trait::async_trait]
 impl Storage for InMemoryBackend {
     fn storage_name() -> &'static str {
         "InMemory"
     }
 
-    async fn create_stream(&mut self, stream: Stream) -> Result<Stream, StorageError> {
+    fn create_stream(&mut self, stream: Stream 
+
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
 
         if self.streams.contains_key(&stream_uuid) {
-            return Err(StorageError::StreamAlreadyExists);
+            return Box::pin(async move {Err(StorageError::StreamAlreadyExists)});
         }
 
         self.streams.insert(stream_uuid.to_owned(), stream);
@@ -33,34 +35,38 @@ impl Storage for InMemoryBackend {
 
         trace!("Created stream {}", stream_uuid);
 
-        Ok(self.streams.get(&stream_uuid).unwrap().clone())
+let res = self.streams.get(&stream_uuid).unwrap().clone();
+        Box::pin(async move {Ok(res)})
     }
 
-    async fn delete_stream(&mut self, stream: &Stream) -> Result<(), StorageError> {
+    fn delete_stream(&mut self, stream: &Stream
+
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), StorageError>> + Send>> {
         if !self.streams.contains_key(stream.stream_uuid()) {
-            return Err(StorageError::StreamDoesntExists);
+            return Box::pin(async move {Err(StorageError::StreamDoesntExists)});
         }
 
         self.streams.remove(stream.stream_uuid());
         self.events.remove(stream.stream_uuid());
 
-        Ok(())
+        Box::pin(async move {Ok(())})
     }
 
-    async fn read_stream(
-        &mut self,
-        _: &str,
+    fn read_stream(
+        &self,
+        _: String,
         _: usize,
         _: usize,
-    ) -> Result<Vec<RecordedEvent>, StorageError> {
-        Ok(vec![])
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
+    {
+        Box::pin(async { Ok(vec![]) })
     }
 
-    async fn append_to_stream(
+    fn append_to_stream(
         &mut self,
         stream_uuid: &str,
         events: &[UnsavedEvent],
-    ) -> Result<Vec<Uuid>, StorageError> {
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Uuid>, StorageError>> + Send>> {
         trace!(
             "Attempting to append {} event(s) to stream {}",
             events.len(),
@@ -68,7 +74,7 @@ impl Storage for InMemoryBackend {
         );
         if !self.streams.contains_key(stream_uuid) {
             trace!("Stream {} does not exists", stream_uuid);
-            return Err(StorageError::StreamDoesntExists);
+            return Box::pin(async move {Err(StorageError::StreamDoesntExists) });
         }
 
         if let Some(e) = self.events.get_mut(stream_uuid) {
@@ -96,17 +102,20 @@ impl Storage for InMemoryBackend {
                 stream_uuid
             );
 
-            Ok(events_ids)
+            Box::pin(async move {Ok(events_ids) })
         } else {
-            Err(StorageError::StreamDoesntExists)
+            Box::pin(async move {Err(StorageError::StreamDoesntExists) })
         }
     }
 
-    async fn read_stream_info(&mut self, stream_uuid: String) -> Result<Stream, StorageError> {
-        self.streams
+    fn read_stream_info(&mut self, stream_uuid: String
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>> {
+        let res = self.streams
             .get(&stream_uuid)
             .cloned()
-            .ok_or(StorageError::StreamDoesntExists)
+            .ok_or(StorageError::StreamDoesntExists);
+
+        Box::pin(async move { res })
     }
 }
 

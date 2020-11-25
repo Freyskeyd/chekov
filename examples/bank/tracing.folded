@@ -1,0 +1,111 @@
+ThreadId(1)-main 117624144
+ThreadId(1)-main; event_store::EventStoreBuilder::build:event_store/src/lib.rs:244 82828
+ThreadId(3)-actix-rt:worker:0 3054021481
+ThreadId(3)-actix-rt:worker:0; chekov::router::Dispatcher:src/router.rs:40 88021
+ThreadId(3)-actix-rt:worker:0 23265
+ThreadId(3)-actix-rt:worker:0; chekov::router::Router:src/router.rs:27 27728
+ThreadId(3)-actix-rt:worker:0 15649
+ThreadId(3)-actix-rt:worker:0; chekov::router::Dispatcher:src/router.rs:40 1512
+ThreadId(3)-actix-rt:worker:0 12927
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 2119
+ThreadId(3)-actix-rt:worker:0 3901
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 7529
+ThreadId(3)-actix-rt:worker:0 3468
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 29950
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 15503
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 252456
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 3861
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 134974
+ThreadId(1)-main 2936966482
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 32797
+ThreadId(1)-main 12052
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 5613
+ThreadId(1)-main 11198
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 17870
+ThreadId(1)-main 7970
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 96836
+ThreadId(1)-main 3063457
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 159750
+ThreadId(1)-main 8620
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 3942
+ThreadId(1)-main 6174764
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 185548
+ThreadId(1)-main 8560754
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 147532
+ThreadId(1)-main 13871
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 28412
+ThreadId(3)-actix-rt:worker:0 18589786
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 50207
+ThreadId(3)-actix-rt:worker:0 14598
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate::AggregateInstance:src/aggregate.rs:25 17869
+ThreadId(3)-actix-rt:worker:0 6148
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 18582
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::appender::Appender:event_store/src/storage/appender.rs:81 110833
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 8177
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::appender::Appender:event_store/src/storage/appender.rs:81 2831
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 43694
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::appender::Appender:event_store/src/storage/appender.rs:81 2645
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 106037
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::appender::Appender:event_store/src/storage/appender.rs:81 5417
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 83024
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29; event_store::storage::appender::Appender:event_store/src/storage/appender.rs:81 4183
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 31910
+ThreadId(3)-actix-rt:worker:0 12482448
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 97706
+ThreadId(3)-actix-rt:worker:0 11307692
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 44392
+ThreadId(1)-main 90185883
+ThreadId(1)-main; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 18829
+ThreadId(3)-actix-rt:worker:0 65827082
+ThreadId(1)-main 681185
+ThreadId(1)-main; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 33686
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 667890
+ThreadId(3)-actix-rt:worker:0 23226
+ThreadId(3)-actix-rt:worker:0; chekov::aggregate_registry::AggregateRegistry:src/aggregate_registry.rs:29 2871
+ThreadId(3)-actix-rt:worker:0 39986
+ThreadId(3)-actix-rt:worker:0; chekov::router::Dispatcher:src/router.rs:40 3536
+ThreadId(1)-main 210399
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 37773
+ThreadId(1)-main 5125
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 5128
+ThreadId(1)-main 53695
+ThreadId(1)-main; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 86247
+ThreadId(1)-main 110972
+ThreadId(1)-main; event_store::storage::reader::Reader:event_store/src/storage/reader.rs:183 2729
+ThreadId(1)-main 47651
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 13195
+ThreadId(1)-main 4513
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 74638
+ThreadId(1)-main 9187
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 246476
+ThreadId(1)-main 9158
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 2286
+ThreadId(1)-main 2657
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 917
+ThreadId(1)-main 1819
+ThreadId(1)-main; event_store::EventStore::ReadStreamRequest:event_store/src/lib.rs:69 2919
+ThreadId(1)-main 9406
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 28672
+ThreadId(1)-main 3887
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 8718
+ThreadId(1)-main 2427
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 1664
+ThreadId(1)-main 1897
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 95898
+ThreadId(1)-main 3578119
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 215326
+ThreadId(1)-main 7211
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 110349
+ThreadId(1)-main 7976
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 56455
+ThreadId(1)-main 6407
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 3434
+ThreadId(1)-main 8524604
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 98688
+ThreadId(1)-main 5791
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 108147
+ThreadId(1)-main 8638780
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 21216
+ThreadId(1)-main 4619
+ThreadId(1)-main; event_store::connection::Connection::Read:event_store/src/connection.rs:41 145316
+ThreadId(1)-main 10176
