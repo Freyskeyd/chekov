@@ -7,15 +7,22 @@ use uuid::Uuid;
 
 #[derive(Message)]
 #[rtype(result = "Result<Cow<'static, Stream>, EventStoreError>")]
-pub struct StreamInfo(pub(crate) String);
+pub struct StreamInfo {
+    pub(crate) correlation_id: Uuid,
+    pub(crate) stream_uuid: String,
+}
 
 #[derive(Message)]
 #[rtype(result = "Result<Cow<'static, Stream>, EventStoreError>")]
-pub struct CreateStream(pub(crate) String);
+pub struct CreateStream {
+    pub(crate) correlation_id: Uuid,
+    pub(crate) stream_uuid: String,
+}
 
 #[derive(Message)]
 #[rtype(result = "Result<Vec<Uuid>, EventStoreError>")]
 pub struct Append {
+    pub(crate) correlation_id: Uuid,
     pub(crate) stream: String,
     pub(crate) expected_version: ExpectedVersion,
     pub(crate) events: Vec<UnsavedEvent>,
@@ -24,6 +31,7 @@ pub struct Append {
 #[derive(Message)]
 #[rtype(result = "Result<Vec<RecordedEvent>, EventStoreError>")]
 pub struct Read {
+    pub(crate) correlation_id: Uuid,
     pub(crate) stream: String,
     pub(crate) version: usize,
     pub(crate) limit: usize,

@@ -4,13 +4,15 @@ use crate::EventStoreError;
 use crate::ReadVersion;
 use crate::RecordedEvent;
 use crate::Storage;
-use log::trace;
+use tracing::trace;
 use uuid::Uuid;
 
 use actix::prelude::*;
 use futures::task::Poll;
+
 pub struct Reader {
-    id: Uuid,
+    correlation_id: Uuid,
+    span: tracing::Span,
     read_version: ReadVersion,
     stream: String,
     limit: usize,
@@ -54,6 +56,8 @@ where
 
         match EventStore::<S>::from_registry()
             .send(ReadStreamRequest {
+                correlation_id: Uuid::new_v4(),
+                span: tracing::span!(tracing::Level::TRACE, "stream"),
                 stream: state.stream.to_string(),
                 version: state.version,
                 limit: state.chunk as usize,
@@ -145,7 +149,7 @@ pub struct StreamReader {
 impl std::convert::From<Reader> for StreamReader {
     fn from(reader: Reader) -> Self {
         Self {
-            id: reader.id,
+            id: reader.correlation_id,
             read_version: reader.read_version,
             stream: reader.stream,
             limit: reader.limit,
@@ -172,20 +176,27 @@ impl StreamReader {
 
 impl Default for Reader {
     fn default() -> Self {
+        Self::with_correlation_id(Uuid::new_v4())
+    }
+}
+
+impl Reader {
+    #[tracing::instrument(name = "Reader")]
+    pub fn with_correlation_id(correlation_id: Uuid) -> Self {
         let reader = Self {
-            id: Uuid::new_v4(),
+            correlation_id,
+            span: tracing::Span::current(),
             read_version: ReadVersion::Origin,
             stream: String::new(),
             limit: 1_000,
         };
 
-        trace!("Reader[{}]: Created with default configuration", reader.id);
+        trace!(
+            parent: &reader.span,
+            "Created");
 
         reader
     }
-}
-
-impl Reader {
     /// Define which stream we are reading from
     ///
     /// # Errors
@@ -196,23 +207,29 @@ impl Reader {
         self.stream = stream.into();
 
         trace!(
-            "Reader[{}]: Defined stream {} as target",
-            self.id,
+            parent: &self.span,
+            "Defined stream {} as target",
             self.stream,
         );
+
         Ok(self)
     }
 
     #[must_use]
     pub fn from(mut self, version: ReadVersion) -> Self {
         self.read_version = version;
-        trace!("Reader[{}]: Defined {:?}", self.id, self.read_version,);
+        trace!(
+            parent: &self.span,
+            "Defined {:?}", self.read_version
+        );
         self
     }
 
     pub fn limit(mut self, limit: usize) -> Self {
         self.limit = limit;
-        trace!("Reader[{}]: Defined {:?} limit", self.id, self.limit);
+        trace!(
+            parent: &self.span,
+            "Defined {:?} limit", self.limit);
 
         self
     }
@@ -222,13 +239,18 @@ impl Reader {
     }
 
     pub async fn execute_async<S: Storage>(self) -> Result<Vec<RecordedEvent>, EventStoreError> {
-        trace!("Reader[{}]: Attempting to execute", self.id);
+        trace!(
+            parent: &self.span,
+            "Attempting to execute");
+
         if !Stream::validates_stream_id(&self.stream) {
             return Err(EventStoreError::Any);
         }
 
         EventStore::<S>::from_registry()
             .send(ReadStreamRequest {
+                correlation_id: self.correlation_id.clone(),
+                span: tracing::span!(parent: &self.span, tracing::Level::TRACE, "ReadStreamRequest", correlation_id = ?self.correlation_id),
                 stream: self.stream,
                 version: 0,
                 limit: self.limit,
@@ -240,6 +262,8 @@ impl Reader {
 #[derive(Debug, Message)]
 #[rtype(result = "Result<Vec<RecordedEvent>, EventStoreError>")]
 pub struct ReadStreamRequest {
+    pub correlation_id: Uuid,
+    pub span: tracing::Span,
     pub stream: String,
     pub version: usize,
     pub limit: usize,

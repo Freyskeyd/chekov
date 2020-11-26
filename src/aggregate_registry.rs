@@ -5,8 +5,9 @@ use crate::{
 };
 use actix::prelude::{Actor, Addr, AsyncContext};
 use event_store::prelude::ReadVersion;
-use log::trace;
 use std::convert::TryFrom;
+use tracing::trace;
+use tracing::Instrument;
 
 #[derive(Default)]
 pub struct AggregateInstanceRegistry<A: Aggregate> {
@@ -25,63 +26,67 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
 {
     type Result = actix::ResponseActFuture<Self, Result<Vec<C::Event>, CommandExecutorError>>;
 
+    #[tracing::instrument(
+        name = "AggregateRegistry",
+        skip(self, _ctx, cmd),
+        fields(correlation_id = %cmd.metadatas.correlation_id, aggregate_id = %cmd.command.identifier(), aggregate_type = %::std::any::type_name::<C::Executor>())
+    )]
     fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
         // Open aggregate
         async move {
-            critical_section::<Self, _>(async move {
-                let id = cmd.command.identifier();
-                let addr: Addr<_> = if let Some(addr) =
-                    with_ctx(|actor: &mut Self, _| actor.registry.get(&id).cloned())
-                {
-                    trace!(
-                        "{}({}) already started",
-                        std::any::type_name::<C::Executor>(),
-                        id
-                    );
-                    addr
-                } else {
-                    // start it?
-                    trace!("{}({}) not found", std::any::type_name::<C::Executor>(), id);
-                    trace!(
-                        "Rebuilding state for {}({}) ",
-                        std::any::type_name::<C::Executor>(),
-                        id
-                    );
-                    let result = match event_store::read()
-                        .stream(&id)
-                        .unwrap()
-                        .from(ReadVersion::Origin)
-                        .limit(10)
-                        .execute_async::<A::Storage>()
-                        .await
+            critical_section::<Self, _>(
+                async move {
+                    let correlation_id = cmd.metadatas.correlation_id.clone();
+                    let id = cmd.command.identifier();
+                    let addr: Addr<_> = if let Some(addr) =
+                        with_ctx(|actor: &mut Self, _| actor.registry.get(&id).cloned())
                     {
-                        Ok(events) => events,
-                        Err(_) => panic!(""),
+                        trace!("Instance already started");
+                        addr
+                    } else {
+                        // start it?
+                        trace!("Instance not found");
+                        trace!("Rebuilding instance state");
+                        let result =
+                            match event_store::prelude::Reader::with_correlation_id(correlation_id)
+                                .stream(&id)
+                                .unwrap()
+                                .from(ReadVersion::Origin)
+                                .limit(10)
+                                .execute_async::<A::Storage>()
+                                .await
+                            {
+                                Ok(events) => events,
+                                Err(_) => panic!(""),
+                            };
+
+                        let addr = AggregateInstance::create(move |ctx_agg| {
+                            trace!("Creating aggregate instance");
+                            let _ctx_address = ctx_agg.address();
+                            let mut inner = C::Executor::default();
+                            for event in result {
+                                let _res = match C::Event::try_from(event.clone()) {
+                                    Ok(parsed_event) => inner.apply(&parsed_event).map_err(|_| ()),
+                                    _ => Err(()),
+                                };
+                            }
+                            AggregateInstance { inner }
+                        });
+
+                        with_ctx(|actor: &mut Self, _| {
+                            actor.registry.insert(id.clone(), addr.clone())
+                        });
+                        addr
                     };
 
-                    let addr = AggregateInstance::create(move |ctx_agg| {
-                        trace!("Creating aggregate instance");
-                        let _ctx_address = ctx_agg.address();
-                        let mut inner = C::Executor::default();
-                        for event in result {
-                            let _res = match C::Event::try_from(event.clone()) {
-                                Ok(parsed_event) => inner.apply(&parsed_event).map_err(|_| ()),
-                                _ => Err(()),
-                            };
-                        }
-                        AggregateInstance { inner }
-                    });
-
-                    with_ctx(|actor: &mut Self, _| actor.registry.insert(id.clone(), addr.clone()));
-                    addr
-                };
-
-                match addr.send(cmd).await {
-                    Ok(res) => {
-                        if let Ok(ref events) = res {
-                            trace!("Generated {:?}", events.len());
-                            let ev: Vec<&_> = events.iter().collect();
-                            let _result = event_store::append()
+                    match addr.send(cmd).await {
+                        Ok(res) => {
+                            if let Ok(ref events) = res {
+                                trace!("Generated {:?}", events.len());
+                                let ev: Vec<&_> = events.iter().collect();
+                                let _result = event_store::prelude::Appender::with_correlation_id(
+                                    correlation_id,
+                                )
                                 .events(&ev[..])
                                 .unwrap()
                                 .to(&id)
@@ -89,14 +94,17 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                                 .expected_version(event_store::prelude::ExpectedVersion::AnyVersion)
                                 .execute::<A::Storage>()
                                 .await;
+                            }
+                            res
                         }
-                        res
+                        Err(_) => Err(CommandExecutorError::Any),
                     }
-                    Err(_) => Err(CommandExecutorError::Any),
                 }
-            })
+                .instrument(tracing::Span::current()),
+            )
             .await
         }
+        .instrument(tracing::Span::current())
         .interop_actor_boxed(self)
     }
 }

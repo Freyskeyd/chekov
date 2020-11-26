@@ -34,4 +34,8 @@ futures = "*"
 log = {version = "0.4"}
 actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
 
+
+tracing = "0.1"
+tracing-futures = { version = "*" }
+
 lazy_static = "1.4.0"

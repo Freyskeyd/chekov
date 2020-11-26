@@ -1,27 +1,18 @@
-use actix_web::{Error, HttpRequest, HttpResponse, Responder};
-use chekov::prelude::*;
-
-use log;
-use tracing_log::LogTracer;
-
+use actix::prelude::*;
 use actix_web::{delete, get, post, put};
 use actix_web::{middleware, web, App, HttpServer};
-
-use std::any::TypeId;
-use std::collections::HashMap;
-
-use actix::prelude::*;
+use actix_web::{Error, HttpRequest, HttpResponse, Responder};
+use chekov::prelude::*;
 use event_store::prelude::*;
 use futures::future::{ready, Ready};
+use log;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
+use std::any::TypeId;
+use std::collections::HashMap;
 use uuid::Uuid;
-
-use tracing::{error, info, Level};
-use tracing_error::ErrorLayer;
-use tracing_subscriber::prelude::*;
 
 #[derive(Serialize)]
 enum AccountStatus {
@@ -348,31 +339,10 @@ fn configure_events() -> HashMap<String, TypeId> {
     hash
 }
 
-use std::{fs::File, io::BufWriter};
-use tracing_flame::FlameLayer;
-use tracing_subscriber::{fmt, prelude::*, registry::Registry};
-fn setup_global_subscriber() -> impl Drop {
-    let fmt_layer = fmt::Layer::default();
-
-    let (flame_layer, _guard) = FlameLayer::with_file("./tracing.folded").unwrap();
-
-    let x = tracing_subscriber::registry()
-        .with(fmt_layer)
-        .with(flame_layer)
-        .with(tracing_subscriber::filter::EnvFilter::DEFAULT_ENV)
-        .with(tracing_subscriber::filter::LevelFilter::from(
-            tracing::Level::TRACE,
-        ));
-
-    tracing::subscriber::set_global_default(x);
-    _guard
-}
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    // tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt::init();
 
-    setup_global_subscriber();
     let db_pool = PgPool::connect("postgresql://postgres:postgres@localhost/bank")
         .await
         .unwrap();

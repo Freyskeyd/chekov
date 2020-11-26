@@ -6,7 +6,7 @@ use super::{
 use crate::prelude::RecordedEvents;
 use crate::Storage;
 use actix::prelude::*;
-use log::debug;
+use tracing::debug;
 
 #[derive(Debug, Message)]
 #[rtype("()")]

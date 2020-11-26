@@ -4,8 +4,8 @@ use crate::Router;
 use crate::SubscriberManager;
 use actix::prelude::*;
 use event_store::prelude::*;
-use log::trace;
 use std::pin::Pin;
+use tracing::trace;
 
 use std::any::TypeId;
 use std::collections::HashMap;

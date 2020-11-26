@@ -2,9 +2,10 @@ use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
 use actix::{Actor, Context, Handler};
 use actix_interop::{with_ctx, FutureInterop};
-use log::{debug, trace};
 use std::borrow::Cow;
 use std::str::FromStr;
+use tracing::Instrument;
+use tracing::{debug, trace};
 use uuid::Uuid;
 
 mod messaging;
@@ -37,47 +38,45 @@ impl<S: Storage> Handler<Read> for Connection<S> {
     // type Result = actix::AtomicResponse<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
     type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
 
+    #[tracing::instrument(name = "Connection::Read", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Read, _ctx: &mut Context<Self>) -> Self::Result {
-        let stream = msg.stream;
+        // let stream = msg.stream;
         let limit = msg.limit;
         let version = msg.version;
 
-        trace!("Reading {} event(s)", stream);
-        // let storage = self.storage.clone();
+        trace!("Reading {} event(s)", msg.stream);
 
-        //         actix::AtomicResponse::new(Box::pin(
-        // Box::pin(
         async move {
-            let res =
-                with_ctx(|actor: &mut Self, _| actor.storage.read_stream(stream, version, limit));
-            // match storage
-            //     // .lock()
-            //     // .await
-            //     .read_stream(&stream, version, limit)
-            //     .await
-            match res.await {
+            match with_ctx(|actor: &mut Self, _| {
+                actor
+                    .storage
+                    .read_stream(msg.stream, version, limit, msg.correlation_id)
+            })
+            .await
+            {
                 Ok(events) => Ok(events),
                 Err(_) => Err(EventStoreError::Any),
             }
         }
+        .instrument(tracing::Span::current())
         .interop_actor_boxed(self)
-        // )
-        // ))
     }
 }
 
 impl<S: Storage> Handler<Append> for Connection<S> {
     type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
 
+    #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
-        let events = msg.events;
-        let stream = msg.stream;
-
-        trace!("Appending {} event(s) to {}", events.len(), stream);
+        trace!("Appending {} event(s) to {}", msg.events.len(), msg.stream);
 
         async move {
-            match with_ctx(|actor: &mut Self, _| actor.storage.append_to_stream(&stream, &events))
-                .await
+            match with_ctx(|actor: &mut Self, _| {
+                actor
+                    .storage
+                    .append_to_stream(&msg.stream, &msg.events, msg.correlation_id)
+            })
+            .await
             {
                 Ok(events_ids) => Ok(events_ids),
                 Err(_) => Err(EventStoreError::Any),
@@ -88,15 +87,19 @@ impl<S: Storage> Handler<Append> for Connection<S> {
 }
 
 impl<S: Storage> Handler<CreateStream> for Connection<S> {
-    // type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
     type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
+    #[tracing::instrument(name = "Connection::CreateStream", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: CreateStream, _ctx: &mut Context<Self>) -> Self::Result {
-        trace!("Creating {} stream", msg.0);
+        trace!("Creating {} stream", msg.stream_uuid);
 
-        let stream = Stream::from_str(&msg.0).unwrap();
+        let stream = Stream::from_str(&msg.stream_uuid).unwrap();
         async move {
-            match with_ctx(|actor: &mut Self, _| actor.storage.create_stream(stream)).await {
+            match with_ctx(|actor: &mut Self, _| {
+                actor.storage.create_stream(stream, msg.correlation_id)
+            })
+            .await
+            {
                 Ok(s) => Ok(Cow::Owned(s)),
                 Err(_) => Err(EventStoreError::Any),
             }
@@ -109,11 +112,16 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
     // type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
     type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
+    #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
-        trace!("Execute StreamInfo for {}", msg.0);
+        trace!("Execute StreamInfo for {}", msg.stream_uuid);
 
         async move {
-            let res = with_ctx(|actor: &mut Self, _| actor.storage.read_stream_info(msg.0));
+            let res = with_ctx(|actor: &mut Self, _| {
+                actor
+                    .storage
+                    .read_stream_info(msg.stream_uuid, msg.correlation_id)
+            });
             match res.await {
                 Ok(s) => Ok(Cow::Owned(s)),
                 Err(e) => Err(EventStoreError::Storage(e)),
@@ -137,7 +145,9 @@ mod test {
     async fn init_with_stream(name: &str) -> (actix::Addr<Connection<InMemoryBackend>>, Stream) {
         let mut storage = InMemoryBackend::default();
         let stream = Stream::from_str(name).unwrap();
-        let _ = storage.create_stream(stream.clone()).await;
+        let _ = storage
+            .create_stream(stream.clone(), uuid::Uuid::new_v4())
+            .await;
 
         let conn: Connection<crate::storage::inmemory::InMemoryBackend> = Connection::make(storage);
 
@@ -172,7 +182,10 @@ mod test {
         let (connection, stream) = init_with_stream("stream_name").await;
 
         let result = connection
-            .send(StreamInfo("stream_name".into()))
+            .send(StreamInfo {
+                correlation_id: Uuid::new_v4(),
+                stream_uuid: "stream_name".into(),
+            })
             .await
             .unwrap();
 
@@ -189,7 +202,10 @@ mod test {
         let connection = conn.start();
 
         let result = connection
-            .send(CreateStream("stream_name".into()))
+            .send(CreateStream {
+                correlation_id: Uuid::new_v4(),
+                stream_uuid: "stream_name".into(),
+            })
             .await
             .unwrap();
 
@@ -204,6 +220,7 @@ mod test {
 
         let result = connection
             .send(Append {
+                correlation_id: Uuid::new_v4(),
                 stream: "stream_name".into(),
                 expected_version: ExpectedVersion::AnyVersion,
                 events: vec![event],
@@ -223,6 +240,7 @@ mod test {
 
         let result = connection
             .send(Append {
+                correlation_id: Uuid::new_v4(),
                 stream: "stream_name".into(),
                 expected_version: ExpectedVersion::Version(2),
                 events: vec![event],
