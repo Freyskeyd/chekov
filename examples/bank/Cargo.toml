@@ -23,3 +23,9 @@ actix-web = "3"
 sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json"]}
 chrono = "0.4"
 
+tracing = {version ="*", features = []}
+tracing-subscriber = "*"
+tracing-futures = "*"
+tracing-flame = "*"
+tracing-error = "*"
+tracing-log = "*"

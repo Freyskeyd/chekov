@@ -14,9 +14,10 @@ mod creation {
     async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
+        let c_id = Uuid::new_v4();
 
         assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap())
+            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
             .await
             .is_ok());
     }
@@ -26,14 +27,15 @@ mod creation {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
+        let c_id = Uuid::new_v4();
 
         assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap())
+            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
             .await
             .is_ok());
         assert_eq!(
             storage
-                .create_stream(Stream::from_str(&uuid).unwrap())
+                .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
                 .await,
             Err(StorageError::StreamAlreadyExists)
         );
@@ -49,13 +51,14 @@ mod deletion {
     async fn success() {
         let mut storage = InMemoryBackend::default();
         let uuid = Uuid::new_v4().to_string();
+        let c_id = Uuid::new_v4();
 
         assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap())
+            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
             .await
             .is_ok());
         assert!(storage
-            .delete_stream(&Stream::from_str(&uuid).unwrap())
+            .delete_stream(&Stream::from_str(&uuid).unwrap(), c_id)
             .await
             .is_ok());
     }
@@ -65,10 +68,11 @@ mod deletion {
         let mut storage = InMemoryBackend::default();
 
         let uuid = Uuid::new_v4().to_string();
+        let c_id = Uuid::new_v4();
 
         assert_eq!(
             storage
-                .delete_stream(&Stream::from_str(&uuid).unwrap())
+                .delete_stream(&Stream::from_str(&uuid).unwrap(), c_id)
                 .await,
             Err(StorageError::StreamDoesntExists)
         );

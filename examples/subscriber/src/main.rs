@@ -130,8 +130,8 @@ async fn main() -> std::io::Result<()> {
         .register::<Application1>()
         .await;
 
-    let _ = Router::<Application1>::dispatch::<_>(cmd.clone()).await;
-    let _ = Router::<Application2>::dispatch::<_>(cmd).await;
+    let _ = Router::<Application1>::dispatch::<_>(cmd.clone(), CommandMetadatas::default()).await;
+    let _ = Router::<Application2>::dispatch::<_>(cmd, CommandMetadatas::default()).await;
 
     HttpServer::new(move || App::new())
         .bind("127.0.0.1:8080")?

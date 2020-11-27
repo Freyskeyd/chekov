@@ -5,7 +5,7 @@ use futures::Future;
 use uuid::Uuid;
 
 /// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`
-pub trait Storage: Default + Send + std::marker::Unpin + 'static {
+pub trait Storage: std::fmt::Debug + Default + Send + std::marker::Unpin + 'static {
     fn storage_name() -> &'static str;
     /// Create a new stream with an identifier
     ///
@@ -17,6 +17,7 @@ pub trait Storage: Default + Send + std::marker::Unpin + 'static {
     fn create_stream(
         &mut self,
         stream: Stream,
+        correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>>;
 
     /// Delete a stream from the `Backend`
@@ -31,12 +32,14 @@ pub trait Storage: Default + Send + std::marker::Unpin + 'static {
     fn delete_stream(
         &mut self,
         stream: &Stream,
+        correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), StorageError>> + Send>>;
 
     fn append_to_stream(
         &mut self,
         stream_uud: &str,
         events: &[UnsavedEvent],
+        correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Uuid>, StorageError>> + Send>>;
 
     // async fn read_stream(
@@ -45,11 +48,13 @@ pub trait Storage: Default + Send + std::marker::Unpin + 'static {
         stream_uud: String,
         version: usize,
         limit: usize,
+        correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>;
 
     fn read_stream_info(
         &mut self,
         stream_uuid: String,
+        correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>>;
 }
 

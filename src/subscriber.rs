@@ -2,9 +2,9 @@ use super::message;
 use crate::application::Application;
 use actix::prelude::*;
 use actix_interop::{with_ctx, FutureInterop};
-use log::trace;
 use sqlx::postgres::PgNotification;
 use std::collections::HashMap;
+use tracing::trace;
 use uuid::Uuid;
 
 pub struct Subscriber {

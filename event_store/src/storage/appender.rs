@@ -8,8 +8,8 @@ use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
-use log::trace;
 use std::str::FromStr;
+use tracing::trace;
 use uuid::Uuid;
 
 /// An Appender defines the parameters of an append action
@@ -64,6 +64,8 @@ use uuid::Uuid;
 /// ```
 pub struct Appender {
     id: Uuid,
+    correlation_id: Uuid,
+    span: tracing::Span,
     expected_version: ExpectedVersion,
     events: Vec<UnsavedEvent>,
     stream: String,
@@ -71,23 +73,27 @@ pub struct Appender {
 
 impl Default for Appender {
     fn default() -> Self {
-        let appender = Self {
-            id: Uuid::new_v4(),
-            expected_version: ExpectedVersion::AnyVersion,
-            events: Vec::new(),
-            stream: String::new(),
-        };
-
-        trace!(
-            "Appender[{}]: Created with default configuration",
-            appender.id
-        );
-
-        appender
+        Self::with_correlation_id(Uuid::new_v4())
     }
 }
 
 impl Appender {
+    #[tracing::instrument(name = "Appender")]
+    pub fn with_correlation_id(correlation_id: Uuid) -> Self {
+        let appender = Self {
+            id: Uuid::new_v4(),
+            correlation_id,
+            span: tracing::Span::current(),
+            expected_version: ExpectedVersion::AnyVersion,
+            events: Vec::new(),
+            stream: String::new(),
+        };
+        trace!(
+            parent: &appender.span,
+            "Created");
+
+        appender
+    }
     /// Add a list of `Event`s to the `Appender`
     ///
     /// Any struct that implement `Event` can be passed to this method.
@@ -100,10 +106,8 @@ impl Appender {
     /// This function can fail if one event can't be converted
     pub fn events<E: Event>(mut self, events: &[&E]) -> Result<Self, EventStoreError> {
         trace!(
-            "Appender[{}]: Attemting to add {} event(s)",
-            self.id,
-            events.len()
-        );
+            parent: &self.span,
+            "Attemting to add {} event(s)", events.len());
         let events: Vec<Result<UnsavedEvent, ParseEventError>> = events
             .iter()
             .map(|event| UnsavedEvent::try_from(*event))
@@ -111,15 +115,15 @@ impl Appender {
 
         if events.iter().any(Result::is_err) {
             trace!(
-                "Appender[{}]: Failed to add {} event(s)",
-                self.id,
-                events.len(),
-            );
+            parent: &self.span,
+                "Failed to add {} event(s)", events.len(),);
             return Err(EventStoreError::Any);
         }
 
         let mut events: Vec<UnsavedEvent> = events.into_iter().map(Result::unwrap).collect();
-        trace!("Appender[{}]: Added {} event(s)", self.id, events.len());
+        trace!(
+            parent: &self.span,
+            "Added {} event(s)", events.len());
         self.events.append(&mut events);
 
         Ok(self)
@@ -134,10 +138,14 @@ impl Appender {
     ///
     /// This function can fail if the event can't be converted
     pub fn event<E: Event>(mut self, event: &E) -> Result<Self, EventStoreError> {
-        trace!("Appender[{}]: Attemting to add 1 event", self.id);
+        trace!(
+            parent: &self.span,
+            "Attemting to add 1 event");
         self.events.push(UnsavedEvent::try_from(event)?);
 
-        trace!("Appender[{}]: Added 1 event", self.id);
+        trace!(
+            parent: &self.span,
+            "Added 1 event");
         Ok(self)
     }
 
@@ -151,10 +159,8 @@ impl Appender {
         self.stream = stream.to_string();
 
         trace!(
-            "Appender[{}]: Defined stream {} as target",
-            self.id,
-            self.stream,
-        );
+            parent: &self.span,
+            "Defined stream {} as target", self.stream,);
         Ok(self)
     }
 
@@ -162,7 +168,9 @@ impl Appender {
     #[must_use]
     pub fn expected_version(mut self, version: ExpectedVersion) -> Self {
         self.expected_version = version;
-        trace!("Appender[{}]: Defined {:?}", self.id, self.expected_version,);
+        trace!(
+            parent: &self.span,
+            "Defined {:?}", self.expected_version,);
         self
     }
 
@@ -172,14 +180,19 @@ impl Appender {
     ///
     /// The execution can fail in various cases such as `ExpectedVersionResult` failure
     pub async fn execute<S: Storage>(self) -> Result<Vec<Uuid>, EventStoreError> {
-        trace!("Appender[{}]: Attempting to execute", self.id);
+        trace!(
+            parent: &self.span,
+            "Attempting to execute");
         // Fetch stream informations
         if !Stream::validates_stream_id(&self.stream) {
             return Err(EventStoreError::Any);
         }
 
         let stream = EventStore::<S>::from_registry()
-            .send(crate::connection::StreamInfo(self.stream.to_string()))
+            .send(crate::connection::StreamInfo {
+                correlation_id: self.correlation_id.clone(),
+                stream_uuid: self.stream.to_string(),
+            })
             .await?;
 
         let expected_version_result = match stream {
@@ -196,29 +209,26 @@ impl Appender {
         let stream = match expected_version_result {
             ExpectedVersionResult::NeedCreation => {
                 trace!(
-                    "Appender[{}]: Stream {} does not exists",
-                    self.id,
-                    self.stream
-                );
+            parent: &self.span,
+                    "Stream {} does not exists", self.stream);
 
                 EventStore::<S>::from_registry()
-                    .send(crate::connection::CreateStream(self.stream.to_string()))
+                    .send(crate::connection::CreateStream {
+                        correlation_id: self.correlation_id,
+                        stream_uuid: self.stream.to_string(),
+                    })
                     .await??
             }
             ExpectedVersionResult::Ok => {
                 trace!(
-                    "Appender[{}]: Fetched stream {} informations",
-                    self.id,
-                    self.stream,
-                );
+            parent: &self.span,
+                    "Fetched stream {} informations", self.stream,);
                 stream.unwrap()
             }
             _ => {
                 trace!(
-                    "Appender[{}]: Stream {} does not exists",
-                    self.id,
-                    self.stream
-                );
+            parent: &self.span,
+                    "Stream {} does not exists", self.stream);
 
                 return Err(EventStoreError::Any);
             }
@@ -236,20 +246,23 @@ impl Appender {
             .collect();
 
         trace!(
-            "Appender[{}]: Transformed {} event(s) into appendable events",
-            self.id,
+            parent: &self.span,
+            "Transformed {} event(s) into appendable events",
             events.len(),
         );
 
         let res = EventStore::<S>::from_registry()
             .send(AppendToStreamRequest {
+                correlation_id: self.correlation_id,
                 stream: self.stream.to_string(),
                 expected_version: self.expected_version,
                 events: events,
             })
             .await?;
 
-        trace!("Appender[{}]: Successfully executed", self.id);
+        trace!(
+            parent: &self.span,
+            "Successfully executed");
 
         res
     }
@@ -259,10 +272,12 @@ use actix::prelude::*;
 #[derive(Debug, Message)]
 #[rtype(result = "Result<Vec<Uuid>, EventStoreError>")]
 pub struct AppendToStreamRequest {
+    pub correlation_id: Uuid,
     pub stream: String,
     pub expected_version: ExpectedVersion,
     pub events: Vec<UnsavedEvent>,
 }
+
 #[cfg(test)]
 mod test {
     use super::*;

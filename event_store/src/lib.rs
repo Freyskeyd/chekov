@@ -23,10 +23,9 @@ use error::EventStoreError;
 pub use event::Event;
 use event::{ParseEventError, RecordedEvent};
 use expected_version::ExpectedVersion;
-use log::{debug, trace, warn};
+use tracing::{debug, info, instrument, trace, warn};
 
-#[cfg(feature = "verbose")]
-use log::info;
+use tracing_futures::Instrument;
 
 use read_version::ReadVersion;
 use std::borrow::Cow;
@@ -65,6 +64,7 @@ where
 impl<S: Storage> Handler<storage::reader::ReadStreamRequest> for EventStore<S> {
     type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
 
+    #[tracing::instrument(name = "EventStore::ReadStreamRequest", skip(self, e, _ctx), fields(correlation_id = %e.correlation_id))]
     fn handle(
         &mut self,
         e: storage::reader::ReadStreamRequest,
@@ -72,7 +72,6 @@ impl<S: Storage> Handler<storage::reader::ReadStreamRequest> for EventStore<S> {
     ) -> Self::Result {
         let stream: String = e.stream.to_string();
 
-        #[cfg(feature = "verbose")]
         info!("Attempting to read {} stream event(s)", stream);
 
         let connection = self.connection.clone();
@@ -80,6 +79,7 @@ impl<S: Storage> Handler<storage::reader::ReadStreamRequest> for EventStore<S> {
         let fut = async move {
             match connection
                 .send(Read {
+                    correlation_id: e.correlation_id,
                     #[cfg(feature = "verbose")]
                     stream: stream.clone(),
                     #[cfg(not(feature = "verbose"))]
@@ -101,6 +101,7 @@ impl<S: Storage> Handler<storage::reader::ReadStreamRequest> for EventStore<S> {
                 }
             }
         }
+        .instrument(tracing::Span::current())
         .into_actor(self);
 
         Box::pin(fut)
@@ -113,8 +114,9 @@ impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
         Result<Cow<'static, crate::stream::Stream>, EventStoreError>,
     >;
 
+    #[tracing::instrument(name = "EventStore::StreamInfo", skip(self, e, _ctx), fields(correlation_id = %e.correlation_id))]
     fn handle(&mut self, e: StreamInfo, _ctx: &mut Self::Context) -> Self::Result {
-        debug!("Asking for stream {} infos", e.0);
+        debug!("Asking for stream {} infos", e.stream_uuid);
 
         let connection = self.connection.clone();
         let fut = async move { connection.send(e).await? }.into_actor(self);
@@ -129,8 +131,9 @@ impl<S: Storage> Handler<CreateStream> for EventStore<S> {
         Result<Cow<'static, crate::stream::Stream>, EventStoreError>,
     >;
 
+    #[tracing::instrument(name = "EventStore::CreateStream", skip(self, e, _ctx), fields(correlation_id = %e.correlation_id))]
     fn handle(&mut self, e: CreateStream, _ctx: &mut Self::Context) -> Self::Result {
-        debug!("Creating stream {}", e.0);
+        debug!("Creating stream {}", e.stream_uuid);
 
         let connection = self.connection.clone();
         let fut = async move { connection.send(e).await? }.into_actor(self);
@@ -142,6 +145,7 @@ impl<S: Storage> Handler<CreateStream> for EventStore<S> {
 impl<S: Storage> Handler<storage::appender::AppendToStreamRequest> for EventStore<S> {
     type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
 
+    #[tracing::instrument(name = "EventStore::AppendToStream", skip(self, e, _ctx), fields(correlation_id = %e.correlation_id))]
     fn handle(
         &mut self,
         e: storage::appender::AppendToStreamRequest,
@@ -150,21 +154,19 @@ impl<S: Storage> Handler<storage::appender::AppendToStreamRequest> for EventStor
         let stream: String = e.stream.to_string();
 
         #[cfg(feature = "verbose")]
-        let events_number = {
-            info!(
-                "Attempting to append {} event(s) to {} with ExpectedVersion::{:?}",
-                e.events.len(),
-                e.stream,
-                e.expected_version
-            );
-
-            e.events.len()
-        };
+        let events_number = e.events.len();
+        info!(
+            "Attempting to append {} event(s) to {} with ExpectedVersion::{:?}",
+            e.events.len(),
+            e.stream,
+            e.expected_version
+        );
 
         let connection = self.connection.clone();
         let fut = async move {
             match connection
                 .send(Append {
+                    correlation_id: e.correlation_id,
                     #[cfg(feature = "verbose")]
                     stream: stream.clone(),
                     #[cfg(not(feature = "verbose"))]
@@ -186,6 +188,7 @@ impl<S: Storage> Handler<storage::appender::AppendToStreamRequest> for EventStor
                 }
             }
         }
+        .instrument(tracing::Span::current())
         .into_actor(self);
 
         Box::pin(fut)
@@ -215,6 +218,7 @@ pub fn read() -> Reader {
 }
 
 /// Builder use to simplify the `EventStore` creation
+#[derive(Debug)]
 pub struct EventStoreBuilder<S: Storage> {
     storage: Option<S>,
 }
@@ -235,6 +239,8 @@ where
     /// # Errors
     ///
     /// For now this method can fail only if you haven't define a `Storage`
+    // #[instrument(level = "trace", name = "my_name", skip(self))]
+    #[instrument(level = "trace", name = "EventStoreBuilder::build", skip(self))]
     pub async fn build(self) -> Result<EventStore<S>, ()> {
         if self.storage.is_none() {
             return Err(());
@@ -253,8 +259,8 @@ pub mod prelude {
     pub use crate::expected_version::ExpectedVersion;
     pub use crate::read_version::ReadVersion;
     pub use crate::storage::{
-        appender::Appender, inmemory::InMemoryBackend, postgres::PostgresBackend, Storage,
-        StorageError,
+        appender::Appender, inmemory::InMemoryBackend, postgres::PostgresBackend, reader::Reader,
+        Storage, StorageError,
     };
     pub use crate::stream::Stream;
     pub use crate::EventStore;

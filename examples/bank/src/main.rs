@@ -1,19 +1,17 @@
-use actix_web::{Error, HttpRequest, HttpResponse, Responder};
-use chekov::prelude::*;
-
+use actix::prelude::*;
 use actix_web::{delete, get, post, put};
 use actix_web::{middleware, web, App, HttpServer};
-
-use std::any::TypeId;
-use std::collections::HashMap;
-
-use actix::prelude::*;
+use actix_web::{Error, HttpRequest, HttpResponse, Responder};
+use chekov::prelude::*;
 use event_store::prelude::*;
 use futures::future::{ready, Ready};
+use log;
 use serde::Deserialize;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
 use sqlx::{PgPool, Row};
+use std::any::TypeId;
+use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -110,6 +108,7 @@ impl CommandExecutor<DeleteAccount> for Account {
 
 impl CommandExecutor<OpenAccount> for Account {
     fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
+        log::trace!("NEW ACCOUNT CREATED");
         match state.status {
             AccountStatus::Initialized => Ok(vec![AccountOpened {
                 account_id: cmd.account_id,
@@ -252,7 +251,7 @@ async fn create(account: web::Json<OpenAccount>) -> impl Responder {
     //     account_id: account.account_id,
     //     name: "DELETED".into(),
     // };
-    match Router::<DefaultApp>::dispatch(account.clone()).await {
+    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
         Ok(res) => HttpResponse::Ok().json(res), // <- send response
         Err(e) => HttpResponse::Ok().json(e),    // <- send response
     }
@@ -265,7 +264,12 @@ async fn update(_id: web::Path<i32>, _account: web::Json<OpenAccount>) -> impl R
 
 #[delete("/accounts/{id}")]
 async fn delete(id: web::Path<uuid::Uuid>) -> impl Responder {
-    match Router::<DefaultApp>::dispatch(DeleteAccount { account_id: id.0 }).await {
+    match Router::<DefaultApp>::dispatch(
+        DeleteAccount { account_id: id.0 },
+        CommandMetadatas::default(),
+    )
+    .await
+    {
         Ok(res) => HttpResponse::Ok().json(res),
         Err(e) => HttpResponse::Ok().json(e),
     }
@@ -337,7 +341,7 @@ fn configure_events() -> HashMap<String, TypeId> {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
 
     let db_pool = PgPool::connect("postgresql://postgres:postgres@localhost/bank")
         .await

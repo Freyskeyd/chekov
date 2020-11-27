@@ -2,7 +2,7 @@ use crate::message::EventEnvelope;
 use crate::subscriber::Subscriber;
 // use crate::Chekov;
 use actix::prelude::*;
-use log::trace;
+use tracing::trace;
 
 use crate::Application;
 
