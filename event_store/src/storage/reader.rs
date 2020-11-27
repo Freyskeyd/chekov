@@ -225,6 +225,7 @@ impl Reader {
         self
     }
 
+    #[must_use]
     pub fn limit(mut self, limit: usize) -> Self {
         self.limit = limit;
         trace!(
@@ -234,6 +235,7 @@ impl Reader {
         self
     }
 
+    #[must_use]
     pub fn into_stream(self) -> StreamReader {
         self.into()
     }
@@ -249,7 +251,7 @@ impl Reader {
 
         EventStore::<S>::from_registry()
             .send(ReadStreamRequest {
-                correlation_id: self.correlation_id.clone(),
+                correlation_id: self.correlation_id,
                 span: tracing::span!(parent: &self.span, tracing::Level::TRACE, "ReadStreamRequest", correlation_id = ?self.correlation_id),
                 stream: self.stream,
                 version: 0,

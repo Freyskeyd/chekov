@@ -6,6 +6,7 @@
 )]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::toplevel_ref_arg)]
+#![allow(clippy::similar_names)]
 #![allow(dead_code)]
 //! The `event_store` crate
 mod connection;

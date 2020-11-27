@@ -42,7 +42,7 @@ impl<S: Storage> Subscriptions<S> {
                 Ok(subscription)
             }
 
-            Err(e) => Err(e),
+            Err(_) => Err(()),
         }
     }
 }

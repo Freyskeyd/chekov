@@ -110,7 +110,7 @@ impl Storage for PostgresBackend {
                             }
                         }
                     }
-                    _ => Err(StorageError::Unknown),
+                    Err(..) => Err(StorageError::Unknown),
                 }
             }
             .instrument(tracing::Span::current()),

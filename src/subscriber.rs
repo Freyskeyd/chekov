@@ -24,23 +24,7 @@ impl Subscriber {
 
 impl actix::Actor for Subscriber {
     type Context = Context<Self>;
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        // let current_address = ctx.address();
-        // self.subscribe_sync::<BrokerType, EventNotification>(ctx);
-        // ctx.wait(
-        //     async {
-        //         let res = SubscriberManager::from_registry()
-        //             .send(Subscribe {
-        //                 subscriber_id: Uuid::new_v4(),
-        //                 subscriber: current_address.recipient(),
-        //             })
-        //             .await;
-
-        //         println!("{:?}", res);
-        //     }
-        //     .into_actor(self),
-        // );
-    }
+    fn started(&mut self, _ctx: &mut Self::Context) {}
 }
 
 impl actix::Handler<EventNotification> for Subscriber {

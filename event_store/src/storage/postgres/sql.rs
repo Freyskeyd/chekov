@@ -50,6 +50,7 @@ pub async fn stream_info(
     stream_uuid: &str,
 ) -> Result<Stream, sqlx::Error> {
     #[allow(clippy::used_underscore_binding)]
+    #[allow(clippy::similar_names)]
     sqlx::query_as!(
         Stream,
         "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1",

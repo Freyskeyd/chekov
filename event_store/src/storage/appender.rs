@@ -190,7 +190,7 @@ impl Appender {
 
         let stream = EventStore::<S>::from_registry()
             .send(crate::connection::StreamInfo {
-                correlation_id: self.correlation_id.clone(),
+                correlation_id: self.correlation_id,
                 stream_uuid: self.stream.to_string(),
             })
             .await?;
@@ -256,7 +256,7 @@ impl Appender {
                 correlation_id: self.correlation_id,
                 stream: self.stream.to_string(),
                 expected_version: self.expected_version,
-                events: events,
+                events,
             })
             .await?;
 

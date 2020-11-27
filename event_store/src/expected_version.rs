@@ -15,7 +15,7 @@ pub enum ExpectedVersion {
 
 impl ExpectedVersion {
     #[must_use]
-    pub fn verify(stream: &Stream, expected: &Self) -> ExpectedVersionResult {
+    pub const fn verify(stream: &Stream, expected: &Self) -> ExpectedVersionResult {
         match expected {
             _ if stream.is_persisted() && stream.deleted_at.is_some() => {
                 ExpectedVersionResult::StreamDeleted

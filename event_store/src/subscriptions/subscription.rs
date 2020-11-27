@@ -48,7 +48,7 @@ impl<S: Storage> Handler<Connect> for Subscription<S> {
 
         // Ensure not already subscribe
         if self.subscription.has_subscriber(&msg.0) {
-            return ();
+            return;
         }
 
         let fut = async move {
