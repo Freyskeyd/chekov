@@ -42,6 +42,4 @@ impl SubscriptionFSM {
             self.notify_subscribers().await;
         }
     }
-
-    pub fn subscribe(&mut self) {}
 }

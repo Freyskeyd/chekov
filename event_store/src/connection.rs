@@ -13,32 +13,28 @@ mod messaging;
 pub use messaging::{Append, CreateStream, Read, StreamInfo};
 
 pub struct Connection<S: Storage> {
-    // storage: Arc<Mutex<S>>,
     storage: S,
 }
 
 impl<S: Storage> Connection<S> {
     pub fn make(storage: S) -> Self {
-        Self {
-            // storage: Arc::new(Mutex::new(storage)),
-            storage: storage,
-        }
+        Self { storage }
     }
 }
 
 impl<S: Storage> Actor for Connection<S> {
     type Context = Context<Self>;
 
+    #[tracing::instrument(name = "Connection", skip(self, _ctx), fields(backend = %S::storage_name()))]
     fn started(&mut self, _ctx: &mut Self::Context) {
         debug!("Starting with {} storage", S::storage_name());
     }
 }
 
 impl<S: Storage> Handler<Read> for Connection<S> {
-    // type Result = actix::AtomicResponse<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
     type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
 
-    #[tracing::instrument(name = "Connection::Read", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
+    #[tracing::instrument(name = "Connection::Read", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Read, _ctx: &mut Context<Self>) -> Self::Result {
         // let stream = msg.stream;
         let limit = msg.limit;
@@ -66,7 +62,7 @@ impl<S: Storage> Handler<Read> for Connection<S> {
 impl<S: Storage> Handler<Append> for Connection<S> {
     type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
 
-    #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
+    #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Appending {} event(s) to {}", msg.events.len(), msg.stream);
 
@@ -89,7 +85,7 @@ impl<S: Storage> Handler<Append> for Connection<S> {
 impl<S: Storage> Handler<CreateStream> for Connection<S> {
     type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
-    #[tracing::instrument(name = "Connection::CreateStream", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
+    #[tracing::instrument(name = "Connection::CreateStream", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: CreateStream, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Creating {} stream", msg.stream_uuid);
 
@@ -109,10 +105,9 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
 }
 
 impl<S: Storage> Handler<StreamInfo> for Connection<S> {
-    // type Result = actix::AtomicResponse<Self, Result<Cow<'static, Stream>, EventStoreError>>;
     type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
 
-    #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(correlation_id = %msg.correlation_id))]
+    #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Execute StreamInfo for {}", msg.stream_uuid);
 

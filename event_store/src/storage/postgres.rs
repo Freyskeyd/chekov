@@ -26,8 +26,9 @@ impl PostgresBackend {
     /// # Errors
     ///
     /// In case of Postgres connection error
+    #[tracing::instrument(name = "PostgresBackend", skip(url))]
     pub async fn with_url(url: &str) -> Result<Self, sqlx::Error> {
-        trace!("Connecting a new PostgresBackend");
+        trace!("Creating");
 
         Ok(Self {
             pool: PgPoolOptions::new()
@@ -109,7 +110,7 @@ impl Storage for PostgresBackend {
                             }
                         }
                     }
-                    _ => Err(StorageError::Unknown),
+                    Err(..) => Err(StorageError::Unknown),
                 }
             }
             .instrument(tracing::Span::current()),

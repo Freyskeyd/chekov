@@ -4,7 +4,7 @@ use actix::prelude::*;
 use actix_interop::{with_ctx, FutureInterop};
 use sqlx::postgres::PgNotification;
 use std::collections::HashMap;
-use tracing::trace;
+use tracing::{trace, Instrument};
 use uuid::Uuid;
 
 pub struct Subscriber {
@@ -24,23 +24,7 @@ impl Subscriber {
 
 impl actix::Actor for Subscriber {
     type Context = Context<Self>;
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        // let current_address = ctx.address();
-        // self.subscribe_sync::<BrokerType, EventNotification>(ctx);
-        // ctx.wait(
-        //     async {
-        //         let res = SubscriberManager::from_registry()
-        //             .send(Subscribe {
-        //                 subscriber_id: Uuid::new_v4(),
-        //                 subscriber: current_address.recipient(),
-        //             })
-        //             .await;
-
-        //         println!("{:?}", res);
-        //     }
-        //     .into_actor(self),
-        // );
-    }
+    fn started(&mut self, _ctx: &mut Self::Context) {}
 }
 
 impl actix::Handler<EventNotification> for Subscriber {
@@ -121,6 +105,8 @@ impl<A: Application> actix::Supervised for SubscriberManager<A> {}
 
 impl<A: Application> actix::Actor for SubscriberManager<A> {
     type Context = Context<Self>;
+
+    #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
     fn started(&mut self, ctx: &mut Self::Context) {
         ctx.wait(
             async {
@@ -128,6 +114,7 @@ impl<A: Application> actix::Actor for SubscriberManager<A> {
                 let addr = Listener::setup().await.unwrap();
                 addr
             }
+            .instrument(tracing::Span::current())
             .into_actor(self)
             .map(|res, actor, _| {
                 actor.listener = Some(res);
@@ -154,6 +141,8 @@ where
     A: Application,
 {
     type Result = ();
+
+    #[tracing::instrument(name = "SubscriberManager", skip(self, subscription, ctx), fields(app = %A::get_name()))]
     fn handle(&mut self, subscription: EventNotification, ctx: &mut Self::Context) {
         trace!(
             "Fetching Related RecordedEvents for {}",
@@ -178,7 +167,6 @@ where
                 Err(_) => panic!(""),
             };
 
-            // let k = critical_section::<Self, _>(async {
             for event in result {
                 let _: Option<Vec<(TypeId, Box<dyn Any>)>> = with_ctx(|actor: &mut Self, _| {
                     match actor.eventmapper.get(&event.event_type) {
@@ -192,10 +180,8 @@ where
                     }
                 });
             }
-            // "OKK".to_string()
-            // })
-            // .await;
         }
+        .in_current_span()
         .interop_actor(self)
         .map(|_res, _actor, _ctx| {});
         ctx.spawn(fut);
@@ -260,6 +246,7 @@ pub struct Listener<A: Application> {
 impl<A: Application> actix::Actor for Listener<A> {
     type Context = Context<Self>;
 
+    #[tracing::instrument(name = "Listener", skip(self, _ctx), fields(app = %A::get_name()))]
     fn started(&mut self, _ctx: &mut Self::Context) {
         trace!("Created a Listener instance");
     }

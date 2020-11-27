@@ -78,10 +78,10 @@ where
         self
     }
 
+    #[tracing::instrument(name = "Chekov::Launch", skip(self), fields(app = %A::get_name()))]
     pub async fn launch(self) {
         trace!(
-            "[[{}]] Launching a new Chekov instance with {}",
-            A::get_name(),
+            "Launching a new Chekov instance with {}",
             std::any::type_name::<A::Storage>()
         );
 
