@@ -157,6 +157,10 @@ mod test {
         fn event_type(&self) -> &'static str {
             "MyEvent"
         }
+
+        fn all_event_types() -> Vec<&'static str> {
+            vec!["MyEvent"]
+        }
     }
 
     impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {

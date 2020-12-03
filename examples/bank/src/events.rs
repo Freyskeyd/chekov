@@ -3,7 +3,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
 pub struct AccountDeleted {
     pub account_id: Uuid,
 }
@@ -23,7 +23,7 @@ pub enum AccountUpdated {
     Disabled(String),
 }
 
-#[derive(chekov::macros::Event, Debug, Deserialize, Serialize)]
+#[derive(Clone, chekov::macros::Event, Debug, Deserialize, Serialize)]
 #[event(event_type = "Elixir.Conduit.Accounts.Events.UserRegistered")]
 pub struct UserRegistered {
     pub email: String,
@@ -32,7 +32,7 @@ pub struct UserRegistered {
     pub username: String,
 }
 
-#[derive(chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, chekov::macros::Event, Deserialize, Serialize)]
 #[event(event_type = "MoneyMovement")]
 pub enum MoneyMovementEvent {
     Deposited {

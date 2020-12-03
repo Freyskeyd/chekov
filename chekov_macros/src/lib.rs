@@ -5,6 +5,7 @@ mod command;
 mod event;
 
 use proc_macro::TokenStream;
+use quote::*;
 use syn::*;
 
 #[proc_macro_derive(Command, attributes(command))]
@@ -45,56 +46,59 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
     }
 }
 
-use quote::*;
-
 #[derive(Debug)]
-struct Options {
-    consistency: Option<proc_macro2::Ident>,
-    // bracket_token: token::Bracket,
-    // content: TokenStream,
+struct ApplyEvent {
+    app: proc_macro2::Ident,
+    event: proc_macro2::Ident,
+    apply_to: proc_macro2::Ident,
+    closure: proc_macro2::Ident,
 }
 
-impl syn::parse::Parse for Options {
-    fn parse(_input: syn::parse::ParseStream) -> Result<Self> {
-        // let name = if let Ok(option) = input.parse::<syn::Ident>() {
-        //     input.parse::<Token![:]>()?;
-        //     input.parse::<Token![:]>()?;
-        //     input.parse()?
-        // } else {
-        //     panic!()
-        // };
-
-        // if let Ok(_) = input.parse::<Token![,]>() {
-        //     input.parse::<syn::Ident>()?;
-        //     input.parse::<Token![:]>()?;
-        //     input.parse::<syn::LitInt>()?;
-        // }
-
-        Ok(Options { consistency: None })
-    }
-}
-
-#[derive(Debug)]
-struct Dispatch {
-    cmd: proc_macro2::Ident,
-    // bracket_token: token::Bracket,
-    // content: TokenStream,
-}
-
-impl syn::parse::Parse for Dispatch {
+impl syn::parse::Parse for ApplyEvent {
     fn parse(input: syn::parse::ParseStream) -> Result<Self> {
-        let cmd: syn::Ident = input.parse()?;
+        let app: syn::Ident = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let apply_to: syn::Ident = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let event: syn::Ident = input.parse()?;
+        input.parse::<Token![,]>()?;
+        let closure: syn::Ident = input.parse()?;
 
-        Ok(Dispatch { cmd })
+        Ok(ApplyEvent {
+            app,
+            event,
+            apply_to,
+            closure,
+        })
     }
 }
 
 #[proc_macro]
-pub fn dispatch(item: TokenStream) -> TokenStream {
-    let _input: Dispatch = parse_macro_input!(item);
+pub fn apply_event(item: TokenStream) -> TokenStream {
+    let apply: ApplyEvent = parse_macro_input!(item);
 
+    let app = apply.app;
+    let event = apply.event;
+    let apply_to = apply.apply_to;
+    let closure = apply.closure;
+
+    let registry = proc_macro2::Ident::new(
+        &format!("{}EventRegistration", apply_to.to_string()),
+        proc_macro2::Span::call_site(),
+    );
     let toks = quote! {
-        "ok"
+
+        inventory::submit! {
+            #registry { resolver: Box::new(|stream: &str, ctx: &Context<AggregateInstance<#apply_to>>|{
+                chekov::SubscriberManager::<#app>::from_registry().do_send(Subscribe(stream.into(), ctx.address().recipient::<chekov::message::EventEnvelope<#event>>(), stream.into()));
+            })}
+        }
+
+        impl chekov::prelude::EventApplier<#event> for #apply_to {
+            fn apply(&mut self, event: &#event) -> Result<(), chekov::prelude::ApplyError> {
+                #closure(self, event)
+            }
+        }
     };
 
     toks.into()

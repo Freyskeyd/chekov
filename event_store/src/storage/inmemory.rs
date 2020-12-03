@@ -107,7 +107,7 @@ impl Storage for InMemoryBackend {
                 })
                 .collect();
 
-            let events_ids: Vec<Uuid> = re.iter().map(|event| event.event_uuid).collect();
+            let events = re.clone();
             e.append(&mut re);
             debug!(
                 "Successfully append {} event(s) to {}",
@@ -115,7 +115,7 @@ impl Storage for InMemoryBackend {
                 stream_uuid
             );
 
-            Box::pin(async move { Ok(events_ids) })
+            Box::pin(async move { Ok(events.iter().map(|e| e.event_uuid).collect()) })
         } else {
             Box::pin(async move { Err(StorageError::StreamDoesntExists) })
         }

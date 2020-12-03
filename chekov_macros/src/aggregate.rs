@@ -25,8 +25,28 @@ pub fn generate_aggregate(
     let struct_name = container.ident;
     let identity = container.identity;
 
+    let registry = proc_macro2::Ident::new(
+        &format!("{}EventRegistration", struct_name.to_string()),
+        proc_macro2::Span::call_site(),
+    );
+
     Ok(quote! {
+
+        pub struct #registry {
+            resolver: Box<dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>)>,
+        }
+
+        impl chekov::aggregate::EventRegistryItem<#struct_name> for #registry {
+            fn get_resolver(&self) -> &Box<dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>)> {
+                &self.resolver
+            }
+        }
+
+        inventory::collect!(#registry);
+
         impl chekov::Aggregate for #struct_name {
+            type EventRegistry = #registry;
+
             fn identity() -> &'static str {
                 #identity
             }

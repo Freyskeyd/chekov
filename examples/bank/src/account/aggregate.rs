@@ -1,12 +1,11 @@
-use chekov::prelude::*;
-
 use super::*;
+use crate::DefaultApp;
+use actix::prelude::*;
+use actix::Context;
 
-impl Aggregate for Account {
-    fn identity() -> &'static str {
-        "account"
-    }
-}
+chekov::macros::apply_event!(DefaultApp, Account, AccountUpdated, apply_account_updated);
+chekov::macros::apply_event!(DefaultApp, Account, AccountDeleted, apply_account_deleted);
+chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);
 
 impl CommandExecutor<DeleteAccount> for Account {
     fn execute(cmd: DeleteAccount, _: &Self) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
@@ -37,25 +36,21 @@ impl CommandExecutor<UpdateAccount> for Account {
     }
 }
 
-impl EventApplier<AccountOpened> for Account {
-    fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
-        self.account_id = Some(event.account_id);
-        self.status = AccountStatus::Active;
+fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), ApplyError> {
+    println!("Applying AccountOpened");
+    state.account_id = Some(event.account_id);
+    state.status = AccountStatus::Active;
 
-        Ok(())
-    }
+    Ok(())
+}
+fn apply_account_updated(_state: &mut Account, _event: &AccountUpdated) -> Result<(), ApplyError> {
+    println!("Applying AccountUpdated");
+    Ok(())
 }
 
-impl EventApplier<AccountUpdated> for Account {
-    fn apply(&mut self, _event: &AccountUpdated) -> Result<(), ApplyError> {
-        Ok(())
-    }
-}
+fn apply_account_deleted(state: &mut Account, _event: &AccountDeleted) -> Result<(), ApplyError> {
+    println!("Applying AccountDeleted");
+    state.status = AccountStatus::Deleted;
 
-impl EventApplier<AccountDeleted> for Account {
-    fn apply(&mut self, _event: &AccountDeleted) -> Result<(), ApplyError> {
-        self.status = AccountStatus::Deleted;
-
-        Ok(())
-    }
+    Ok(())
 }

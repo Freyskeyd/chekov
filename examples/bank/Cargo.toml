@@ -12,10 +12,8 @@ tokio = {version = "0.3", features = ["macros", "rt"]}
 uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = "*"
 serde_json = "*"
-async-trait = "0.1"
 actix = "*"
 actix-rt = "1.1"
-env_logger = "0.7.1"
 log = "*"
 futures = "*"
 actix-web = "3"
@@ -26,6 +24,7 @@ chrono = "0.4"
 tracing = {version ="*", features = []}
 tracing-subscriber = "*"
 tracing-futures = "*"
-tracing-flame = "*"
-tracing-error = "*"
 tracing-log = "*"
+
+inventory = "*"
+lazy_static = "*"

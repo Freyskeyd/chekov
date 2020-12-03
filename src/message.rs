@@ -4,6 +4,7 @@ use super::CommandExecutorError;
 use crate::command::CommandMetadatas;
 use actix::prelude::*;
 use event_store::prelude::*;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Message)]
 #[rtype(result = "Result<Vec<C::Event>, CommandExecutorError>")]
@@ -14,6 +15,29 @@ pub struct Dispatch<C: Command, A: Application> {
     pub command: C,
 }
 
+#[derive(Debug, Clone)]
+pub struct EventMetadatas {
+    pub correlation_id: Option<Uuid>,
+    pub causation_id: Option<Uuid>,
+    pub stream_name: String,
+}
+
+#[doc(hidden)]
 #[derive(Debug, Clone, Message)]
-#[rtype(result = "Result<usize, ()>")]
-pub struct EventEnvelope(pub RecordedEvent);
+#[rtype(result = "Result(), ()>")]
+pub struct EventEnvelope<E: Event> {
+    pub event: E,
+    pub meta: EventMetadatas,
+}
+
+#[derive(Message)]
+#[rtype("Result<Vec<RecordedEvent>, event_store::prelude::EventStoreError>")]
+pub(crate) struct ExecuteReader(pub(crate) event_store::prelude::Reader);
+
+#[derive(Message)]
+#[rtype("Result<Vec<Uuid>, event_store::prelude::EventStoreError>")]
+pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
+
+#[derive(Message)]
+#[rtype("Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
+pub(crate) struct ExecuteStreamInfo(pub(crate) String);

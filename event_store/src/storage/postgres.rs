@@ -3,17 +3,24 @@ use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use futures::Future;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-use sqlx::{postgres::PgPoolOptions, Acquire};
 use tracing::Instrument;
 use tracing::{debug, info, trace};
 use uuid::Uuid;
 
 mod sql;
 
-#[derive(Debug)]
 pub struct PostgresBackend {
     pool: PgPool,
+}
+
+impl std::fmt::Debug for PostgresBackend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PostgresBackend")
+            .field("pool", &self.pool)
+            .finish()
+    }
 }
 
 impl std::default::Default for PostgresBackend {
@@ -41,7 +48,7 @@ impl PostgresBackend {
 
 impl std::convert::From<sqlx::Error> for StorageError {
     fn from(e: sqlx::Error) -> Self {
-        println!("{:?}", e);
+        println!("Postgres --> {:?}", e);
         Self::StreamDoesntExists
     }
 }
@@ -60,8 +67,8 @@ impl Storage for PostgresBackend {
         trace!("Attempting to create stream {}", stream.stream_uuid());
 
         let stream_uuid = stream.stream_uuid().to_owned();
-
         let mut pool = self.pool.try_acquire().unwrap();
+
         Box::pin(
             async move {
                 match sql::create_stream(&mut pool, &stream_uuid).await {
@@ -98,6 +105,7 @@ impl Storage for PostgresBackend {
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
     {
         let pool = self.pool.acquire();
+
         Box::pin(
             async move {
                 match pool.await {
@@ -136,30 +144,19 @@ impl Storage for PostgresBackend {
         let pool = self.pool.acquire();
         let stream_uuid = stream_uuid.to_string();
         let events = events.to_vec();
-
         Box::pin(
             async move {
                 match pool.await {
-                    Ok(mut conn) => match conn.begin().await {
-                        Ok(mut tx) => {
-                            let stream = sql::stream_info(&mut tx, &stream_uuid).await?;
-                            let uuids = sql::transactional_insert_events(&mut tx, &events).await?;
-                            sql::insert_stream_events(&mut tx, &events, stream.stream_id).await?;
-                            // 0 -> is $all stream
-                            sql::insert_link_events(&mut tx, &uuids, 0).await?;
+                    Ok(mut conn) => {
+                        let events = sql::insert_events(&mut conn, &stream_uuid, &events).await?;
+                        debug!(
+                            "Successfully append {} event(s) to stream {}",
+                            events.len(),
+                            stream_uuid
+                        );
 
-                            tx.commit().await?;
-
-                            debug!(
-                                "Successfully append {} event(s) to stream {}",
-                                uuids.len(),
-                                stream_uuid
-                            );
-
-                            Ok(uuids)
-                        }
-                        Err(_) => Err(StorageError::StreamDoesntExists),
-                    },
+                        Ok(events)
+                    }
                     Err(_) => Err(StorageError::StreamDoesntExists),
                 }
             }

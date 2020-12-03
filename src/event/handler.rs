@@ -1,7 +1,7 @@
 use crate::message::EventEnvelope;
-use crate::subscriber::Subscriber;
 // use crate::Chekov;
 use actix::prelude::*;
+use actix_interop::{with_ctx, FutureInterop};
 use tracing::trace;
 
 use crate::Application;
@@ -33,18 +33,11 @@ where
     }
 }
 
-pub trait Listening {
-    // fn started(ctx: &mut actix::Context<EventHandlerInstance<Self>>)
-    // where
-    //     Self: EventHandler,
-    // {
-    // }
-}
-
 pub trait BrokerMsg: Message<Result = ()> + Send + Clone + 'static {}
 impl<M> BrokerMsg for M where M: Message<Result = ()> + Send + Clone + 'static {}
 
-pub trait EventHandler: Listening + Sized + std::marker::Unpin + 'static {
+/// Define a struct as an EventHandler
+pub trait EventHandler: Sized + std::marker::Unpin + 'static {
     fn builder(self) -> EventHandlerBuilder<Self> {
         EventHandlerBuilder::new(self)
     }
@@ -56,14 +49,11 @@ pub trait EventHandler: Listening + Sized + std::marker::Unpin + 'static {
     fn listen<A: Application, M: BrokerMsg + event_store::Event + std::fmt::Debug>(
         &self,
         ctx: &mut actix::Context<EventHandlerInstance<A, Self>>,
-    )
-    // ) where
-    // EventHandlerInstance<Self>: actix::Handler<M>,
-    // <EventHandlerInstance<Self> as Actor>::Context: ToEnvelope<EventHandlerInstance<Self>, M>,
+    ) where
+        Self: crate::event::Handler<M>,
     {
         let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
-        // let broker = T::get_broker();
-        let recipient = ctx.address().recipient::<M>();
+        let recipient = ctx.address().recipient::<EventEnvelope<M>>();
         broker.do_send(Subscribe(
             "$all".into(),
             recipient,
@@ -72,35 +62,43 @@ pub trait EventHandler: Listening + Sized + std::marker::Unpin + 'static {
     }
 }
 
+#[doc(hidden)]
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
 pub struct Subscribe<M: BrokerMsg>(pub String, pub Recipient<M>, pub String);
 
+/// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {
     _phantom: std::marker::PhantomData<A>,
     pub(crate) _handler: E,
-    pub(crate) _subscribtion: Addr<Subscriber>,
+    // pub(crate) _subscribtion: Addr<Subscriber>,
     pub(crate) _name: String,
 }
 
-impl<A: Application, E: EventHandler, V: BrokerMsg> actix::Handler<V>
-    for EventHandlerInstance<A, E>
+impl<A: Application, E: EventHandler, T: event_store::Event + 'static>
+    ::actix::Handler<EventEnvelope<T>> for EventHandlerInstance<A, E>
+where
+    E: crate::event::Handler<T>,
 {
-    // type Result = actix::MessageResult<V>;
     type Result = ();
 
-    fn handle(&mut self, _event: V, _ctx: &mut Self::Context) -> Self::Result {}
+    fn handle(&mut self, msg: EventEnvelope<T>, ctx: &mut Self::Context) -> Self::Result {
+        let fut = async move {
+            let _ = with_ctx(|actor: &mut Self, _| actor._handler.handle(&msg.event)).await;
+        };
+
+        ctx.spawn(fut.interop_actor(self).map(|_, _, _| ()));
+    }
 }
 
 impl<A: Application, E: EventHandler> EventHandlerInstance<A, E> {
+    #[tracing::instrument(name = "EventHandlerInstance", skip(builder))]
     pub fn from_builder(builder: EventHandlerBuilder<E>) -> Addr<Self> {
-        Self::create(move |ctx| {
+        Self::create(move |_ctx| {
             trace!("Register a new EventHandler instance with {}", builder.name);
-            let ctx_address = ctx.address();
 
             EventHandlerInstance {
                 _phantom: std::marker::PhantomData,
-                _subscribtion: Subscriber::new(ctx_address.recipient(), "$all"),
                 _handler: builder.handler,
                 _name: builder.name,
             }
@@ -112,19 +110,5 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self._handler.started(ctx);
-        // self.subscribe_sync::<BrokerType, EventNotification>(ctx);
-    }
-}
-
-// impl<E: EventHandler> actix::Handler<EventNotification> for EventHandlerInstance<E> {
-//     type Result = ();
-//     fn handle(&mut self, _event: EventNotification, _: &mut Self::Context) -> Self::Result {
-//         trace!("Received event notif on {}", self.name);
-//     }
-// }
-impl<A: Application, E: EventHandler> actix::Handler<EventEnvelope> for EventHandlerInstance<A, E> {
-    type Result = actix::ResponseActFuture<Self, Result<usize, ()>>;
-    fn handle(&mut self, _event: EventEnvelope, _: &mut Self::Context) -> Self::Result {
-        Box::pin(async { Ok(1) }.into_actor(self))
     }
 }

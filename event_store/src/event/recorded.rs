@@ -3,7 +3,7 @@ use chrono::DateTime;
 use uuid::Uuid;
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
-#[derive(Debug, Clone, Message)]
+#[derive(sqlx::FromRow, Debug, Clone, Message)]
 #[rtype("()")]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
@@ -15,9 +15,9 @@ pub struct RecordedEvent {
     /// The stream version when this event was appended
     pub(crate) stream_version: Option<i64>,
     /// a `causation_id` defines who caused this event
-    pub(crate) causation_id: Option<Uuid>,
+    pub causation_id: Option<Uuid>,
     /// a `correlation_id` correlates multiple events
-    pub(crate) correlation_id: Option<Uuid>,
+    pub correlation_id: Option<Uuid>,
     /// Human readable event type
     pub event_type: String,
     /// Payload of this event
@@ -39,11 +39,7 @@ impl RecordedEvent {
     ) -> Result<T, ()> {
         match T::deserialize(&self.data) {
             Ok(e) => Ok(e),
-            Err(e) => {
-                println!("{:?}", e);
-
-                Err(())
-            }
+            Err(_) => Err(()),
         }
     }
 }

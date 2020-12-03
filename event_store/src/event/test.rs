@@ -20,11 +20,23 @@ impl Event for MyEnumEvent {
             Self::Updated(_) => "MyEnumEvent::Updated",
         }
     }
+
+    fn all_event_types() -> Vec<&'static str> {
+        vec![
+            "MyEnumEvent::Deleted",
+            "MyEnumEvent::Collect",
+            "MyEnumEvent::Updated",
+        ]
+    }
 }
 
 impl Event for MyStructEvent {
     fn event_type(&self) -> &'static str {
         "MyStructEvent"
+    }
+
+    fn all_event_types() -> Vec<&'static str> {
+        vec!["MyStructEvent"]
     }
 }
 

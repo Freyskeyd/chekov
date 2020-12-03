@@ -27,11 +27,10 @@ use expected_version::ExpectedVersion;
 use tracing::{debug, info, instrument, trace, warn};
 
 use tracing_futures::Instrument;
-
+use uuid::Uuid;
 use read_version::ReadVersion;
 use std::borrow::Cow;
 use storage::{appender::Appender, reader::Reader, Storage};
-use uuid::Uuid;
 
 /// An `EventStore` that hold a storage connection
 #[derive(Clone)]
@@ -45,15 +44,11 @@ impl<S: Storage> std::default::Default for EventStore<S> {
     }
 }
 
-impl<S> ::actix::registry::SystemService for EventStore<S> where
-    S: 'static + Storage + std::marker::Unpin + std::default::Default
-{
-}
-
-// impl<S> ::actix::registry::ArbiterService for EventStore<S> where
+// impl<S> ::actix::registry::SystemService for EventStore<S> where
 //     S: 'static + Storage + std::marker::Unpin + std::default::Default
 // {
 // }
+
 impl<S> ::actix::Supervised for EventStore<S> where S: 'static + Storage + std::marker::Unpin {}
 impl<S> ::actix::Actor for EventStore<S>
 where
@@ -255,6 +250,7 @@ where
 }
 
 pub mod prelude {
+    pub use crate::connection::StreamInfo;
     pub use crate::error::EventStoreError;
     pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
     pub use crate::expected_version::ExpectedVersion;

@@ -8,8 +8,8 @@ use uuid::Uuid;
 #[derive(Message)]
 #[rtype(result = "Result<Cow<'static, Stream>, EventStoreError>")]
 pub struct StreamInfo {
-    pub(crate) correlation_id: Uuid,
-    pub(crate) stream_uuid: String,
+    pub correlation_id: Uuid,
+    pub stream_uuid: String,
 }
 
 #[derive(Message)]

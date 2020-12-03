@@ -1,40 +1,66 @@
-use actix::prelude::*;
+//! Chekov is a CQRS/ES Framework built on top of Actix actor framework.
+//!
+//! ## Getting started
+//!
+//! ### Application
+//!
+//! Chekov is using `Application` as a way to separate usecases. You can defined multiple
+//! applications on the same runtime which can be useful to synchronise multiple domains.
+//!
+//! But first, let's define our first `Application`:
+//!
+//! ```rust
+//! struct DefaultApp {}
+//!
+//! // Application trait is here to preconfigure your chekov runtime.
+//! // It tells that you want this `Application` to use a PostgresBackend and resolve the
+//! // eventbus's event with the `DefaultEventResolver`.
+//! impl chekov::Application for DefaultApp {
+//!     type Storage = event_store::prelude::PostgresBackend;
+//!     type EventResolver = chekov::DefaultEventResolver<Self>;
+//! }
+//! ```
 pub use chekov_macros as macros;
-pub use event_store;
-pub use event_store::Event;
 
-mod aggregate;
-pub mod aggregate_registry;
+pub mod aggregate;
 pub mod application;
 mod command;
-mod command_executor;
-mod command_handler;
 mod error;
-mod event_applier;
-pub mod event_handler;
-mod message;
+pub mod event;
+mod event_store;
+#[doc(hidden)]
+pub mod message;
 pub mod prelude;
-mod registry;
 mod router;
 mod subscriber;
 
+use ::event_store::prelude::RecordedEvent;
+#[doc(inline)]
 pub use aggregate::Aggregate;
+#[doc(inline)]
 pub use application::Application;
+#[doc(inline)]
+pub use application::ApplicationBuilder;
+#[doc(inline)]
 pub use command::Command;
-use command_executor::CommandExecutor;
 use error::CommandExecutorError;
-use event_applier::EventApplier;
-use event_handler::EventHandler;
-use event_handler::EventHandlerBuilder;
+#[doc(inline)]
+pub use event::Event;
+#[doc(inline)]
+pub use event::EventApplier;
+#[doc(inline)]
+pub use event::EventHandler;
 use message::Dispatch;
 use router::Router;
-use subscriber::SubscriberManager;
+pub use subscriber::SubscriberManager;
 
-pub mod event {
-    #[async_trait::async_trait]
-    pub trait Handler<E: event_store::Event> {
-        async fn handle(&self, event: &E) -> Result<(), ()>;
-    }
+pub trait EventResolver<A: Application> {
+    fn resolve(
+        &self,
+        notify: actix::Addr<SubscriberManager<A>>,
+        event_name: &str,
+        event: RecordedEvent,
+    );
 }
 
 #[cfg(test)]

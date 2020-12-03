@@ -3,8 +3,9 @@ use crate::{
     CommandExecutorError,
 };
 use actix::prelude::{ArbiterService, WrapFuture};
-use tracing::{trace};
+use tracing::trace;
 
+#[doc(hidden)]
 #[derive(Default)]
 pub struct Router<A: Application> {
     pub(crate) _app: std::marker::PhantomData<A>,

@@ -38,7 +38,6 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
     let container: EventAttrs = match FromDeriveInput::from_derive_input(input) {
         Ok(v) => v,
         Err(e) => {
-            println!("errorrrr");
             return Err(e.write_errors());
         }
     };
@@ -50,7 +49,7 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
         struct_name.to_string()
     };
 
-    let (event_type, try_from) = if container.data.as_ref().is_enum() {
+    let (event_type, all_event_types, try_from) = if container.data.as_ref().is_enum() {
         if let Some(variants) = container.data.take_enum() {
             let vars: Vec<SynTokenStream> = variants
                 .iter()
@@ -67,6 +66,22 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
                     }
                 })
                 .collect();
+
+            let strings: Vec<SynTokenStream> = variants
+                .iter()
+                .map(|x| {
+                    let _name = struct_name.clone();
+                    let v_ident = x.ident.clone();
+                    let string_representation = if let Some(event_type) = &x.event_type {
+                        format!("{}::{}", struct_event_type, event_type)
+                    } else {
+                        format!("{}::{}", struct_event_type, v_ident)
+                    };
+                    quote! {
+                        #string_representation
+                    }
+                })
+                .collect();
             (
                 quote! {
                     match *self {
@@ -74,6 +89,9 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
                             #vars,
                         )*
                     }
+                },
+                quote! {
+                    vec![#(#strings,)*]
                 },
                 quote! {
                     Err(())
@@ -86,6 +104,9 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
         (
             quote! {
                 #struct_event_type
+            },
+            quote! {
+                vec![#struct_event_type]
             },
             quote! {
                 ::serde_json::from_value::<#struct_name>(e.data).map_err(|_|())
@@ -101,9 +122,14 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
             }
         }
 
-        impl chekov::Event for #struct_name {
+        impl chekov::event::Event for #struct_name {}
+        impl event_store::prelude::Event for #struct_name {
             fn event_type(&self) -> &'static str {
                 #event_type
+            }
+
+            fn all_event_types() -> Vec<&'static str> {
+                #all_event_types
             }
         }
     })

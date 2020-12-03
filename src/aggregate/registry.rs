@@ -1,7 +1,7 @@
 use crate::Application;
 use crate::{
-    aggregate::AggregateInstance, event_applier::EventApplier, Aggregate, Command,
-    CommandExecutorError, Dispatch,
+    aggregate::AggregateInstance, event::EventApplier, Aggregate, Command, CommandExecutorError,
+    Dispatch,
 };
 use actix::prelude::{Actor, Addr, AsyncContext};
 use event_store::prelude::ReadVersion;
@@ -9,6 +9,7 @@ use std::convert::TryFrom;
 use tracing::trace;
 use tracing::Instrument;
 
+#[doc(hidden)]
 #[derive(Default)]
 pub struct AggregateInstanceRegistry<A: Aggregate> {
     registry: ::std::collections::HashMap<String, ::actix::Addr<AggregateInstance<A>>>,
@@ -47,29 +48,35 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                         // start it?
                         trace!("Instance not found");
                         trace!("Rebuilding instance state");
-                        let result =
-                            match event_store::prelude::Reader::with_correlation_id(correlation_id)
+
+                        let events = match crate::event_store::EventStore::<A>::with_reader(
+                            event_store::prelude::Reader::with_correlation_id(correlation_id)
                                 .stream(&id)
                                 .unwrap()
                                 .from(ReadVersion::Origin)
-                                .limit(10)
-                                .execute_async::<A::Storage>()
-                                .await
-                            {
-                                Ok(events) => events,
-                                Err(_) => panic!(""),
-                            };
+                                .limit(10),
+                        )
+                        // TODO deal with mailbox error
+                        .await
+                        .unwrap()
+                        {
+                            Ok(events) => events,
+                            Err(_) => panic!(""),
+                        };
 
+                        let identity = id.clone();
                         let addr = AggregateInstance::create(move |ctx_agg| {
                             trace!("Creating aggregate instance");
                             let _ctx_address = ctx_agg.address();
                             let mut inner = C::Executor::default();
-                            for event in result {
+                            for event in events {
                                 let _res = match C::Event::try_from(event.clone()) {
                                     Ok(parsed_event) => inner.apply(&parsed_event).map_err(|_| ()),
                                     _ => Err(()),
                                 };
                             }
+
+                            inner.on_start(&identity, &ctx_agg);
                             AggregateInstance { inner }
                         });
 
@@ -84,18 +91,27 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                             if let Ok(ref events) = res {
                                 trace!("Generated {:?}", events.len());
                                 let ev: Vec<&_> = events.iter().collect();
-                                let _result = event_store::prelude::Appender::with_correlation_id(
-                                    correlation_id,
+                                match crate::event_store::EventStore::<A>::with_appender(
+                                    event_store::prelude::Appender::with_correlation_id(
+                                        correlation_id,
+                                    )
+                                    .events(&ev[..])
+                                    .unwrap()
+                                    .to(&id)
+                                    .unwrap()
+                                    .expected_version(
+                                        event_store::prelude::ExpectedVersion::AnyVersion,
+                                    ),
                                 )
-                                .events(&ev[..])
-                                .unwrap()
-                                .to(&id)
-                                .unwrap()
-                                .expected_version(event_store::prelude::ExpectedVersion::AnyVersion)
-                                .execute::<A::Storage>()
-                                .await;
+                                // TODO deal with mailbox error
+                                .await
+                                {
+                                    Ok(Ok(_)) => res,
+                                    _ => Err(CommandExecutorError::Any),
+                                }
+                            } else {
+                                Err(CommandExecutorError::Any)
                             }
-                            res
                         }
                         Err(_) => Err(CommandExecutorError::Any),
                     }

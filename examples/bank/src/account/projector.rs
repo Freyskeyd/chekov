@@ -1,8 +1,13 @@
 use super::*;
-use chekov::event_handler::EventHandlerInstance;
+use crate::DefaultApp;
+use actix::AsyncContext;
+use actix::Context;
+use actix::SystemService;
+use chekov::event::EventHandlerInstance;
+use futures::Future;
 
 pub struct AccountProjector {
-    pool: PgPool,
+    pub pool: PgPool,
 }
 
 impl EventHandler for AccountProjector {
@@ -12,12 +17,28 @@ impl EventHandler for AccountProjector {
     }
 }
 
-impl chekov::event_handler::Listening for AccountProjector {}
-
-#[async_trait::async_trait]
 impl chekov::event::Handler<AccountOpened> for AccountProjector {
-    async fn handle(&self, event: &AccountOpened) -> Result<(), ()> {
-        let _result = Account::create(event, &self.pool).await;
-        Ok(())
+    fn handle(
+        &mut self,
+        event: &AccountOpened,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
+        let event = event.clone();
+        let pool = self.pool.clone();
+        Box::pin(async move {
+            let _result = Account::create(&event, &pool).await;
+            println!("Receive account opened on handler!");
+
+            Ok(())
+        })
+    }
+}
+
+impl chekov::event::Handler<AccountUpdated> for AccountProjector {
+    fn handle(
+        &mut self,
+        _event: &AccountUpdated,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
+        // let _result = Account::create(event, &self.pool).await;
+        Box::pin(async move { Ok(()) })
     }
 }

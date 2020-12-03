@@ -26,9 +26,7 @@ impl SubscriptionFSM {
         self.data.subscribers.get(subscriber).is_some()
     }
 
-    pub async fn notify_subscribers(&mut self) {
-        println!("DO somnething");
-    }
+    pub async fn notify_subscribers(&mut self) {}
 
     pub async fn connect_subscriber(&mut self, subscriber: &Recipient<RecordedEvents>) {
         let addr = Subscriber {

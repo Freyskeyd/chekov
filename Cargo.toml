@@ -38,4 +38,5 @@ actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
 tracing = "0.1"
 tracing-futures = { version = "*" }
 
+inventory = "*"
 lazy_static = "1.4.0"

@@ -1,132 +1,84 @@
-use crate::EventHandler;
-use crate::EventHandlerBuilder;
-use crate::Router;
-use crate::SubscriberManager;
-use actix::prelude::*;
-use event_store::prelude::*;
-use std::pin::Pin;
-use tracing::trace;
+//! Struct and Trait correlated to Application
 
-use std::any::TypeId;
-use std::collections::HashMap;
+mod builder;
+mod internal;
 
-#[async_trait::async_trait]
-pub trait StorageConfig<S>
-where
-    S: Storage,
-{
-    async fn build(&self) -> S;
-}
+pub use builder::ApplicationBuilder;
+pub(crate) use internal::InternalApplication;
 
-pub struct PgStorageConfig {
-    url: String,
-}
+use crate::{EventResolver, SubscriberManager};
 
-impl PgStorageConfig {
-    pub fn with_url(url: &str) -> Self {
-        Self { url: url.into() }
-    }
-}
-
-#[async_trait::async_trait]
-impl StorageConfig<PostgresBackend> for PgStorageConfig {
-    async fn build(&self) -> PostgresBackend {
-        // TODO: Remove unwrap
-        PostgresBackend::with_url(&self.url).await.unwrap()
-    }
-}
-
-pub struct ApplicationBuilder<A: Application> {
-    app: std::marker::PhantomData<A>,
-    storage: Pin<Box<dyn Future<Output = A::Storage>>>,
-    event_handlers: Vec<Pin<Box<dyn Future<Output = ()>>>>,
-    eventmapper: HashMap<String, TypeId>,
-}
-
-impl<A> ApplicationBuilder<A>
-where
-    A: Application,
-{
-    pub fn event_handler<E: EventHandler + 'static>(mut self, handler: E) -> Self {
-        self.event_handlers
-            .push(Box::pin(EventHandlerBuilder::new(handler).register::<A>()));
-        self
-    }
-
-    pub fn with_storage_config<CFG: StorageConfig<A::Storage> + 'static>(
-        mut self,
-        storage: CFG,
-    ) -> Self {
-        self.storage = Box::pin(async move { storage.build().await });
-
-        self
-    }
-
-    pub fn storage<F: Future<Output = Result<A::Storage, E>> + 'static, E: std::fmt::Debug>(
-        mut self,
-        storage: F,
-    ) -> Self {
-        self.storage =
-            Box::pin(async move { storage.await.expect("Unable to connect the storage") });
-
-        self
-    }
-
-    pub fn events(mut self, events: HashMap<String, TypeId>) -> Self {
-        self.eventmapper.extend(events);
-
-        self
-    }
-
-    #[tracing::instrument(name = "Chekov::Launch", skip(self), fields(app = %A::get_name()))]
-    pub async fn launch(self) {
-        trace!(
-            "Launching a new Chekov instance with {}",
-            std::any::type_name::<A::Storage>()
-        );
-
-        let storage: A::Storage = self.storage.await;
-        let event_store: EventStore<A::Storage> = EventStore::builder()
-            .storage(storage)
-            .build()
-            .await
-            .unwrap();
-
-        use futures::future::join_all;
-
-        join_all(self.event_handlers).await;
-
-        let event_store_addr = event_store.start();
-
-        let router = Router::<A> {
-            _app: std::marker::PhantomData,
-            _before_dispatch: vec![],
-        };
-
-        let addr = router.start();
-        let subscriber_manager_addr =
-            SubscriberManager::<A>::new(event_store_addr.clone(), self.eventmapper).start();
-
-        ::actix::SystemRegistry::set(event_store_addr.clone());
-        ::actix::Registry::set(addr.clone());
-        ::actix::Registry::set(subscriber_manager_addr.clone());
-    }
-}
-
-#[async_trait::async_trait]
+/// Application are high order logical seperator.
+///
+/// A chekov application is a simple entity that will represent a single and unique domain
+/// application.
+///
+/// It is used to separate and allow multiple chekov application on a single runtime.
+///
+/// It's also used to define the typology of the application, like which storage will be used or
+/// how to resolve the eventbus's event
+///
+/// The Application isn't instanciate at all and it's useless to define fields on it. It just act
+/// as a type holder for the entier system.
+///
+/// ```rust
+///
+/// struct DefaultApp {}
+///
+/// impl chekov::Application for DefaultApp {
+///     // Define that this application will use a PostgresBackend as event_store
+///     type Storage = event_store::prelude::PostgresBackend;
+///     // Define that this application will use a DefaultEventResolver as event_resolver
+///     type EventResolver = chekov::DefaultEventResolver<Self>;
+/// }
+/// ```
 pub trait Application: Unpin + 'static + Send + std::default::Default {
-    type Storage: Storage;
+    /// The type of storage used by the application
+    type Storage: event_store::prelude::Storage;
 
+    /// The type of the event_resolver, see EventResolver documentation to know more about it.
+    type EventResolver: crate::EventResolver<Self>;
+
+    /// Used to initiate the launch of the application
+    ///
+    /// It will just return an ApplicationBuilder which will take care of everything.
     fn with_default() -> ApplicationBuilder<Self> {
-        ApplicationBuilder {
-            event_handlers: Vec::new(),
-            app: std::marker::PhantomData,
-            storage: Box::pin(async { Self::Storage::default() }),
-            eventmapper: HashMap::new(),
-        }
+        ApplicationBuilder::<Self>::default()
     }
 
+    /// Returns the logical name of the application
+    /// Mostly used for logs and debugging.
+    ///
+    /// You can configure it or use the default value which is the struct full qualified name.
     fn get_name() -> &'static str {
         std::any::type_name::<Self>()
+    }
+}
+
+pub struct DefaultEventResolver<A: Application> {
+    pub mapping: Vec<(
+        Vec<&'static str>,
+        Box<
+            dyn Fn(
+                event_store::prelude::RecordedEvent,
+                actix::Addr<SubscriberManager<A>>,
+            ) -> std::result::Result<(), ()>,
+        >,
+    )>,
+}
+
+impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
+    fn resolve(
+        &self,
+        notify: actix::Addr<SubscriberManager<A>>,
+        event_name: &str,
+        event: event_store::prelude::RecordedEvent,
+    ) {
+        self.mapping
+            .iter()
+            .filter(|x| x.0.contains(&event_name))
+            .for_each(|f| {
+                let _ = f.1(event.clone(), notify.clone());
+            });
     }
 }

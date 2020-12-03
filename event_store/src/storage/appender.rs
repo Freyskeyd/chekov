@@ -30,6 +30,9 @@ use uuid::Uuid;
 /// #   fn event_type(&self) -> &'static str {
 /// #      "MyEvent"
 /// #   }
+/// #   fn all_event_types() -> Vec<&'static str> {
+/// #      vec!["MyEvent"]
+/// #   }
 /// # }
 /// #
 /// # impl std::convert::TryFrom<event_store::prelude::RecordedEvent> for MyEvent {
@@ -45,7 +48,8 @@ use uuid::Uuid;
 /// #   .storage(InMemoryBackend::default())
 /// #   .build()
 /// #   .await
-/// #   .unwrap();
+/// #   .unwrap()
+/// #   .start();
 /// let my_event = MyEvent{};
 /// let stream_name = "account-1";
 ///
@@ -57,7 +61,7 @@ use uuid::Uuid;
 ///     // Define that we expect the stream to be in version 1
 ///     .expected_version(ExpectedVersion::Version(1))
 ///     // Execute this appender on an eventstore
-///     .execute::<InMemoryBackend>()
+///     .execute(es)
 ///     .await;
 /// #   Ok(())
 /// # }
@@ -179,7 +183,10 @@ impl Appender {
     /// # Errors
     ///
     /// The execution can fail in various cases such as `ExpectedVersionResult` failure
-    pub async fn execute<S: Storage>(self) -> Result<Vec<Uuid>, EventStoreError> {
+    pub async fn execute<S: Storage>(
+        self,
+        event_store: Addr<EventStore<S>>,
+    ) -> Result<Vec<Uuid>, EventStoreError> {
         trace!(
             parent: &self.span,
             "Attempting to execute");
@@ -188,7 +195,7 @@ impl Appender {
             return Err(EventStoreError::Any);
         }
 
-        let stream = EventStore::<S>::from_registry()
+        let stream = event_store
             .send(crate::connection::StreamInfo {
                 correlation_id: self.correlation_id,
                 stream_uuid: self.stream.to_string(),
@@ -212,7 +219,7 @@ impl Appender {
             parent: &self.span,
                     "Stream {} does not exists", self.stream);
 
-                EventStore::<S>::from_registry()
+                event_store
                     .send(crate::connection::CreateStream {
                         correlation_id: self.correlation_id,
                         stream_uuid: self.stream.to_string(),
@@ -251,7 +258,7 @@ impl Appender {
             events.len(),
         );
 
-        let res = EventStore::<S>::from_registry()
+        let res = event_store
             .send(AppendToStreamRequest {
                 correlation_id: self.correlation_id,
                 stream: self.stream.to_string(),
@@ -260,9 +267,10 @@ impl Appender {
             })
             .await?;
 
-        trace!(
-            parent: &self.span,
-            "Successfully executed");
+        trace!(parent: &self.span, "{}", match res {
+            Ok(_) => "Successfully executed",
+            Err(_) => "Unsuccessfully executed",
+        });
 
         res
     }
@@ -289,6 +297,10 @@ mod test {
     impl Event for MyEvent {
         fn event_type(&self) -> &'static str {
             "MyEvent"
+        }
+
+        fn all_event_types() -> Vec<&'static str> {
+            vec!["MyEvent"]
         }
     }
 
@@ -329,8 +341,6 @@ mod test {
 
         let addr = es.start();
 
-        ::actix::SystemRegistry::set(addr.clone());
-
         let uuid = Uuid::new_v4();
 
         let event = MyEvent {};
@@ -339,7 +349,7 @@ mod test {
             .to(uuid)?
             .event(&event)?
             .expected_version(ExpectedVersion::StreamExists)
-            .execute::<InMemoryBackend>()
+            .execute(addr.clone())
             .await;
 
         assert_eq!(res, Err(EventStoreError::Any));
@@ -347,7 +357,7 @@ mod test {
         let res = Appender::default()
             .to(uuid)?
             .event(&event)?
-            .execute::<InMemoryBackend>()
+            .execute(addr)
             .await;
 
         assert!(res.is_ok());

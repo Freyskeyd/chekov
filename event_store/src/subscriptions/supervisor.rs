@@ -56,7 +56,6 @@ impl<S: Storage> Handler<Started> for SubscriptionsSupervisor<S> {
     type Result = MessageResult<Started>;
 
     fn handle(&mut self, _: Started, _: &mut Self::Context) -> Self::Result {
-        println!("Received child started");
         MessageResult(())
     }
 }
@@ -69,7 +68,6 @@ impl<S: Storage> Handler<GoingDown> for SubscriptionsSupervisor<S> {
     type Result = MessageResult<GoingDown>;
 
     fn handle(&mut self, _: GoingDown, _: &mut Self::Context) -> Self::Result {
-        println!("Received child going down");
         MessageResult(())
     }
 }
@@ -82,7 +80,6 @@ impl<S: Storage> Handler<Down> for SubscriptionsSupervisor<S> {
     type Result = MessageResult<Down>;
 
     fn handle(&mut self, _: Down, _: &mut Self::Context) -> Self::Result {
-        println!("Received child stopped");
         MessageResult(())
     }
 }

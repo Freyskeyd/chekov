@@ -63,18 +63,13 @@ pub fn generate_command(
     let identifier_value = identifiers.first().unwrap().ident.clone();
     Ok(quote! {
 
-        #[async_trait::async_trait]
         impl chekov::Command for #struct_name {
             type Event = #event;
             type Executor = #executor;
-            type ExecutorRegistry = ::chekov::aggregate_registry::AggregateInstanceRegistry<#executor>;
+            type ExecutorRegistry = ::chekov::aggregate::AggregateInstanceRegistry<#executor>;
 
             fn identifier(&self) -> ::std::string::String {
                 self.#identifier_value.to_string()
-            }
-            async fn dispatch(&self) -> Result<(), ()>{
-
-                Ok(())
             }
         }
     })

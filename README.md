@@ -61,14 +61,15 @@ impl CommandExecutor<CreateUser> for User {
 
 /// Define an Applier for the `UserCreated` event
 /// Applier is a mutation action on the aggregate
-impl EventApplier<UserCreated> for User {
-  fn apply(&mut self, event: &UserCreated) -> Result<(), ApplyError> {
-    self.user_id = Some(event.user_id);
-    self.account_id = Some(event.account_id);
+fn apply_user_created(state: &mut User, event: &UserCreated) -> Result<(), ApplyError> {
+  self.user_id = Some(event.user_id);
+  self.account_id = Some(event.account_id);
 
-    Ok(())
-  }
+  Ok(())
 }
+
+// Register this applier in chekov
+chekov::macros::apply_event!(DefaultApp, User, UserCreated, apply_user_created);
 ```
 
 ### Defining Commands

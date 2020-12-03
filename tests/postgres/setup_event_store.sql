@@ -47,8 +47,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION create_global_stream_events()
+	RETURNS trigger AS $$
+DECLARE
+	all_stream streams%ROWTYPE;
+BEGIN
+	UPDATE streams SET stream_version = stream_version + 1 WHERE stream_id = 0 RETURNING * INTO all_stream;
+	INSERT INTO stream_events (event_id, stream_id, stream_version, original_stream_id, original_stream_version) VALUES (NEW.event_id, 0, all_stream.stream_version, NEW.stream_id, NEW.stream_version);
+
+	RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER event_notification AFTER UPDATE ON streams FOR EACH ROW EXECUTE PROCEDURE notify_events();
+CREATE TRIGGER propagate_stream_events AFTER INSERT ON stream_events FOR EACH ROW WHEN (NEW.stream_id != 0 ) EXECUTE PROCEDURE create_global_stream_events();
 
 /* CREATE UNIQUE INDEX ix_subscriptions_stream_uuid_subscription_name ON subscriptions (stream_uuid, subscription_name); */
 CREATE UNIQUE INDEX ix_stream_events ON stream_events (stream_id, stream_version);

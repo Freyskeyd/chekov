@@ -1,14 +1,13 @@
 use actix_web::{middleware, web, App, HttpServer};
-use chekov::prelude::*;
+use chekov::{application::DefaultEventResolver, prelude::*};
 use event_store::prelude::*;
 use sqlx::PgPool;
-use std::any::TypeId;
-use std::collections::HashMap;
 
 mod account;
 mod commands;
 mod events;
 mod http;
+use chekov::event::Event;
 
 use events::*;
 
@@ -22,29 +21,17 @@ pub fn init<S: event_store::prelude::Storage>(cfg: &mut web::ServiceConfig) {
 
 #[derive(Default)]
 struct DefaultApp {}
+
 impl chekov::Application for DefaultApp {
     type Storage = PostgresBackend;
+    type EventResolver = DefaultEventResolver<Self>;
 }
 
 #[allow(dead_code)]
-fn configure_events() -> HashMap<String, TypeId> {
-    let mut hash = HashMap::new();
-
-    hash.insert("AccountOpened".into(), TypeId::of::<AccountOpened>());
-    hash.insert(
-        "AccountUpdated::Forced".into(),
-        TypeId::of::<AccountUpdated>(),
-    );
-    hash.insert(
-        "AccountUpdated::Deleted".into(),
-        TypeId::of::<AccountUpdated>(),
-    );
-    hash.insert(
-        "AccountUpdated::Disabled".into(),
-        TypeId::of::<AccountUpdated>(),
-    );
-
-    hash
+fn configure_events<A: chekov::Application>() -> DefaultEventResolver<A> {
+    DefaultEventResolver {
+        mapping: vec![AccountOpened::register(), AccountUpdated::register()],
+    }
 }
 
 #[actix_rt::main]
@@ -60,10 +47,7 @@ async fn main() -> std::io::Result<()> {
         .storage(PostgresBackend::with_url(
             "postgresql://postgres:postgres@localhost/event_store_bank",
         ))
-        // .events(configure_events())
-        // .event_handler(AccountProjector {
-        //     pool: db_pool.clone(),
-        // })
+        .event_resolver(configure_events())
         .launch()
         .await;
 

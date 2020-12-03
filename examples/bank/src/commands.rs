@@ -11,7 +11,6 @@ pub struct DeleteAccount {
     pub account_id: Uuid,
 }
 
-#[async_trait::async_trait]
 impl Command for DeleteAccount {
     type Event = AccountDeleted;
     type Executor = Account;
@@ -19,9 +18,6 @@ impl Command for DeleteAccount {
 
     fn identifier(&self) -> ::std::string::String {
         self.account_id.to_string()
-    }
-    async fn dispatch(&self) -> Result<(), ()> {
-        Ok(())
     }
 }
 

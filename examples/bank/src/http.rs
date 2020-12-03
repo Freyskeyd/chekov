@@ -35,7 +35,16 @@ pub async fn find(_id: web::Path<i32>) -> impl Responder {
 
 #[post("/accounts")]
 pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
-    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
+    let _ = Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await;
+    match Router::<DefaultApp>::dispatch(
+        UpdateAccount {
+            account_id: account.account_id,
+            name: account.name.to_string(),
+        },
+        CommandMetadatas::default(),
+    )
+    .await
+    {
         Ok(res) => HttpResponse::Ok().json(res), // <- send response
         Err(e) => HttpResponse::Ok().json(e),    // <- send response
     }
