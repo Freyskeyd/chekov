@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ApplyError",""],["CommandExecutorError",""]],"struct":[["AggregateInstance",""],["AggregateInstanceRegistry",""],["CommandMetadatas",""],["Router",""],["Subscribe",""]],"trait":[["Command",""],["CommandExecutor",""],["Dispatchable",""],["EventHandler",""]]});

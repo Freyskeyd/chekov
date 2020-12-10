@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["event_store"] = [{"text":"impl StructuralPartialEq for EventStoreError","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for UnsavedEvent","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for ExpectedVersion","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for StorageError","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for Stream","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

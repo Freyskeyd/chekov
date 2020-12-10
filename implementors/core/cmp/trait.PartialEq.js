@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["event_store"] = [{"text":"impl PartialEq&lt;EventStoreError&gt; for EventStoreError","synthetic":false,"types":[]},{"text":"impl PartialEq&lt;UnsavedEvent&gt; for UnsavedEvent","synthetic":false,"types":[]},{"text":"impl PartialEq&lt;ExpectedVersion&gt; for ExpectedVersion","synthetic":false,"types":[]},{"text":"impl PartialEq&lt;StorageError&gt; for StorageError","synthetic":false,"types":[]},{"text":"impl PartialEq&lt;Stream&gt; for Stream","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

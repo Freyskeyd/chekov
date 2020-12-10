@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DeleteAccount",""],["OpenAccount",""],["UpdateAccount",""]]});

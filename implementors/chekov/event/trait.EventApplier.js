@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["bank"] = [{"text":"impl EventApplier&lt;AccountUpdated&gt; for Account","synthetic":false,"types":[]},{"text":"impl EventApplier&lt;AccountDeleted&gt; for Account","synthetic":false,"types":[]},{"text":"impl EventApplier&lt;AccountOpened&gt; for Account","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["bank"] = [{"text":"impl TryFrom&lt;RecordedEvent&gt; for AccountDeleted","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;RecordedEvent&gt; for AccountOpened","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;RecordedEvent&gt; for AccountUpdated","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;RecordedEvent&gt; for UserRegistered","synthetic":false,"types":[]},{"text":"impl TryFrom&lt;RecordedEvent&gt; for MoneyMovementEvent","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

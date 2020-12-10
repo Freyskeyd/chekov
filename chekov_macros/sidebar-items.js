@@ -1,0 +1,1 @@
+initSidebarItems({"derive":[["Aggregate",""],["Command",""],["Event",""]],"macro":[["apply_event",""]]});

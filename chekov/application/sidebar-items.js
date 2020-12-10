@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ApplicationBuilder",""],["DefaultEventResolver",""]],"trait":[["Application","A chekov application is a simple struct that will represent a single and unique domain application."]]});

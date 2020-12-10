@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["aggregate",""],["application",""],["event",""],["message",""],["prelude",""]],"struct":[["SubscriberManager","Deal with Application subscriptions"]],"trait":[["Command",""],["EventResolver",""]]});

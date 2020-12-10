@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AggregateInstance",""],["AggregateInstanceRegistry",""]],"trait":[["Aggregate",""]]});

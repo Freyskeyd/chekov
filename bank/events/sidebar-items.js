@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["AccountUpdated",""],["MoneyMovementEvent",""]],"struct":[["AccountDeleted",""],["AccountOpened",""],["UserRegistered",""]]});
