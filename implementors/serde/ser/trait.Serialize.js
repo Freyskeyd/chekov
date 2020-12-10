@@ -1,4 +1,3 @@
 (function() {var implementors = {};
-implementors["bank"] = [{"text":"impl Serialize for AccountStatus","synthetic":false,"types":[]},{"text":"impl Serialize for Account","synthetic":false,"types":[]},{"text":"impl Serialize for OpenAccount","synthetic":false,"types":[]},{"text":"impl Serialize for UpdateAccount","synthetic":false,"types":[]},{"text":"impl Serialize for AccountDeleted","synthetic":false,"types":[]},{"text":"impl Serialize for AccountOpened","synthetic":false,"types":[]},{"text":"impl Serialize for AccountUpdated","synthetic":false,"types":[]},{"text":"impl Serialize for UserRegistered","synthetic":false,"types":[]},{"text":"impl Serialize for MoneyMovementEvent","synthetic":false,"types":[]}];
 implementors["chekov"] = [{"text":"impl Serialize for CommandExecutorError","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

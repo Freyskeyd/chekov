@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["bank"] = [{"text":"impl Command for DeleteAccount","synthetic":false,"types":[]},{"text":"impl Command for OpenAccount","synthetic":false,"types":[]},{"text":"impl Command for UpdateAccount","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

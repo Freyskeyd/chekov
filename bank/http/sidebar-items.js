@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["create",""],["delete",""],["find",""],["find_all",""],["update",""]]});

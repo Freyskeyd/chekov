@@ -1,5 +1,4 @@
 (function() {var implementors = {};
-implementors["bank"] = [{"text":"impl Message for AccountOpened","synthetic":false,"types":[]},{"text":"impl Message for AccountUpdated","synthetic":false,"types":[]}];
 implementors["chekov"] = [{"text":"impl&lt;M:&nbsp;BrokerMsg&gt; Message for Subscribe&lt;M&gt;","synthetic":false,"types":[]},{"text":"impl&lt;C:&nbsp;Command, A:&nbsp;Application&gt; Message for Dispatch&lt;C, A&gt;","synthetic":false,"types":[]},{"text":"impl&lt;E:&nbsp;Event&gt; Message for EventEnvelope&lt;E&gt;","synthetic":false,"types":[]}];
 implementors["event_store"] = [{"text":"impl Message for StreamInfo","synthetic":false,"types":[]},{"text":"impl Message for RecordedEvent","synthetic":false,"types":[]},{"text":"impl Message for RecordedEvents","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

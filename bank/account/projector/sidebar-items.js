@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["apply_account_open",""]],"static":[["__init14117829084853787430",""]],"struct":[["AccountProjector",""]]});

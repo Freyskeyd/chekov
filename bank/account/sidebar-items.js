@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["AccountStatus",""]],"mod":[["aggregate",""],["projector",""]],"struct":[["Account",""],["AccountEventRegistration",""]]});

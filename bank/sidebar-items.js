@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["configure_events",""],["init",""],["main",""]],"mod":[["account",""],["commands",""],["events",""],["http",""]],"struct":[["DefaultApp",""]]});

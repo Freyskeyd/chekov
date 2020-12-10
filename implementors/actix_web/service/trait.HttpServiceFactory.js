@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["bank"] = [{"text":"impl HttpServiceFactory for find_all","synthetic":false,"types":[]},{"text":"impl HttpServiceFactory for find","synthetic":false,"types":[]},{"text":"impl HttpServiceFactory for create","synthetic":false,"types":[]},{"text":"impl HttpServiceFactory for update","synthetic":false,"types":[]},{"text":"impl HttpServiceFactory for delete","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
