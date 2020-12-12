@@ -43,6 +43,7 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
+<span id="43">43</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Application</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Command</span>;
@@ -68,6 +69,7 @@
     <span class="kw">pub</span> <span class="ident">stream_name</span>: <span class="ident">String</span>,
 }
 
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result(), ()&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Event</span><span class="op">&gt;</span> {

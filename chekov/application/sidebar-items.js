@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ApplicationBuilder",""],["DefaultEventResolver",""]],"trait":[["Application","A chekov application is a simple struct that will represent a single and unique domain application."]]});
+initSidebarItems({"struct":[["ApplicationBuilder","Struct to configure and launch an `Application` instance"],["DefaultEventResolver",""]],"trait":[["Application","Application are high order logical seperator."]]});

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["AggregateInstance",""],["AggregateInstanceRegistry",""]],"trait":[["Aggregate",""]]});
+initSidebarItems({"struct":[["AggregateInstance","Deals with the lifetime of a particular aggregate"]],"trait":[["Aggregate","Define an Aggregate"]]});

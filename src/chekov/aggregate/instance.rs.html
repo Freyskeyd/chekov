@@ -43,6 +43,7 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
+<span id="43">43</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">event</span>::<span class="ident">Event</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">command</span>::<span class="ident">Command</span>, <span class="ident">message</span>::<span class="ident">EventEnvelope</span>};
@@ -51,6 +52,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Aggregate</span>, <span class="ident">Application</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::<span class="ident">trace</span>;
 
+<span class="doccomment">/// Deals with the lifetime of a particular aggregate</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">inner</span>: <span class="ident">A</span>,

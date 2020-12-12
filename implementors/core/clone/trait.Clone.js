@@ -1,4 +1,4 @@
 (function() {var implementors = {};
-implementors["chekov"] = [{"text":"impl Clone for CommandMetadatas","synthetic":false,"types":[]},{"text":"impl&lt;C:&nbsp;Clone + Command, A:&nbsp;Clone + Application&gt; Clone for Dispatch&lt;C, A&gt;","synthetic":false,"types":[]},{"text":"impl Clone for EventMetadatas","synthetic":false,"types":[]},{"text":"impl&lt;E:&nbsp;Clone + Event&gt; Clone for EventEnvelope&lt;E&gt;","synthetic":false,"types":[]}];
+implementors["chekov"] = [{"text":"impl Clone for CommandMetadatas","synthetic":false,"types":[]},{"text":"impl Clone for EventMetadatas","synthetic":false,"types":[]}];
 implementors["event_store"] = [{"text":"impl Clone for RecordedEvent","synthetic":false,"types":[]},{"text":"impl Clone for RecordedEvents","synthetic":false,"types":[]},{"text":"impl Clone for UnsavedEvent","synthetic":false,"types":[]},{"text":"impl Clone for Stream","synthetic":false,"types":[]},{"text":"impl&lt;S:&nbsp;Clone + Storage&gt; Clone for EventStore&lt;S&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

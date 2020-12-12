@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["chekov"] = [{"text":"impl&lt;A:&nbsp;Aggregate&gt; ArbiterService for AggregateInstanceRegistry&lt;A&gt;","synthetic":false,"types":[]},{"text":"impl&lt;A:&nbsp;Application&gt; ArbiterService for Router&lt;A&gt;","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

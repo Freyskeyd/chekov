@@ -14,7 +14,11 @@
 <span id="11">11</span>
 <span id="12">12</span>
 <span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="doccomment">/// Error returns by a CommandExecutor</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">serde</span>::<span class="ident">Serialize</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">CommandExecutorError</span> {
     <span class="ident">Any</span>,
@@ -24,6 +28,8 @@
         <span class="self">Self</span>::<span class="ident">Any</span>
     }
 }
+
+<span class="doccomment">/// Error returns by a failling EventApplier</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ApplyError</span> {
     <span class="ident">Any</span>,
