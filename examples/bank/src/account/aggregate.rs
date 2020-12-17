@@ -43,6 +43,7 @@ fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), 
 
     Ok(())
 }
+
 fn apply_account_updated(_state: &mut Account, _event: &AccountUpdated) -> Result<(), ApplyError> {
     println!("Applying AccountUpdated");
     Ok(())

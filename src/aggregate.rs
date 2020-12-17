@@ -23,10 +23,53 @@
 //! # Examples
 //!
 //! ```rust
+//! # use chekov::prelude::*;
+//! # use chekov::application::DefaultEventResolver;
+//! # use event_store::prelude::*;
+//! # use chekov::macros::*;
+//! # use serde::{Deserialize, Serialize};
+//! # use uuid::Uuid;
+//! # use actix::Message;
+//! #
+//! # #[derive(Serialize)]
+//! # pub enum AccountStatus {
+//! #     Initialized,
+//! #     Active,
+//! #     Deleted,
+//! # }
+//! # impl std::default::Default for AccountStatus {
+//! #     fn default() -> Self {
+//! #        Self::Initialized
+//! #     }
+//! # }
+//! #
+//! # #[derive(Default)]
+//! # struct DefaultApp {}
+//! #
+//! # impl chekov::Application for DefaultApp {
+//! #     type Storage = PostgresBackend;
+//! #     type EventResolver = DefaultEventResolver<Self>;
+//! # }
+//! #
+//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+//! # #[rtype(result = "()")]
+//! # pub struct AccountOpened {
+//! #     pub account_id: Uuid,
+//! #     pub name: String,
+//! # }
+//! #
+//! # #[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+//! # #[command(event = "AccountOpened", aggregate = "Account")]
+//! # pub struct OpenAccount {
+//! #     #[command(identifier)]
+//! #     pub account_id: Uuid,
+//! #     pub name: String,
+//! # }
+//! #
 //! #[derive(Default, Aggregate)]
 //! #[aggregate(identity = "account")]
-//! struct Account {
-//!     account_id: Option<Uuid>,
+//! pub struct Account {
+//!     account_id: Option<uuid::Uuid>,
 //!     name: String,
 //!     status: AccountStatus
 //! }
@@ -77,11 +120,13 @@ pub trait EventRegistryItem<A: Aggregate> {
 ///
 ///
 /// ```rust
+/// # use chekov::prelude::*;
+/// # use chekov::macros::*;
 ///
 /// #[derive(Default, Aggregate)]
 /// #[aggregate(identity = "account")]
 /// struct Account {
-///     account_id: Option<UUID>
+///     account_id: Option<uuid::Uuid>
 /// }
 /// ```
 ///

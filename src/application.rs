@@ -22,14 +22,14 @@ use crate::{EventResolver, SubscriberManager};
 /// as a type holder for the entier system.
 ///
 /// ```rust
-///
+/// #[derive(Default)]
 /// struct DefaultApp {}
 ///
 /// impl chekov::Application for DefaultApp {
 ///     // Define that this application will use a PostgresBackend as event_store
 ///     type Storage = event_store::prelude::PostgresBackend;
 ///     // Define that this application will use a DefaultEventResolver as event_resolver
-///     type EventResolver = chekov::DefaultEventResolver<Self>;
+///     type EventResolver = chekov::application::DefaultEventResolver<Self>;
 /// }
 /// ```
 pub trait Application: Unpin + 'static + Send + std::default::Default {

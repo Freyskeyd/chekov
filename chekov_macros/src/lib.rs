@@ -89,7 +89,9 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
     let toks = quote! {
 
         inventory::submit! {
-            #registry { resolver: Box::new(|stream: &str, ctx: &Context<AggregateInstance<#apply_to>>|{
+            use actix::AsyncContext;
+            use actix::SystemService;
+            #registry { resolver: Box::new(|stream: &str, ctx: &actix::Context<AggregateInstance<#apply_to>>|{
                 chekov::SubscriberManager::<#app>::from_registry().do_send(Subscribe(stream.into(), ctx.address().recipient::<chekov::message::EventEnvelope<#event>>(), stream.into()));
             })}
         }

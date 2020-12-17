@@ -10,6 +10,7 @@
 //! But first, let's define our first `Application`:
 //!
 //! ```rust
+//! #[derive(Default)]
 //! struct DefaultApp {}
 //!
 //! // Application trait is here to preconfigure your chekov runtime.
@@ -17,7 +18,7 @@
 //! // eventbus's event with the `DefaultEventResolver`.
 //! impl chekov::Application for DefaultApp {
 //!     type Storage = event_store::prelude::PostgresBackend;
-//!     type EventResolver = chekov::DefaultEventResolver<Self>;
+//!     type EventResolver = chekov::application::DefaultEventResolver<Self>;
 //! }
 //! ```
 pub use chekov_macros as macros;
@@ -62,6 +63,3 @@ pub trait EventResolver<A: Application> {
         event: RecordedEvent,
     );
 }
-
-#[cfg(test)]
-mod test;
