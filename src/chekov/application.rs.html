@@ -110,14 +110,14 @@
 <span class="doccomment">/// as a type holder for the entier system.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```rust</span>
-<span class="doccomment">///</span>
+<span class="doccomment">/// #[derive(Default)]</span>
 <span class="doccomment">/// struct DefaultApp {}</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">///     // Define that this application will use a PostgresBackend as event_store</span>
 <span class="doccomment">///     type Storage = event_store::prelude::PostgresBackend;</span>
 <span class="doccomment">///     // Define that this application will use a DefaultEventResolver as event_resolver</span>
-<span class="doccomment">///     type EventResolver = chekov::DefaultEventResolver&lt;Self&gt;;</span>
+<span class="doccomment">///     type EventResolver = chekov::application::DefaultEventResolver&lt;Self&gt;;</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Application</span>: <span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std</span>::<span class="ident">default</span>::<span class="ident">Default</span> {

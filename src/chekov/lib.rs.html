@@ -65,6 +65,7 @@
 <span id="62">62</span>
 <span id="63">63</span>
 <span id="64">64</span>
+<span id="65">65</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Chekov is a CQRS/ES Framework built on top of Actix actor framework.</span>
 <span class="doccomment">//!</span>
@@ -78,6 +79,7 @@
 <span class="doccomment">//! But first, let&#39;s define our first `Application`:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! #[derive(Default)]</span>
 <span class="doccomment">//! struct DefaultApp {}</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Application trait is here to preconfigure your chekov runtime.</span>
@@ -85,7 +87,7 @@
 <span class="doccomment">//! // eventbus&#39;s event with the `DefaultEventResolver`.</span>
 <span class="doccomment">//! impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">//!     type Storage = event_store::prelude::PostgresBackend;</span>
-<span class="doccomment">//!     type EventResolver = chekov::DefaultEventResolver&lt;Self&gt;;</span>
+<span class="doccomment">//!     type EventResolver = chekov::application::DefaultEventResolver&lt;Self&gt;;</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//! ```</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros</span> <span class="kw">as</span> <span class="ident">macros</span>;
