@@ -19,12 +19,6 @@ their is no concurrency state alteration.</p>
 <a href="../trait.Command.html"><code>Command</code></a> which are pushed to him. An <code>Aggregate</code> can't execute multiple commands at a time.</p>
 <h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-
-
-
-
-
-
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Aggregate</span>)]</span>
 <span class="attribute">#[<span class="ident">aggregate</span>(<span class="ident">identity</span> <span class="op">=</span> <span class="string">&quot;account&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Account</span> {

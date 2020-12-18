@@ -185,7 +185,7 @@
 <span class="doccomment">//! # use serde::{Deserialize, Serialize};</span>
 <span class="doccomment">//! # use uuid::Uuid;</span>
 <span class="doccomment">//! # use actix::Message;</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Serialize)]</span>
 <span class="doccomment">//! # pub enum AccountStatus {</span>
 <span class="doccomment">//! #     Initialized,</span>
@@ -197,22 +197,22 @@
 <span class="doccomment">//! #        Self::Initialized</span>
 <span class="doccomment">//! #     }</span>
 <span class="doccomment">//! # }</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Default)]</span>
 <span class="doccomment">//! # struct DefaultApp {}</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! # impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">//! #     type Storage = PostgresBackend;</span>
 <span class="doccomment">//! #     type EventResolver = DefaultEventResolver&lt;Self&gt;;</span>
 <span class="doccomment">//! # }</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]</span>
 <span class="doccomment">//! # #[rtype(result = &quot;()&quot;)]</span>
 <span class="doccomment">//! # pub struct AccountOpened {</span>
 <span class="doccomment">//! #     pub account_id: Uuid,</span>
 <span class="doccomment">//! #     pub name: String,</span>
 <span class="doccomment">//! # }</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]</span>
 <span class="doccomment">//! # #[command(event = &quot;AccountOpened&quot;, aggregate = &quot;Account&quot;)]</span>
 <span class="doccomment">//! # pub struct OpenAccount {</span>
@@ -220,7 +220,7 @@
 <span class="doccomment">//! #     pub account_id: Uuid,</span>
 <span class="doccomment">//! #     pub name: String,</span>
 <span class="doccomment">//! # }</span>
-<span class="doccomment">//!</span>
+<span class="doccomment">//! #</span>
 <span class="doccomment">//! #[derive(Default, Aggregate)]</span>
 <span class="doccomment">//! #[aggregate(identity = &quot;account&quot;)]</span>
 <span class="doccomment">//! pub struct Account {</span>
