@@ -1,8 +1,4 @@
 use super::*;
-use crate::DefaultApp;
-use actix::AsyncContext;
-use actix::Context;
-use actix::SystemService;
 use chekov::event::EventHandlerInstance;
 use futures::Future;
 
@@ -23,9 +19,10 @@ impl chekov::event::Handler<AccountOpened> for AccountProjector {
         event: &AccountOpened,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
         let event = event.clone();
-        let pool = self.pool.clone();
+        let pool = self.pool.acquire();
         Box::pin(async move {
-            let _result = Account::create(&event, &pool).await;
+            let p = pool.await.unwrap();
+            let _result = Account::create(&event, p).await;
             println!("Receive account opened on handler!");
 
             Ok(())
@@ -36,9 +33,19 @@ impl chekov::event::Handler<AccountOpened> for AccountProjector {
 impl chekov::event::Handler<AccountUpdated> for AccountProjector {
     fn handle(
         &mut self,
-        _event: &AccountUpdated,
+        event: &AccountUpdated,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>> {
-        // let _result = Account::create(event, &self.pool).await;
-        Box::pin(async move { Ok(()) })
+        let pool = self.pool.acquire();
+        let event = event.clone();
+        Box::pin(async move {
+            match pool.await {
+                Ok(p) => {
+                    let _result = Account::update(&event, p).await;
+                }
+                Err(_) => {}
+            }
+
+            Ok(())
+        })
     }
 }

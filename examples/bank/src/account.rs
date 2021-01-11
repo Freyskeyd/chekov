@@ -1,7 +1,7 @@
 use chekov::prelude::*;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
-use sqlx::{PgPool, Row};
+use sqlx::{Acquire, PgPool, Row};
 use uuid::Uuid;
 
 use crate::commands::*;
@@ -35,29 +35,31 @@ impl std::default::Default for Account {
 }
 
 impl Account {
-    pub async fn find_all(pool: &PgPool) -> Result<Vec<Account>, sqlx::Error> {
+    pub async fn find_all(
+        mut pool: sqlx::pool::PoolConnection<sqlx::Postgres>,
+    ) -> Result<Vec<Account>, sqlx::Error> {
         let mut accounts = vec![];
-        let recs = sqlx::query!(
+        let recs = sqlx::query(
             r#"
                 SELECT account_id
                     FROM accounts
                 ORDER BY account_id
-            "#
+            "#,
         )
-        .fetch_all(pool)
+        .map(|row: PgRow| Account {
+            account_id: Some(row.get(0)),
+            status: AccountStatus::Initialized,
+        })
+        .fetch_all(&mut pool)
         .await?;
-
-        for rec in recs {
-            accounts.push(Account {
-                account_id: Some(rec.account_id),
-                status: AccountStatus::Initialized,
-            });
-        }
 
         Ok(accounts)
     }
 
-    pub async fn create(account: &AccountOpened, pool: &PgPool) -> Result<Account, sqlx::Error> {
+    pub async fn create(
+        account: &AccountOpened,
+        mut pool: sqlx::pool::PoolConnection<sqlx::Postgres>,
+    ) -> Result<Account, sqlx::Error> {
         let mut tx = pool.begin().await?;
         let todo =
             sqlx::query("INSERT INTO accounts (account_id) VALUES ($1) RETURNING account_id")
@@ -68,6 +70,23 @@ impl Account {
                 })
                 .fetch_one(&mut tx)
                 .await?;
+
+        tx.commit().await?;
+        Ok(todo)
+    }
+
+    pub async fn update(
+        account: &AccountUpdated,
+        mut pool: sqlx::pool::PoolConnection<sqlx::Postgres>,
+    ) -> Result<Account, sqlx::Error> {
+        let mut tx = pool.begin().await?;
+        let todo = sqlx::query("SELECT * FROM accounts LIMIT 1")
+            .map(|row: PgRow| Account {
+                account_id: row.get(0),
+                status: AccountStatus::Active,
+            })
+            .fetch_one(&mut tx)
+            .await?;
 
         tx.commit().await?;
         Ok(todo)

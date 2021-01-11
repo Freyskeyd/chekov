@@ -109,15 +109,21 @@ impl Storage for PostgresBackend {
         Box::pin(
             async move {
                 match pool.await {
-                    Ok(mut conn) => {
-                        match sql::read_stream(&mut conn, &stream_uuid, version, limit).await {
-                            Err(_) => Err(StorageError::StreamAlreadyExists),
-                            Ok(s) => {
-                                info!("Read stream {} {}", stream_uuid, s.len());
-                                Ok(s)
+                    Ok(mut conn) => match sql::stream_info(&mut conn, &stream_uuid).await {
+                        // TODO Remove this hack, should be nicely handled by the client
+                        Err(_) => Ok(vec![]),
+                        Ok(stream) => {
+                            match sql::read_stream(&mut conn, stream.stream_id, version, limit)
+                                .await
+                            {
+                                Err(_) => Err(StorageError::StreamAlreadyExists),
+                                Ok(s) => {
+                                    info!("Read stream {} {}", stream_uuid, s.len());
+                                    Ok(s)
+                                }
                             }
                         }
-                    }
+                    },
                     Err(..) => Err(StorageError::Unknown),
                 }
             }

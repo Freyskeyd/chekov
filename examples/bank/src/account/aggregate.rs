@@ -1,7 +1,5 @@
 use super::*;
 use crate::DefaultApp;
-use actix::prelude::*;
-use actix::Context;
 
 chekov::macros::apply_event!(DefaultApp, Account, AccountUpdated, apply_account_updated);
 chekov::macros::apply_event!(DefaultApp, Account, AccountDeleted, apply_account_deleted);

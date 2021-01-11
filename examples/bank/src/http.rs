@@ -22,7 +22,7 @@ impl Responder for Account {
 
 #[get("/accounts")]
 pub async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
-    let result = Account::find_all(db_pool.get_ref()).await;
+    let result = Account::find_all(db_pool.acquire().await.unwrap()).await;
     match result {
         Ok(todos) => HttpResponse::Ok().json(todos),
         _ => HttpResponse::BadRequest().body("Error trying to read all todos from database"),
@@ -35,16 +35,7 @@ pub async fn find(_id: web::Path<i32>) -> impl Responder {
 
 #[post("/accounts")]
 pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
-    let _ = Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await;
-    match Router::<DefaultApp>::dispatch(
-        UpdateAccount {
-            account_id: account.account_id,
-            name: account.name.to_string(),
-        },
-        CommandMetadatas::default(),
-    )
-    .await
-    {
+    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
         Ok(res) => HttpResponse::Ok().json(res), // <- send response
         Err(e) => HttpResponse::Ok().json(e),    // <- send response
     }

@@ -25,6 +25,7 @@ where
         Self::from_registry().send(ExecuteReader(reader)).await
     }
 
+    #[allow(dead_code)]
     pub async fn stream_info(
         stream_uuid: &str,
     ) -> Result<Result<event_store::prelude::Stream, EventStoreError>, MailboxError> {

@@ -1,6 +1,7 @@
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::stream::Stream;
+use log::trace;
 use sqlx::postgres::PgRow;
 use sqlx::Row;
 use std::convert::TryInto;
@@ -8,12 +9,13 @@ use uuid::Uuid;
 
 pub async fn read_stream(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
-    stream_uuid: &str,
+    stream_id: i64,
     version: usize,
     limit: usize,
 ) -> Result<Vec<RecordedEvent>, sqlx::Error> {
     let version: i64 = version.try_into().unwrap();
     let limit: i64 = limit.try_into().unwrap();
+    trace!("Version {}, Limit: {}", version, limit);
     #[allow(clippy::used_underscore_binding)]
     sqlx::query_as!(
         RecordedEvent,
@@ -29,15 +31,15 @@ pub async fn read_stream(
         events.metadata as "metadata: String",
         events.created_at
     FROM
-	events
-	inner JOIN stream_events ON stream_events.event_id = events.event_id
+	stream_events
 	inner JOIN streams ON streams.stream_id = stream_events.original_stream_id
+	inner JOIN events ON stream_events.event_id = events.event_id
     WHERE
-	streams.stream_uuid = $1 AND stream_events.stream_version >=$2
+	stream_events.stream_id = $1 AND stream_events.stream_version >=$2
 	ORDER BY stream_events.stream_version ASC
         LIMIT $3;
          "#,
-        &stream_uuid,
+        &stream_id,
         &version,
         &limit,
     )

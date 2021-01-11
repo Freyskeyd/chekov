@@ -100,7 +100,10 @@ impl Reader {
                 correlation_id: self.correlation_id,
                 span: tracing::span!(parent: &self.span, tracing::Level::TRACE, "ReadStreamRequest", correlation_id = ?self.correlation_id),
                 stream: self.stream,
-                version: 0,
+                version: match self.read_version {
+                    ReadVersion::Origin => 0,
+                    ReadVersion::Version(version) => version as usize
+                },
                 limit: self.limit,
             })
             .await?

@@ -44,6 +44,9 @@ async fn main() -> std::io::Result<()> {
 
     // Configure the storage (PG, InMemory,...)
     DefaultApp::with_default()
+        .event_handler(account::AccountProjector {
+            pool: db_pool.clone(),
+        })
         .storage(PostgresBackend::with_url(
             "postgresql://postgres:postgres@localhost/event_store_bank",
         ))
@@ -54,7 +57,6 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            // .data(chekov.clone())
             .data(db_pool.clone())
             .data(web::JsonConfig::default().limit(4096))
             .configure(init::<PostgresBackend>)

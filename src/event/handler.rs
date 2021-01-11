@@ -82,6 +82,7 @@ where
 {
     type Result = ();
 
+    #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, ctx))]
     fn handle(&mut self, msg: EventEnvelope<T>, ctx: &mut Self::Context) -> Self::Result {
         let fut = async move {
             let _ = with_ctx(|actor: &mut Self, _| actor._handler.handle(&msg.event)).await;

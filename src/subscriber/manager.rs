@@ -96,7 +96,9 @@ where
 {
     type Result = ();
 
+    #[tracing::instrument(name = "SubscriberManager", skip(self, msg, _ctx), fields(app = %A::get_name()))]
     fn handle(&mut self, msg: EventEnvelope<T>, _ctx: &mut Self::Context) -> Self::Result {
+        trace!("{:?}", msg.meta);
         if let Some(subs) = self.sub_map.get_mut(&msg.meta.stream_name) {
             subs.iter()
                 .filter_map(|(id, addr)| {
@@ -142,7 +144,14 @@ where
             .await
             .unwrap()
             {
-                Ok(events) => events,
+                Ok(events) => events
+                    .into_iter()
+                    .map(|mut event| {
+                        // TODO big hack to have a working $all stream
+                        event.stream_uuid = subscription.stream_uuid.to_string();
+                        event
+                    })
+                    .collect(),
                 Err(_) => panic!(""),
             };
 
