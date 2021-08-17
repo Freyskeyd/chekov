@@ -3,10 +3,17 @@
 mod builder;
 mod internal;
 
+use std::{
+    any::TypeId,
+    collections::{BTreeMap, HashMap},
+    convert::{TryFrom, TryInto},
+    marker::PhantomData,
+};
+
 pub use builder::ApplicationBuilder;
 pub(crate) use internal::InternalApplication;
 
-use crate::{EventResolver, SubscriberManager};
+use crate::{Event, EventResolver, SubscriberManager};
 
 /// Application are high order logical seperator.
 ///
@@ -55,16 +62,18 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
     }
 }
 
+#[derive(Default)]
 pub struct DefaultEventResolver<A: Application> {
-    pub mapping: Vec<(
-        Vec<&'static str>,
+    tty_str: HashMap<&'static str, TypeId>,
+    resolvers: HashMap<
+        TypeId,
         Box<
             dyn Fn(
                 event_store::prelude::RecordedEvent,
                 actix::Addr<SubscriberManager<A>>,
             ) -> std::result::Result<(), ()>,
         >,
-    )>,
+    >,
 }
 
 impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
@@ -74,11 +83,28 @@ impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
         event_name: &str,
         event: event_store::prelude::RecordedEvent,
     ) {
-        self.mapping
-            .iter()
-            .filter(|x| x.0.contains(&event_name))
-            .for_each(|f| {
-                let _ = f.1(event.clone(), notify.clone());
-            });
+        if let Some(ty) = self.tty_str.get(event_name) {
+            if let Some(formatter) = self.resolvers.get(ty) {
+                let _ = (formatter)(event, notify);
+            }
+        }
+    }
+}
+
+impl<A: Application> DefaultEventResolver<A> {
+    pub fn register<'de, E: Event + Clone + serde::Deserialize<'de> + 'static>(mut self) -> Self {
+        let (type_string, resolver): (Vec<&'static str>, _) = E::register();
+
+        let tty = TypeId::of::<E>();
+
+        if let Some(_) = self.resolvers.insert(tty, resolver) {
+            panic!("Resolver already defined for this type");
+        }
+
+        type_string.into_iter().for_each(|s| {
+            self.tty_str.insert(s, tty.clone());
+        });
+
+        self
     }
 }

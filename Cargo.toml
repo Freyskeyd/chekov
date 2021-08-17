@@ -20,7 +20,7 @@ categories = []
 authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 
 [dependencies]
-event_store = { version = "0.1.0", path = "event_store" }
+event_store = { path = "event_store" }
 chekov_macros = { version = "0.1.0", path = "chekov_macros" }
 fnv = "1.0.3"
 chrono = "0.4"

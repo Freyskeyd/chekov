@@ -18,12 +18,12 @@ pub trait Handler<E: event_store::Event> {
 }
 
 /// Define an Event which can be produced and consumed
-pub trait Event: Clone + event_store::prelude::Event {
+pub trait Event: event_store::prelude::Event {
     fn lazy_deserialize<'de, A: Application>(
     ) -> Box<dyn Fn(RecordedEvent, actix::Addr<SubscriberManager<A>>) -> Result<(), ()>>
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static,
+        Self: 'static + Clone,
     {
         Box::new(
             |event: RecordedEvent, resolver: actix::Addr<SubscriberManager<A>>| -> Result<(), ()> {
@@ -51,7 +51,7 @@ pub trait Event: Clone + event_store::prelude::Event {
     )
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static,
+        Self: 'static + Clone,
     {
         (Self::all_event_types(), Self::lazy_deserialize())
     }

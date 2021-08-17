@@ -92,7 +92,7 @@ impl<A: Application, M: crate::event::handler::BrokerMsg + std::fmt::Debug>
 impl<A, T> actix::Handler<EventEnvelope<T>> for SubscriberManager<A>
 where
     A: Application,
-    T: crate::event::Event + 'static,
+    T: crate::event::Event + Clone + 'static,
 {
     type Result = ();
 

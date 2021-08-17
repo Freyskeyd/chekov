@@ -7,7 +7,6 @@ mod account;
 mod commands;
 mod events;
 mod http;
-use chekov::event::Event;
 
 use events::*;
 
@@ -29,9 +28,12 @@ impl chekov::Application for DefaultApp {
 
 #[allow(dead_code)]
 fn configure_events<A: chekov::Application>() -> DefaultEventResolver<A> {
-    DefaultEventResolver {
-        mapping: vec![AccountOpened::register(), AccountUpdated::register()],
-    }
+    DefaultEventResolver::default()
+        .register::<AccountOpened>()
+        .register::<AccountUpdated>()
+        .register::<AccountDeleted>()
+        .register::<MoneyMovementEvent>()
+        .register::<UserRegistered>()
 }
 
 #[actix_rt::main]
