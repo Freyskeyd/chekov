@@ -244,7 +244,7 @@
         <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">RecordedEvents</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {}
     }
 
-    <span class="attribute">#[<span class="ident">actix_rt::test</span>]</span>
+    <span class="attribute">#[<span class="ident">actix::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_subscribe</span>() {
         <span class="kw">let</span> <span class="ident">sup</span> <span class="op">=</span> <span class="ident">SubscriptionsSupervisor</span>::<span class="op">&lt;</span><span class="ident">InMemoryBackend</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
         <span class="kw">let</span> <span class="ident">dummy</span> <span class="op">=</span> <span class="ident">Dummy</span> {}.<span class="ident">start</span>();
