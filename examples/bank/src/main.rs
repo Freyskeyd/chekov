@@ -36,7 +36,7 @@ fn configure_events<A: chekov::Application>() -> DefaultEventResolver<A> {
         .register::<UserRegistered>()
 }
 
-#[actix_rt::main]
+#[actix::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
 

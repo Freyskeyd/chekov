@@ -111,7 +111,7 @@ mod test {
         fn handle(&mut self, _: RecordedEvents, _: &mut Self::Context) -> Self::Result {}
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn can_subscribe() {
         let sup = SubscriptionsSupervisor::<InMemoryBackend>::from_registry();
         let dummy = Dummy {}.start();

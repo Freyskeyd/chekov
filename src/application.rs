@@ -3,12 +3,7 @@
 mod builder;
 mod internal;
 
-use std::{
-    any::TypeId,
-    collections::{BTreeMap, HashMap},
-    convert::{TryFrom, TryInto},
-    marker::PhantomData,
-};
+use std::{any::TypeId, collections::HashMap};
 
 pub use builder::ApplicationBuilder;
 pub(crate) use internal::InternalApplication;

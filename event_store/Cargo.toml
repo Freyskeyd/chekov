@@ -19,7 +19,8 @@ log = {version = "0.4"}
 actix = "*"
 sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
 chrono = "0.4"
-actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
+actix-interop = { git = "https://github.com/Freyskeyd/actix-interop" }
+# actix-interop = "0.2"
 
 tracing = "0.1"
 tracing-futures = { version = "*" }

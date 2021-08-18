@@ -32,7 +32,8 @@ serde_json = "*"
 actix = "*"
 futures = "*"
 log = {version = "0.4"}
-actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
+# actix-interop = { git = "https://github.com/Diggsey/actix-interop" }
+actix-interop = { git = "https://github.com/Freyskeyd/actix-interop" }
 
 
 tracing = "0.1"

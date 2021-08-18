@@ -1,7 +1,7 @@
 use super::{EventNotification, Listener, Subscribe};
 use crate::application::InternalApplication;
 use crate::{message::EventEnvelope, Application};
-use actix::{ActorFuture, Addr, AsyncContext, Context, Recipient, WrapFuture};
+use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use actix_interop::FutureInterop;
 use fnv::FnvHasher;
 use std::any::{Any, TypeId};

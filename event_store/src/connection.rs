@@ -176,7 +176,7 @@ mod test {
         let _conn: Connection<InMemoryBackend> = Connection::make(storage);
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn asking_for_stream_info() {
         let (connection, stream) = init_with_stream("stream_name").await;
 
@@ -192,7 +192,7 @@ mod test {
         assert_eq!(result.unwrap().into_owned(), stream);
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn creating_stream() {
         let storage = InMemoryBackend::default();
 
@@ -211,7 +211,7 @@ mod test {
         assert!(result.is_ok());
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn appending_to_stream() {
         let (connection, _) = init_with_stream("stream_name").await;
 
@@ -231,7 +231,7 @@ mod test {
         assert_eq!(result.unwrap().len(), 1);
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn appending_to_stream_failed() {
         let (connection, _) = init_with_stream("stream_name").await;
 

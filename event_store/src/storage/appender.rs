@@ -42,7 +42,7 @@ use uuid::Uuid;
 /// #   }
 /// # }
 /// #
-/// # #[actix_rt::main]
+/// # #[actix::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let es = EventStore::builder()
 /// #   .storage(InMemoryBackend::default())
@@ -331,7 +331,7 @@ mod test {
         assert_eq!(appender.expected_version, ExpectedVersion::AnyVersion);
     }
 
-    #[actix_rt::test]
+    #[actix::test]
     async fn that_an_appender_can_be_executed() -> Result<(), EventStoreError> {
         let es = EventStore::builder()
             .storage(InMemoryBackend::default())
