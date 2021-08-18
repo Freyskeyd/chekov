@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/event/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/event/handler.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>handler.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../chekov/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../chekov/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -115,14 +114,15 @@
 <span id="112">112</span>
 <span id="113">113</span>
 <span id="114">114</span>
-</pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">message</span>::<span class="ident">EventEnvelope</span>;
+<span id="115">115</span>
+</pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::EventEnvelope</span>;
 <span class="comment">// use crate::Chekov;</span>
-<span class="kw">use</span> <span class="ident">actix</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">actix_interop</span>::{<span class="ident">with_ctx</span>, <span class="ident">FutureInterop</span>};
-<span class="kw">use</span> <span class="ident">tracing</span>::<span class="ident">trace</span>;
+<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Application</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventHandlerBuilder</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">handler</span>: <span class="ident">E</span>,
@@ -136,7 +136,7 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">handler</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">handler</span>,
-            <span class="ident">name</span>: <span class="ident">std</span>::<span class="ident">any</span>::<span class="ident">type_name</span>::<span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>().<span class="ident">into</span>(),
+            <span class="ident">name</span>: <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>().<span class="ident">into</span>(),
         }
     }
 
@@ -146,8 +146,8 @@
         <span class="self">self</span>
     }
 
-    <span class="kw">pub</span> <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">register</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="kw">crate</span>::<span class="ident">Application</span><span class="op">&gt;</span>(<span class="self">self</span>) {
-        <span class="ident">EventHandlerInstance</span>::<span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span>::<span class="ident">from_builder</span>(<span class="self">self</span>);
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">register</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="kw">crate</span><span class="ident">::Application</span><span class="op">&gt;</span>(<span class="self">self</span>) {
+        <span class="ident">EventHandlerInstance</span>::<span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span><span class="ident">::from_builder</span>(<span class="self">self</span>);
     }
 }
 
@@ -155,27 +155,27 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span> <span class="ident">BrokerMsg</span> <span class="kw">for</span> <span class="ident">M</span> <span class="kw">where</span> <span class="ident">M</span>: <span class="ident">Message</span><span class="op">&lt;</span><span class="prelude-ty">Result</span> <span class="op">=</span> ()<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {}
 
 <span class="doccomment">/// Define a struct as an EventHandler</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventHandler</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventHandler</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="kw">fn</span> <span class="ident">builder</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EventHandlerBuilder</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="ident">EventHandlerBuilder</span>::<span class="ident">new</span>(<span class="self">self</span>)
+        <span class="ident">EventHandlerBuilder::new</span>(<span class="self">self</span>)
     }
-    <span class="kw">fn</span> <span class="ident">started</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix</span>::<span class="ident">Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>)
+    <span class="kw">fn</span> <span class="ident">started</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>)
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">EventHandler</span>,
     {
     }
-    <span class="kw">fn</span> <span class="ident">listen</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">M</span>: <span class="ident">BrokerMsg</span> <span class="op">+</span> <span class="ident">event_store</span>::<span class="ident">Event</span> <span class="op">+</span> <span class="ident">std</span>::<span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span>(
+    <span class="kw">fn</span> <span class="ident">listen</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">M</span>: <span class="ident">BrokerMsg</span> <span class="op">+</span> <span class="ident">event_store::Event</span> <span class="op">+</span> <span class="ident">std::fmt::Debug</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix</span>::<span class="ident">Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) <span class="kw">where</span>
-        <span class="self">Self</span>: <span class="kw">crate</span>::<span class="ident">event</span>::<span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>,
+        <span class="self">Self</span>: <span class="kw">crate</span><span class="ident">::event::Handler</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">subscriber</span>::<span class="ident">SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>::<span class="ident">from_registry</span>();
+        <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
         <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span><span class="op">&gt;</span>();
         <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(
             <span class="string">&quot;$all&quot;</span>.<span class="ident">into</span>(),
             <span class="ident">recipient</span>,
-            <span class="ident">std</span>::<span class="ident">any</span>::<span class="ident">type_name</span>::<span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>().<span class="ident">to_string</span>(),
+            <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>().<span class="ident">to_string</span>(),
         ));
     }
 }
@@ -187,22 +187,23 @@
 
 <span class="doccomment">/// Deals with the lifetime of a particular EventHandler</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> {
-    <span class="ident">_phantom</span>: <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
+    <span class="ident">_phantom</span>: <span class="ident">std::marker::PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_handler</span>: <span class="ident">E</span>,
     <span class="comment">// pub(crate) _subscribtion: Addr&lt;Subscriber&gt;,</span>
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_name</span>: <span class="ident">String</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span>, <span class="ident">T</span>: <span class="ident">event_store</span>::<span class="ident">Event</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>
-    ::<span class="ident">actix</span>::<span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span>, <span class="ident">T</span>: <span class="ident">event_store::Event</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>
+    <span class="ident">::actix::Handler</span><span class="op">&lt;</span><span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span>
 <span class="kw">where</span>
-    <span class="ident">E</span>: <span class="kw">crate</span>::<span class="ident">event</span>::<span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    <span class="ident">E</span>: <span class="kw">crate</span><span class="ident">::event::Handler</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
 {
     <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> ();
 
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="prelude-ty">Result</span> {
-        <span class="kw">let</span> <span class="ident">fut</span> <span class="op">=</span> <span class="ident">async</span> <span class="kw">move</span> {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">with_ctx</span>(<span class="op">|</span><span class="ident">actor</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="kw">_</span><span class="op">|</span> <span class="ident">actor</span>.<span class="ident">_handler</span>.<span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">event</span>)).<span class="ident">await</span>;
+    <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventHandlerInstance&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">msg</span>, <span class="ident">ctx</span>))]</span>
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
+        <span class="kw">let</span> <span class="ident">fut</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
+            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">with_ctx</span>(<span class="op">|</span><span class="ident">actor</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>, <span class="kw">_</span><span class="op">|</span> <span class="ident">actor</span>.<span class="ident">_handler</span>.<span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">event</span>)).<span class="kw">await</span>;
         };
 
         <span class="ident">ctx</span>.<span class="ident">spawn</span>(<span class="ident">fut</span>.<span class="ident">interop_actor</span>(<span class="self">self</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> ()));
@@ -210,25 +211,25 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-    <span class="attribute">#[<span class="ident">tracing</span>::<span class="ident">instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventHandlerInstance&quot;</span>, <span class="ident">skip</span>(<span class="ident">builder</span>))]</span>
+    <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventHandlerInstance&quot;</span>, <span class="ident">skip</span>(<span class="ident">builder</span>))]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_builder</span>(<span class="ident">builder</span>: <span class="ident">EventHandlerBuilder</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Addr</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="self">Self</span>::<span class="ident">create</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">_ctx</span><span class="op">|</span> {
-            <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;Register a new EventHandler instance with {}&quot;</span>, <span class="ident">builder</span>.<span class="ident">name</span>);
+        <span class="self">Self</span><span class="ident">::create</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">_ctx</span><span class="op">|</span> {
+            <span class="macro">trace!</span>(<span class="string">&quot;Register a new EventHandler instance with {}&quot;</span>, <span class="ident">builder</span>.<span class="ident">name</span>);
 
             <span class="ident">EventHandlerInstance</span> {
-                <span class="ident">_phantom</span>: <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>,
+                <span class="ident">_phantom</span>: <span class="ident">std::marker::PhantomData</span>,
                 <span class="ident">_handler</span>: <span class="ident">builder</span>.<span class="ident">handler</span>,
                 <span class="ident">_name</span>: <span class="ident">builder</span>.<span class="ident">name</span>,
             }
         })
     }
 }
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> <span class="ident">actix</span>::<span class="ident">Actor</span> <span class="kw">for</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> <span class="ident">actix::Actor</span> <span class="kw">for</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Context</span> <span class="op">=</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">Context</span>) {
+    <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {
         <span class="self">self</span>.<span class="ident">_handler</span>.<span class="ident">started</span>(<span class="ident">ctx</span>);
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "chekov";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="chekov" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script></body></html>

@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["chekov","chekov_macros","event_store"];

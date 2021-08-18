@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["event_store"] = [{"text":"impl&lt;S:&nbsp;Storage&gt; Handler&lt;StreamInfo&gt; for EventStore&lt;S&gt;","synthetic":false,"types":[]}];
+implementors["event_store"] = [{"text":"impl&lt;S:&nbsp;<a class=\"trait\" href=\"event_store/prelude/trait.Storage.html\" title=\"trait event_store::prelude::Storage\">Storage</a>&gt; Handler&lt;<a class=\"struct\" href=\"event_store/prelude/struct.StreamInfo.html\" title=\"struct event_store::prelude::StreamInfo\">StreamInfo</a>&gt; for <a class=\"struct\" href=\"event_store/struct.EventStore.html\" title=\"struct event_store::EventStore\">EventStore</a>&lt;S&gt;","synthetic":false,"types":["event_store::EventStore"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
