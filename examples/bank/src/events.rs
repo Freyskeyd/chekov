@@ -8,22 +8,23 @@ pub struct AccountDeleted {
     pub account_id: Uuid,
 }
 
-#[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
 #[rtype(result = "()")]
 pub struct AccountOpened {
     pub account_id: Uuid,
     pub name: String,
 }
 
-#[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
 #[rtype(result = "()")]
 pub enum AccountUpdated {
+    NameChanged(Uuid, String, String),
     Deleted,
     Forced { why: String },
     Disabled(String),
 }
 
-#[derive(Clone, chekov::macros::Event, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
 #[event(event_type = "Elixir.Conduit.Accounts.Events.UserRegistered")]
 pub struct UserRegistered {
     pub email: String,
@@ -32,7 +33,7 @@ pub struct UserRegistered {
     pub username: String,
 }
 
-#[derive(Clone, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
 #[event(event_type = "MoneyMovement")]
 pub enum MoneyMovementEvent {
     Deposited {

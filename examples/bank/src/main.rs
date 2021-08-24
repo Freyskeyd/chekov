@@ -1,3 +1,5 @@
+use std::env;
+
 use actix_web::{
     middleware,
     web::{self, Data},
@@ -17,7 +19,7 @@ use events::*;
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(http::find_all);
     cfg.service(http::find);
-    cfg.service(http::create);
+    // cfg.service(http::create);
     cfg.service(http::update);
     cfg.service(http::delete);
 }
@@ -67,7 +69,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::JsonConfig::default().limit(4096))
             .configure(init)
     })
-    .bind("127.0.0.1:8080")?
+    .bind(env::var("RUNTIME_ENDPOINT").expect("Must define the RUNTIME_ENDPOINT"))?
     .run()
     .await?;
 

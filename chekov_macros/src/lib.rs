@@ -79,6 +79,7 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
 
     let app = apply.app;
     let event = apply.event;
+    let event_str = event.to_string();
     let apply_to = apply.apply_to;
     let closure = apply.closure;
 
@@ -86,14 +87,34 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
         &format!("{}EventRegistration", apply_to.to_string()),
         proc_macro2::Span::call_site(),
     );
+
+    let aggregate_event_resolver = proc_macro2::Ident::new(
+        &format!("{}EventResolverRegistry", apply_to.to_string()),
+        proc_macro2::Span::call_site(),
+    );
+
     let toks = quote! {
 
         inventory::submit! {
             use actix::AsyncContext;
             use actix::SystemService;
             #registry { resolver: Box::new(|stream: &str, ctx: &actix::Context<AggregateInstance<#apply_to>>|{
+                println!("Registering {:?}", #event_str);
                 chekov::SubscriberManager::<#app>::from_registry().do_send(Subscribe(stream.into(), ctx.address().recipient::<chekov::message::EventEnvelope<#event>>(), stream.into()));
             })}
+        }
+
+        inventory::submit! {
+            #aggregate_event_resolver {
+                name: #event_str,
+                deserializer: |event: event_store::prelude::RecordedEvent, ctx: actix::Addr<chekov::prelude::AggregateInstance<#apply_to>>| {
+                    use chekov::Event;
+                    let e = #event::into_envelope(event).unwrap();
+
+                    ctx.try_send(e);
+                    Ok(())
+                }
+            }
         }
 
         impl chekov::prelude::EventApplier<#event> for #apply_to {

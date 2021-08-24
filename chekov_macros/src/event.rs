@@ -123,6 +123,14 @@ pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStr
         }
 
         impl chekov::event::Event for #struct_name {}
+
+        impl chekov::event::GenericEvent for #struct_name {
+
+            fn notify<Q: chekov::event::Querializer>(&self, querializer: Q) {
+
+            }
+        }
+
         impl event_store::prelude::Event for #struct_name {
             fn event_type(&self) -> &'static str {
                 #event_type

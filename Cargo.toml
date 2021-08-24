@@ -43,3 +43,4 @@ tracing-futures = { version = "*" }
 
 inventory = "*"
 lazy_static = "1.4.0"
+typetag = "0.1"

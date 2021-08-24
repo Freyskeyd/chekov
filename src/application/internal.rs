@@ -34,11 +34,43 @@ where
             let _ = Self::from_registry().send(Resolve(event)).await;
         }
     }
+    // pub async fn resolve_many_events(events: Vec<RecordedEvent>) -> Vec<Box<dyn ErasedGeneric>> {
+    //     Self::from_registry()
+    //         .send(ResolveEvents(events))
+    //         .await
+    //         .unwrap()
+    // }
 }
 
 #[derive(Message)]
 #[rtype("()")]
 struct Resolve(RecordedEvent);
+
+// #[derive(Message)]
+// #[rtype("Vec<Box<dyn ErasedGeneric>>")]
+// struct ResolveEvents(Vec<RecordedEvent>);
+
+// impl<A> actix::Handler<ResolveEvents> for InternalApplication<A>
+// where
+//     A: Application,
+// {
+//     type Result = Vec<Box<dyn ErasedGeneric>>;
+
+//     fn handle(&mut self, msg: ResolveEvents, _ctx: &mut Self::Context) -> Self::Result {
+//         msg.0
+//             .into_iter()
+//             .filter_map(|event| {
+//                 self.event_resolver
+//                     .resolve_event(&event.event_type, event.clone())
+//             })
+//             .collect()
+//         // self.event_resolver.resolve_even(
+//         //     SubscriberManager::<A>::from_registry(),
+//         //     &msg.0.event_type.clone(),
+//         //     msg.0,
+//         // )
+//     }
+// }
 
 impl<A> actix::Handler<Resolve> for InternalApplication<A>
 where

@@ -104,6 +104,8 @@
 mod instance;
 mod registry;
 
+use std::collections::HashMap;
+
 pub use instance::AggregateInstance;
 
 #[doc(hidden)]
@@ -112,6 +114,14 @@ pub use registry::AggregateInstanceRegistry;
 #[doc(hidden)]
 pub trait EventRegistryItem<A: Aggregate> {
     fn get_resolver(&self) -> &dyn Fn(&str, &actix::Context<AggregateInstance<A>>);
+}
+
+#[doc(hidden)]
+pub trait EventResolverItem<A: Aggregate> {
+    fn get_resolver(
+        &self,
+    ) -> fn(event_store::prelude::RecordedEvent, actix::Addr<AggregateInstance<A>>) -> Result<(), ()>;
+    fn get_name(&self) -> &'static str;
 }
 
 /// Define an Aggregate
@@ -134,6 +144,9 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     #[doc(hidden)]
     type EventRegistry: inventory::Collect + EventRegistryItem<Self>;
 
+    #[doc(hidden)]
+    type EventResolver: inventory::Collect + EventResolverItem<Self>;
+
     /// Define the identity of this kind of Aggregate.
     ///
     /// The identity is concatenated to the stream_uuid to create the stream_name of this
@@ -143,9 +156,27 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     fn identity() -> &'static str;
 
     #[doc(hidden)]
-    fn on_start(&self, stream: &str, ctx: &actix::Context<AggregateInstance<Self>>) {
+    fn on_start(
+        &self,
+        stream: &str,
+        ctx: &actix::Context<AggregateInstance<Self>>,
+    ) -> HashMap<
+        &'static str,
+        fn(
+            event_store::prelude::RecordedEvent,
+            actix::Addr<AggregateInstance<Self>>,
+        ) -> std::result::Result<(), ()>,
+    > {
         for flag in inventory::iter::<Self::EventRegistry> {
             (flag.get_resolver())(stream, ctx);
         }
+
+        let mut resolvers = HashMap::new();
+
+        for flag in inventory::iter::<Self::EventResolver> {
+            resolvers.insert(flag.get_name(), flag.get_resolver());
+        }
+
+        resolvers
     }
 }

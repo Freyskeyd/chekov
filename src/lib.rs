@@ -35,6 +35,8 @@ pub mod prelude;
 mod router;
 mod subscriber;
 
+pub use lazy_static::lazy_static;
+
 use ::event_store::prelude::RecordedEvent;
 #[doc(inline)]
 pub use aggregate::Aggregate;
@@ -62,4 +64,9 @@ pub trait EventResolver<A: Application> {
         event_name: &str,
         event: RecordedEvent,
     );
+    // fn resolve_event(
+    //     &self,
+    //     event_name: &str,
+    //     event: RecordedEvent,
+    // ) -> Option<Box<dyn ErasedGeneric>>;
 }

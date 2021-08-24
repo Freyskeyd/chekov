@@ -6,9 +6,13 @@ mod internal;
 use std::{any::TypeId, collections::HashMap};
 
 pub use builder::ApplicationBuilder;
+use event_store::prelude::RecordedEvent;
 pub(crate) use internal::InternalApplication;
 
-use crate::{event::BoxedResolver, Event, EventResolver, SubscriberManager};
+use crate::{
+    event::{BoxedDeserializer, BoxedResolver, GenericEvent},
+    Event, EventResolver, SubscriberManager,
+};
 
 /// Application are high order logical seperator.
 ///
@@ -61,6 +65,7 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
 pub struct DefaultEventResolver<A: Application> {
     tty_str: HashMap<&'static str, TypeId>,
     resolvers: HashMap<TypeId, BoxedResolver<A>>,
+    second_resolvers: HashMap<TypeId, BoxedDeserializer>,
 }
 
 impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
@@ -76,10 +81,26 @@ impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
             }
         }
     }
+
+    //     fn resolve_event(
+    //         &self,
+    //         event_name: &str,
+    //         event: RecordedEvent,
+    //     ) -> Option<Box<dyn ErasedGeneric>> {
+    //         if let Some(ty) = self.tty_str.get(event_name) {
+    //             if let Some(resolver) = self.second_resolvers.get(ty) {
+    //                 return Some((resolver)(event));
+    //             }
+    //         }
+
+    //         return None;
+    //     }
 }
 
 impl<A: Application> DefaultEventResolver<A> {
-    pub fn register<'de, E: Event + Clone + serde::Deserialize<'de> + 'static>(mut self) -> Self {
+    pub fn register<'de, E: Event + GenericEvent + Clone + serde::Deserialize<'de> + 'static>(
+        mut self,
+    ) -> Self {
         let (type_string, resolver): (Vec<&'static str>, _) = E::register();
 
         let tty = TypeId::of::<E>();
@@ -92,6 +113,7 @@ impl<A: Application> DefaultEventResolver<A> {
             self.tty_str.insert(s, tty);
         });
 
+        self.second_resolvers.insert(tty, E::into_erased());
         self
     }
 }

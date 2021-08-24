@@ -18,7 +18,7 @@ futures = "0.3"
 log = {version = "0.4"}
 actix = "0.12"
 sqlx = {git = "https://github.com/Freyskeyd/sqlx", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
-chrono = "0.4"
+chrono = {version = "0.4", features = ["serde"]}
 actix-interop = { git = "https://github.com/Freyskeyd/actix-interop" }
 # actix-interop = "0.2"
 

@@ -5,6 +5,7 @@ use actix_web::web;
 use actix_web::{delete, get, post, put};
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use sqlx::PgPool;
+use uuid::Uuid;
 
 impl Responder for Account {
     fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
@@ -25,21 +26,35 @@ pub async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
     }
 }
 #[get("/accounts/{id}")]
-pub async fn find(_id: web::Path<i32>) -> impl Responder {
+pub async fn find(_id: web::Path<Uuid>) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
 }
 
-#[post("/accounts")]
-pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
-    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
-        Ok(res) => HttpResponse::Ok().json(res), // <- send response
-        Err(e) => HttpResponse::Ok().json(e),    // <- send response
-    }
-}
+// #[post("/accounts")]
+// pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
+//     match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
+//         Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
+//         Err(e) => HttpResponse::Ok().json(e),            // <- send response
+//     }
+// }
 
 #[put("/accounts/{id}")]
-pub async fn update(_id: web::Path<i32>, _account: web::Json<OpenAccount>) -> impl Responder {
-    HttpResponse::InternalServerError().body("Unimplemented")
+pub async fn update(
+    account_id: web::Path<Uuid>,
+    account: web::Json<OpenAccount>,
+) -> impl Responder {
+    match Router::<DefaultApp>::dispatch(
+        UpdateAccount {
+            account_id: account_id.into_inner(),
+            name: account.name.to_string(),
+        },
+        CommandMetadatas::default(),
+    )
+    .await
+    {
+        Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
+        Err(e) => HttpResponse::Ok().json(e),            // <- send response
+    }
 }
 
 #[delete("/accounts/{id}")]

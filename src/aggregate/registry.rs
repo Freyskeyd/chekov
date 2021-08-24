@@ -1,3 +1,4 @@
+use crate::application::InternalApplication;
 use crate::Application;
 use crate::{
     aggregate::AggregateInstance, event::EventApplier, Aggregate, Command, CommandExecutorError,
@@ -5,6 +6,7 @@ use crate::{
 };
 use actix::prelude::{Actor, Addr, AsyncContext};
 use event_store::prelude::ReadVersion;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use tracing::trace;
 use tracing::Instrument;
@@ -67,17 +69,17 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                         let identity = id.clone();
                         let addr = AggregateInstance::create(move |ctx_agg| {
                             trace!("Creating aggregate instance");
-                            let _ctx_address = ctx_agg.address();
+                            let ctx_address = ctx_agg.address();
                             let mut inner = C::Executor::default();
-                            for event in events {
-                                let _res = match C::Event::try_from(event.clone()) {
-                                    Ok(parsed_event) => inner.apply(&parsed_event).map_err(|_| ()),
-                                    _ => Err(()),
-                                };
-                            }
 
-                            inner.on_start(&identity, ctx_agg);
-                            AggregateInstance { inner }
+                            let resolvers = inner.on_start(&identity, ctx_agg);
+                            let mut instance = AggregateInstance { inner, resolvers };
+
+                            for event in events {
+                                trace!("resolving and appling {:?}", event);
+                                instance.resolve_and_apply(event, ctx_address.clone());
+                            }
+                            instance
                         });
 
                         with_ctx(|actor: &mut Self, _| {

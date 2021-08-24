@@ -30,6 +30,11 @@ pub fn generate_aggregate(
         proc_macro2::Span::call_site(),
     );
 
+    let aggregate_event_resolver = proc_macro2::Ident::new(
+        &format!("{}EventResolverRegistry", struct_name.to_string()),
+        proc_macro2::Span::call_site(),
+    );
+
     Ok(quote! {
 
         pub struct #registry {
@@ -44,8 +49,26 @@ pub fn generate_aggregate(
 
         inventory::collect!(#registry);
 
+        pub struct #aggregate_event_resolver {
+            name: &'static str,
+            deserializer: fn(event_store::prelude::RecordedEvent, actix::Addr<chekov::prelude::AggregateInstance<#struct_name>>) -> std::result::Result<(), ()>,
+        }
+
+        impl chekov::aggregate::EventResolverItem<#struct_name> for #aggregate_event_resolver {
+            fn get_resolver(&self) -> fn(event_store::prelude::RecordedEvent, actix::Addr<chekov::prelude::AggregateInstance<#struct_name>>) -> std::result::Result<(), ()> {
+                self.deserializer
+            }
+
+            fn get_name(&self) -> &'static str {
+                self.name
+            }
+        }
+
+        inventory::collect!(#aggregate_event_resolver);
+
         impl chekov::Aggregate for #struct_name {
             type EventRegistry = #registry;
+            type EventResolver = #aggregate_event_resolver;
 
             fn identity() -> &'static str {
                 #identity

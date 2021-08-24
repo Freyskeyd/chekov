@@ -39,7 +39,12 @@ impl chekov::event::Handler<AccountUpdated> for AccountProjector {
         let event = event.clone();
         Box::pin(async move {
             if let Ok(p) = pool.await {
-                let _result = Account::update(&event, p).await;
+                match event {
+                    AccountUpdated::NameChanged(account_id, _, name) => {
+                        let _result = Account::update(&account_id, &name, p).await;
+                    }
+                    _ => {}
+                }
             }
 
             Ok(())

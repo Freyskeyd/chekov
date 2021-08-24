@@ -1,9 +1,10 @@
 use actix::Message;
 use chrono::DateTime;
+use serde::Serialize;
 use uuid::Uuid;
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
-#[derive(sqlx::FromRow, Debug, Clone, Message)]
+#[derive(sqlx::FromRow, Debug, Clone, Message, Serialize)]
 #[rtype("()")]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
