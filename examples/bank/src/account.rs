@@ -38,8 +38,7 @@ impl Account {
     pub async fn find_all(
         mut pool: sqlx::pool::PoolConnection<sqlx::Postgres>,
     ) -> Result<Vec<Account>, sqlx::Error> {
-        let mut accounts = vec![];
-        let recs = sqlx::query(
+        sqlx::query(
             r#"
                 SELECT account_id
                     FROM accounts
@@ -51,9 +50,7 @@ impl Account {
             status: AccountStatus::Initialized,
         })
         .fetch_all(&mut pool)
-        .await?;
-
-        Ok(accounts)
+        .await
     }
 
     pub async fn create(
@@ -76,7 +73,7 @@ impl Account {
     }
 
     pub async fn update(
-        account: &AccountUpdated,
+        _account: &AccountUpdated,
         mut pool: sqlx::pool::PoolConnection<sqlx::Postgres>,
     ) -> Result<Account, sqlx::Error> {
         let mut tx = pool.begin().await?;

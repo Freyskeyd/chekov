@@ -1,4 +1,8 @@
-use actix_web::{middleware, web, App, HttpServer};
+use actix_web::{
+    middleware,
+    web::{self, Data},
+    App, HttpServer,
+};
 use chekov::{application::DefaultEventResolver, prelude::*};
 use event_store::prelude::*;
 use sqlx::PgPool;
@@ -10,7 +14,7 @@ mod http;
 
 use events::*;
 
-pub fn init<S: event_store::prelude::Storage>(cfg: &mut web::ServiceConfig) {
+pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(http::find_all);
     cfg.service(http::find);
     cfg.service(http::create);
@@ -56,14 +60,18 @@ async fn main() -> std::io::Result<()> {
         .launch()
         .await;
 
-    HttpServer::new(move || {
+    let _ = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            .data(db_pool.clone())
-            .data(web::JsonConfig::default().limit(4096))
-            .configure(init::<PostgresBackend>)
+            .app_data(Data::new(db_pool.clone()))
+            .app_data(web::JsonConfig::default().limit(4096))
+            .configure(init)
     })
     .bind("127.0.0.1:8080")?
     .run()
-    .await
+    .await?;
+
+    tokio::signal::ctrl_c().await.unwrap();
+    println!("Ctrl-C received, shutting down");
+    Ok(())
 }

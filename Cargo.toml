@@ -25,11 +25,13 @@ chekov_macros = { version = "0.1.0", path = "chekov_macros" }
 fnv = "1.0.3"
 chrono = "0.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
-sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
+# sqlx = {version = "0.5", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
+# Until next minor
+sqlx = {git = "https://github.com/Freyskeyd/sqlx", features = ["postgres", "chrono", "time", "uuid", "json", "offline"]}
 async-trait = "0.1"
 serde = "*"
 serde_json = "*"
-actix = "*"
+actix = "0.12"
 futures = "*"
 log = {version = "0.4"}
 # actix-interop = { git = "https://github.com/Diggsey/actix-interop" }

@@ -3,20 +3,16 @@ use crate::account::*;
 use crate::commands::*;
 use actix_web::web;
 use actix_web::{delete, get, post, put};
-use actix_web::{Error, HttpRequest, HttpResponse, Responder};
-use futures::future::{ready, Ready};
+use actix_web::{HttpRequest, HttpResponse, Responder};
 use sqlx::PgPool;
 
 impl Responder for Account {
-    type Error = Error;
-    type Future = Ready<Result<HttpResponse, Error>>;
-
-    fn respond_to(self, _req: &HttpRequest) -> Self::Future {
+    fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
         let body = serde_json::to_string(&self).unwrap();
 
-        ready(Ok(HttpResponse::Ok()
+        HttpResponse::Ok()
             .content_type("application/json")
-            .body(body)))
+            .body(body)
     }
 }
 
@@ -49,7 +45,9 @@ pub async fn update(_id: web::Path<i32>, _account: web::Json<OpenAccount>) -> im
 #[delete("/accounts/{id}")]
 pub async fn delete(id: web::Path<uuid::Uuid>) -> impl Responder {
     match Router::<DefaultApp>::dispatch(
-        DeleteAccount { account_id: id.0 },
+        DeleteAccount {
+            account_id: id.into_inner(),
+        },
         CommandMetadatas::default(),
     )
     .await

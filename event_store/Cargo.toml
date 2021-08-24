@@ -13,11 +13,11 @@ uuid = { version = "0.8", features = ["serde", "v4"] }
 serde = "1.0"
 serde_json = "1.0"
 async-trait = "0.1"
-tokio = {version = "0.3", features = ["rt", "sync", "time", "stream", "macros"]}
+tokio = {version = "1", features = ["full"]}
 futures = "0.3"
 log = {version = "0.4"}
-actix = "*"
-sqlx = {version = "0.4.1", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
+actix = "0.12"
+sqlx = {git = "https://github.com/Freyskeyd/sqlx", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
 chrono = "0.4"
 actix-interop = { git = "https://github.com/Freyskeyd/actix-interop" }
 # actix-interop = "0.2"
@@ -26,7 +26,6 @@ tracing = "0.1"
 tracing-futures = { version = "*" }
 
 [dev-dependencies]
-actix-rt = "1.1"
 pretty_assertions = "0.6.1"
 
 [features]

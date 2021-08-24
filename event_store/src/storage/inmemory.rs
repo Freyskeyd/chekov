@@ -1,3 +1,6 @@
+// TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved
+#![allow(unused_braces)]
+
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
 use crate::storage::{Storage, StorageError};
@@ -39,6 +42,7 @@ impl Storage for InMemoryBackend {
         trace!("Created stream {}", stream_uuid);
 
         let res = self.streams.get(&stream_uuid).unwrap().clone();
+
         Box::pin(async move { Ok(res) })
     }
 
