@@ -280,9 +280,9 @@
         }
         .<span class="ident">start</span>();
 
-        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>.<span class="ident">clone</span>());
-        <span class="ident">::actix::Registry::set</span>(<span class="ident">addr</span>.<span class="ident">clone</span>());
-        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>.<span class="ident">clone</span>());
+        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>);
+        <span class="ident">::actix::Registry::set</span>(<span class="ident">addr</span>);
+        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(
             <span class="ident">InternalApplication</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
                 <span class="ident">event_resolver</span>: <span class="self">self</span>

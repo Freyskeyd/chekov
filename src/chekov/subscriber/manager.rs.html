@@ -179,9 +179,6 @@
 <span id="177">177</span>
 <span id="178">178</span>
 <span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventNotification</span>, <span class="ident">Listener</span>, <span class="ident">Subscribe</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::application::InternalApplication</span>;
@@ -287,11 +284,8 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">subs</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">sub_map</span>.<span class="ident">get_mut</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="ident">meta</span>.<span class="ident">stream_name</span>) {
             <span class="ident">subs</span>.<span class="ident">iter</span>()
                 .<span class="ident">filter_map</span>(<span class="op">|</span>(<span class="ident">id</span>, <span class="ident">addr</span>)<span class="op">|</span> {
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">rec</span>) <span class="op">=</span> <span class="ident">addr</span>.<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>() {
-                        <span class="prelude-val">Some</span>((<span class="ident">id</span>, <span class="ident">rec</span>))
-                    } <span class="kw">else</span> {
-                        <span class="prelude-val">None</span>
-                    }
+                    <span class="ident">addr</span>.<span class="ident">downcast_ref</span>::<span class="op">&lt;</span><span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">EventEnvelope</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>()
+                        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">rec</span><span class="op">|</span> (<span class="ident">id</span>, <span class="ident">rec</span>))
                 })
                 .<span class="ident">for_each</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">addr</span>)<span class="op">|</span> {
                     <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">addr</span>.<span class="ident">do_send</span>(<span class="ident">msg</span>.<span class="ident">clone</span>());
