@@ -30,7 +30,6 @@ impl<A: Application> Listener<A> {
         }
     }
 
-    #[must_use]
     pub async fn setup() -> Result<Addr<Self>, ()> {
         let mut listener = sqlx::postgres::PgListener::connect(
             "postgresql://postgres:postgres@localhost/event_store_bank",

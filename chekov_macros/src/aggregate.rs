@@ -37,7 +37,7 @@ pub fn generate_aggregate(
         }
 
         impl chekov::aggregate::EventRegistryItem<#struct_name> for #registry {
-            fn get_resolver(&self) -> &Box<dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>)> {
+            fn get_resolver(&self) -> &dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>) {
                 &self.resolver
             }
         }

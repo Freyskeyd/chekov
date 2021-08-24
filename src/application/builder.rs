@@ -131,9 +131,9 @@ where
         }
         .start();
 
-        ::actix::SystemRegistry::set(event_store.clone());
-        ::actix::Registry::set(addr.clone());
-        ::actix::SystemRegistry::set(subscriber_manager_addr.clone());
+        ::actix::SystemRegistry::set(event_store);
+        ::actix::Registry::set(addr);
+        ::actix::SystemRegistry::set(subscriber_manager_addr);
         ::actix::SystemRegistry::set(
             InternalApplication::<A> {
                 event_resolver: self

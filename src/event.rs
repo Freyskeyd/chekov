@@ -9,6 +9,9 @@ pub(crate) mod handler;
 pub use handler::EventHandler;
 pub use handler::EventHandlerInstance;
 
+pub type BoxedResolver<A> =
+    Box<dyn Fn(RecordedEvent, actix::Addr<SubscriberManager<A>>) -> std::result::Result<(), ()>>;
+
 /// Receive an immutable event to handle
 pub trait Handler<E: event_store::Event> {
     fn handle(
@@ -19,8 +22,7 @@ pub trait Handler<E: event_store::Event> {
 
 /// Define an Event which can be produced and consumed
 pub trait Event: event_store::prelude::Event {
-    fn lazy_deserialize<'de, A: Application>(
-    ) -> Box<dyn Fn(RecordedEvent, actix::Addr<SubscriberManager<A>>) -> Result<(), ()>>
+    fn lazy_deserialize<'de, A: Application>() -> BoxedResolver<A>
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
         Self: 'static + Clone,
@@ -34,7 +36,7 @@ pub trait Event: event_store::prelude::Event {
                     meta: EventMetadatas {
                         correlation_id: event.correlation_id,
                         causation_id: event.causation_id,
-                        stream_name: event.stream_uuid.clone(),
+                        stream_name: event.stream_uuid,
                     },
                 });
 
@@ -43,12 +45,7 @@ pub trait Event: event_store::prelude::Event {
         )
     }
 
-    fn register<'de, A: Application>() -> (
-        Vec<&'static str>,
-        Box<
-            dyn Fn(RecordedEvent, actix::Addr<SubscriberManager<A>>) -> std::result::Result<(), ()>,
-        >,
-    )
+    fn register<'de, A: Application>() -> (Vec<&'static str>, BoxedResolver<A>)
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
         Self: 'static + Clone,

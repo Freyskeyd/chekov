@@ -57,7 +57,7 @@ use uuid::Uuid;
 ///     // Add an event to the append list
 ///     .event(&my_event)?
 ///     // Define which stream will be appended
-///     .to(stream_name)?
+///     .to(&stream_name)?
 ///     // Define that we expect the stream to be in version 1
 ///     .expected_version(ExpectedVersion::Version(1))
 ///     // Execute this appender on an eventstore
@@ -158,7 +158,7 @@ impl Appender {
     /// # Errors
     ///
     /// Can fail if the stream doesn't have the expected format
-    pub fn to<S: ToString>(mut self, stream: S) -> Result<Self, EventStoreError> {
+    pub fn to<S: ToString>(mut self, stream: &S) -> Result<Self, EventStoreError> {
         // TODO: validate stream name format
         self.stream = stream.to_string();
 
@@ -315,7 +315,7 @@ mod test {
     fn that_an_appender_can_be_configured() {
         let mut appender = Appender::default();
 
-        appender = appender.to("stream_name").unwrap();
+        appender = appender.to(&"stream_name").unwrap();
         assert_eq!(appender.stream, "stream_name");
 
         appender = appender.event(&MyEvent {}).unwrap();
@@ -346,7 +346,7 @@ mod test {
         let event = MyEvent {};
 
         let res = Appender::default()
-            .to(uuid)?
+            .to(&uuid)?
             .event(&event)?
             .expected_version(ExpectedVersion::StreamExists)
             .execute(addr.clone())
@@ -355,7 +355,7 @@ mod test {
         assert_eq!(res, Err(EventStoreError::Any));
 
         let res = Appender::default()
-            .to(uuid)?
+            .to(&uuid)?
             .event(&event)?
             .execute(addr)
             .await;

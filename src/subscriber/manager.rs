@@ -102,11 +102,8 @@ where
         if let Some(subs) = self.sub_map.get_mut(&msg.meta.stream_name) {
             subs.iter()
                 .filter_map(|(id, addr)| {
-                    if let Some(rec) = addr.downcast_ref::<Recipient<EventEnvelope<T>>>() {
-                        Some((id, rec))
-                    } else {
-                        None
-                    }
+                    addr.downcast_ref::<Recipient<EventEnvelope<T>>>()
+                        .map(|rec| (id, rec))
                 })
                 .for_each(|(_, addr)| {
                     let _ = addr.do_send(msg.clone());

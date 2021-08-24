@@ -78,11 +78,6 @@ impl Reader {
         self
     }
 
-    //     #[must_use]
-    //     pub fn into_stream(self) -> StreamReader {
-    //         self.into()
-    //     }
-
     pub async fn execute_async<S: Storage>(
         self,
         event_store: Addr<EventStore<S>>,
@@ -102,6 +97,7 @@ impl Reader {
                 stream: self.stream,
                 version: match self.read_version {
                     ReadVersion::Origin => 0,
+                    // TODO: Should we switch to usize for version ?
                     ReadVersion::Version(version) => version as usize
                 },
                 limit: self.limit,

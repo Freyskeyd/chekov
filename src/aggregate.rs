@@ -111,7 +111,7 @@ pub use registry::AggregateInstanceRegistry;
 
 #[doc(hidden)]
 pub trait EventRegistryItem<A: Aggregate> {
-    fn get_resolver(&self) -> &Box<dyn Fn(&str, &actix::Context<AggregateInstance<A>>)>;
+    fn get_resolver(&self) -> &dyn Fn(&str, &actix::Context<AggregateInstance<A>>);
 }
 
 /// Define an Aggregate

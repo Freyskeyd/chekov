@@ -30,16 +30,15 @@ pub struct RecordedEvent {
 
 impl RecordedEvent {
     /// # Errors
-    /// `()` for now
     pub fn try_deserialize<
         'de,
         T: serde::Deserialize<'de> + crate::Event + serde::de::Deserialize<'de>,
     >(
         &'de self,
-    ) -> Result<T, ()> {
+    ) -> Result<T, RecordedEventError> {
         match T::deserialize(&self.data) {
             Ok(e) => Ok(e),
-            Err(_) => Err(()),
+            Err(_) => Err(RecordedEventError::Deserialize),
         }
     }
 }
@@ -48,4 +47,8 @@ impl RecordedEvent {
 #[rtype("()")]
 pub struct RecordedEvents {
     events: Vec<RecordedEvent>,
+}
+
+pub enum RecordedEventError {
+    Deserialize,
 }

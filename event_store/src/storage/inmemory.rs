@@ -36,7 +36,7 @@ impl Storage for InMemoryBackend {
             return Box::pin(async move { Err(StorageError::StreamAlreadyExists) });
         }
 
-        self.streams.insert(stream_uuid.to_owned(), stream);
+        self.streams.insert(stream_uuid.clone(), stream);
         self.events.insert(stream_uuid.clone(), Vec::new());
 
         trace!("Created stream {}", stream_uuid);

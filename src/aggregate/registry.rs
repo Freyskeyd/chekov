@@ -37,7 +37,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
         async move {
             critical_section::<Self, _>(
                 async move {
-                    let correlation_id = cmd.metadatas.correlation_id.clone();
+                    let correlation_id = cmd.metadatas.correlation_id;
                     let id = cmd.command.identifier();
                     let addr: Addr<_> = if let Some(addr) =
                         with_ctx(|actor: &mut Self, _| actor.registry.get(&id).cloned())
@@ -76,7 +76,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                                 };
                             }
 
-                            inner.on_start(&identity, &ctx_agg);
+                            inner.on_start(&identity, ctx_agg);
                             AggregateInstance { inner }
                         });
 

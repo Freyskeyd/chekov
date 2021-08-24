@@ -1,5 +1,6 @@
 use actix::prelude::*;
 use sqlx::postgres::PgNotification;
+use std::{convert::TryFrom, str::FromStr};
 use uuid::Uuid;
 
 mod listener;
@@ -30,37 +31,36 @@ pub struct EventNotification {
     last_stream_version: i32,
 }
 
-trait IsEmptyResult {
-    fn is_empty_result<E>(self, err: E) -> Result<Self, E>
-    where
-        Self: std::marker::Sized;
-}
+struct NonEmptyString(String);
 
-impl<'a> IsEmptyResult for &'a str {
-    fn is_empty_result<E>(self, err: E) -> Result<Self, E> {
-        if self.is_empty() {
-            Err(err)
+impl FromStr for NonEmptyString {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty() {
+            Err("unable to parse stream_uuid")
         } else {
-            Ok(self)
+            Ok(NonEmptyString(s.to_owned()))
         }
     }
 }
-
-use std::convert::TryFrom;
+impl From<NonEmptyString> for String {
+    fn from(s: NonEmptyString) -> Self {
+        s.0
+    }
+}
 
 impl<'a> TryFrom<&'a str> for EventNotification {
     type Error = &'static str;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        let elements = value.splitn(4, ',').collect::<Vec<&str>>();
-
-        let mut through = elements.iter();
+        let mut through = value.splitn(4, ',');
 
         let stream_uuid = through
             .next()
             .ok_or("unable to parse stream_uuid")?
-            .is_empty_result("unable to parse stream_uuid")?
-            .to_owned();
+            .parse::<NonEmptyString>()?
+            .into();
 
         let stream_id = through
             .next()

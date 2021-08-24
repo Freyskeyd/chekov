@@ -90,7 +90,7 @@ fn create_append_indexes(events: usize) -> String {
 
 fn create_event_id_stream_version_indexes(starting_at: usize, length: usize) -> String {
     (0..length)
-        .map(|index| match index {
+        .map(|i| match i {
             0 => format!("(${}::uuid, ${}::bigint)", starting_at, starting_at + 1),
             event_number => {
                 let index = (event_number * 2) + starting_at;

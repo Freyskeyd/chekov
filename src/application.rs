@@ -8,7 +8,7 @@ use std::{any::TypeId, collections::HashMap};
 pub use builder::ApplicationBuilder;
 pub(crate) use internal::InternalApplication;
 
-use crate::{Event, EventResolver, SubscriberManager};
+use crate::{event::BoxedResolver, Event, EventResolver, SubscriberManager};
 
 /// Application are high order logical seperator.
 ///
@@ -60,15 +60,7 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
 #[derive(Default)]
 pub struct DefaultEventResolver<A: Application> {
     tty_str: HashMap<&'static str, TypeId>,
-    resolvers: HashMap<
-        TypeId,
-        Box<
-            dyn Fn(
-                event_store::prelude::RecordedEvent,
-                actix::Addr<SubscriberManager<A>>,
-            ) -> std::result::Result<(), ()>,
-        >,
-    >,
+    resolvers: HashMap<TypeId, BoxedResolver<A>>,
 }
 
 impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
@@ -92,12 +84,12 @@ impl<A: Application> DefaultEventResolver<A> {
 
         let tty = TypeId::of::<E>();
 
-        if let Some(_) = self.resolvers.insert(tty, resolver) {
+        if self.resolvers.insert(tty, resolver).is_some() {
             panic!("Resolver already defined for this type");
         }
 
         type_string.into_iter().for_each(|s| {
-            self.tty_str.insert(s, tty.clone());
+            self.tty_str.insert(s, tty);
         });
 
         self
