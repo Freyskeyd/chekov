@@ -54,7 +54,6 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
-<span id="55">55</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="ident">actix::Message</span>;
 <span class="kw">use</span> <span class="ident">chrono::DateTime</span>;
@@ -88,7 +87,6 @@
 
 <span class="kw">impl</span> <span class="ident">RecordedEvent</span> {
     <span class="doccomment">/// # Errors</span>
-    <span class="doccomment">/// `()` for now</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_deserialize</span><span class="op">&lt;</span>
         <span class="lifetime">&#39;de</span>,
         <span class="ident">T</span>: <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="op">+</span> <span class="kw">crate</span><span class="ident">::Event</span> <span class="op">+</span> <span class="ident">serde::de::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
