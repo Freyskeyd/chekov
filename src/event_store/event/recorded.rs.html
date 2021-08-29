@@ -54,13 +54,15 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
+<span id="55">55</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="ident">actix::Message</span>;
 <span class="kw">use</span> <span class="ident">chrono::DateTime</span>;
+<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="doccomment">/// A `RecordedEvent` represents an `Event` which have been append to a `Stream`</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">sqlx::FromRow</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">sqlx::FromRow</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Message</span>, <span class="ident">Serialize</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RecordedEvent</span> {
     <span class="doccomment">/// an incrementing and gapless integer used to order the event in a stream.</span>

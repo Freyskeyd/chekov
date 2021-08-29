@@ -26,10 +26,10 @@
 <span id="24">24</span>
 <span id="25">25</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">serde::Serialize</span>;
 
 <span class="doccomment">/// Represent event that can be handled by an `EventStore`</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std::convert::TryFrom</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std::convert::TryFrom</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Return a static str which define the event type</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This str must be as precise as possible.</span>

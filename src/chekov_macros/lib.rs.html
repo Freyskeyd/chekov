@@ -107,6 +107,21 @@
 <span id="105">105</span>
 <span id="106">106</span>
 <span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
 </pre><pre class="rust">
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">proc_macro</span>;
 
@@ -192,10 +207,9 @@
     <span class="kw">let</span> <span class="ident">apply_to</span> <span class="op">=</span> <span class="ident">apply</span>.<span class="ident">apply_to</span>;
     <span class="kw">let</span> <span class="ident">closure</span> <span class="op">=</span> <span class="ident">apply</span>.<span class="ident">closure</span>;
 
-    <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="ident">proc_macro2::Ident::new</span>(
-        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}EventRegistration&quot;</span>, <span class="ident">apply_to</span>.<span class="ident">to_string</span>()),
-        <span class="ident">proc_macro2::Span::call_site</span>(),
-    );
+    <span class="kw">let</span> <span class="ident">registry</span> <span class="op">=</span> <span class="macro">format_ident!</span>(<span class="string">&quot;{}EventRegistration&quot;</span>, <span class="ident">apply_to</span>.<span class="ident">to_string</span>());
+    <span class="kw">let</span> <span class="ident">aggregate_event_resolver</span> <span class="op">=</span> <span class="macro">format_ident!</span>(<span class="string">&quot;{}EventResolverRegistry&quot;</span>, <span class="ident">apply_to</span>.<span class="ident">to_string</span>(),);
+
     <span class="kw">let</span> <span class="ident">toks</span> <span class="op">=</span> <span class="macro">quote!</span> {
 
         <span class="macro">inventory::submit!</span> {
@@ -204,6 +218,22 @@
             #<span class="ident">registry</span> { <span class="ident">resolver</span>: <span class="ident">Box::new</span>(<span class="op">|</span><span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span>#<span class="ident">apply_to</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span>{
                 <span class="ident">chekov::SubscriberManager</span>::<span class="op">&lt;</span>#<span class="ident">app</span><span class="op">&gt;</span><span class="ident">::from_registry</span>().<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">stream</span>.<span class="ident">into</span>(), <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">chekov::message::EventEnvelope</span><span class="op">&lt;</span>#<span class="ident">event</span><span class="op">&gt;</span><span class="op">&gt;</span>(), <span class="ident">stream</span>.<span class="ident">into</span>()));
             })}
+        }
+
+        <span class="macro">inventory::submit!</span> {
+            <span class="kw">use</span> <span class="ident">event_store::Event</span>;
+            #<span class="ident">aggregate_event_resolver</span> {
+                <span class="ident">names</span>: #<span class="ident">event::all_event_types</span>(),
+                <span class="ident">type_id</span>: <span class="ident">std::any::TypeId::of</span>::<span class="op">&lt;</span>#<span class="ident">event</span><span class="op">&gt;</span>(),
+                <span class="ident">deserializer</span>: <span class="op">|</span><span class="ident">event</span>: <span class="ident">event_store::prelude::RecordedEvent</span>, <span class="ident">ctx</span>: <span class="ident">actix::Addr</span><span class="op">&lt;</span><span class="ident">chekov::prelude::AggregateInstance</span><span class="op">&lt;</span>#<span class="ident">apply_to</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">|</span> {
+                    <span class="kw">use</span> <span class="ident">chekov::Event</span>;
+                    <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
+
+                    <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> #<span class="ident">event::into_envelope</span>(<span class="ident">event</span>).<span class="ident">unwrap</span>();
+
+                    <span class="ident">Box::pin</span>(<span class="ident">ctx</span>.<span class="ident">send</span>(<span class="ident">e</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span>()))
+                }
+            }
         }
 
         <span class="kw">impl</span> <span class="ident">chekov::prelude::EventApplier</span><span class="op">&lt;</span>#<span class="ident">event</span><span class="op">&gt;</span> <span class="kw">for</span> #<span class="ident">apply_to</span> {
