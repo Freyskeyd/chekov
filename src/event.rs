@@ -1,8 +1,10 @@
 //! Struct and Trait correlated to Event
+use std::any::TypeId;
+use std::collections::BTreeMap;
+
 use crate::error::ApplyError;
-use crate::prelude::EventEnvelope;
 use crate::{message::EventMetadatas, Application, SubscriberManager};
-use actix::{Actor, Addr, Recipient};
+use actix::Actor;
 use event_store::prelude::RecordedEvent;
 use futures::Future;
 
@@ -14,7 +16,7 @@ pub use handler::EventHandlerInstance;
 pub type BoxedResolver<A> =
     Box<dyn Fn(RecordedEvent, actix::Addr<SubscriberManager<A>>) -> std::result::Result<(), ()>>;
 
-pub type BoxedDeserializer = Box<dyn Fn(RecordedEvent) -> Box<dyn ErasedGeneric>>;
+// pub type BoxedDeserializer = Box<dyn Fn(RecordedEvent) -> Box<dyn ErasedGeneric>>;
 
 /// Receive an immutable event to handle
 pub trait Handler<E: event_store::Event> {
@@ -40,16 +42,6 @@ pub trait Event: event_store::prelude::Event {
                 causation_id: event.causation_id,
                 stream_name: event.stream_uuid,
             },
-        })
-    }
-
-    fn into_erased<'de>() -> BoxedDeserializer
-    where
-        Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static + Clone + GenericEvent,
-    {
-        Box::new(|event: RecordedEvent| -> Box<dyn ErasedGeneric> {
-            Box::new(Self::deserialize(event.data).unwrap())
         })
     }
 
@@ -81,47 +73,23 @@ pub trait EventApplier<E: Event> {
     fn apply(&mut self, event: &E) -> Result<(), ApplyError>;
 }
 
-pub trait Querializer {}
+#[doc(hidden)]
+pub type EventResolverFn<T> =
+    fn(
+        event_store::prelude::RecordedEvent,
+        actix::Addr<T>,
+    ) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>;
 
-pub trait GenericEvent {
-    // Not object safe because of this generic method.
-    fn notify<Q: Querializer>(&self, querializer: Q);
+#[doc(hidden)]
+pub struct EventResolverRegistry<T: Actor> {
+    pub names: BTreeMap<&'static str, TypeId>,
+    pub resolvers: BTreeMap<TypeId, EventResolverFn<T>>,
 }
 
-impl<'a, T: ?Sized> Querializer for &'a T where T: Querializer {}
+impl<T: Actor> EventResolverRegistry<T> {
+    pub fn get(&self, event_name: &str) -> Option<&EventResolverFn<T>> {
+        let type_id = self.names.get(event_name)?;
 
-impl<'a, T: ?Sized> GenericEvent for Box<T>
-where
-    T: GenericEvent,
-{
-    fn notify<Q: Querializer>(&self, querializer: Q) {
-        (**self).notify(querializer)
+        self.resolvers.get(type_id)
     }
 }
-
-/////////////////////////////////////////////////////////////////////
-// This is an object-safe equivalent that interoperates seamlessly.
-
-pub trait ErasedGeneric: 'static + Send {
-    fn erased_fn(&self, querializer: &Querializer);
-}
-
-impl GenericEvent for ErasedGeneric {
-    fn notify<Q: Querializer>(&self, querializer: Q) {
-        self.erased_fn(&querializer)
-    }
-}
-
-impl<T> ErasedGeneric for T
-where
-    T: GenericEvent + 'static + Send,
-{
-    fn erased_fn(&self, querializer: &Querializer) {
-        self.notify(querializer)
-    }
-}
-
-pub struct EventPlaceHolder;
-impl Querializer for EventPlaceHolder {}
-
-// impl Event for ErasedGeneric {}

@@ -79,19 +79,11 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
 
     let app = apply.app;
     let event = apply.event;
-    let event_str = event.to_string();
     let apply_to = apply.apply_to;
     let closure = apply.closure;
 
-    let registry = proc_macro2::Ident::new(
-        &format!("{}EventRegistration", apply_to.to_string()),
-        proc_macro2::Span::call_site(),
-    );
-
-    let aggregate_event_resolver = proc_macro2::Ident::new(
-        &format!("{}EventResolverRegistry", apply_to.to_string()),
-        proc_macro2::Span::call_site(),
-    );
+    let registry = format_ident!("{}EventRegistration", apply_to.to_string());
+    let aggregate_event_resolver = format_ident!("{}EventResolverRegistry", apply_to.to_string(),);
 
     let toks = quote! {
 
@@ -99,20 +91,22 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
             use actix::AsyncContext;
             use actix::SystemService;
             #registry { resolver: Box::new(|stream: &str, ctx: &actix::Context<AggregateInstance<#apply_to>>|{
-                println!("Registering {:?}", #event_str);
                 chekov::SubscriberManager::<#app>::from_registry().do_send(Subscribe(stream.into(), ctx.address().recipient::<chekov::message::EventEnvelope<#event>>(), stream.into()));
             })}
         }
 
         inventory::submit! {
+            use event_store::Event;
             #aggregate_event_resolver {
-                name: #event_str,
+                names: #event::all_event_types(),
+                type_id: std::any::TypeId::of::<#event>(),
                 deserializer: |event: event_store::prelude::RecordedEvent, ctx: actix::Addr<chekov::prelude::AggregateInstance<#apply_to>>| {
                     use chekov::Event;
+                    use futures::TryFutureExt;
+
                     let e = #event::into_envelope(event).unwrap();
 
-                    ctx.try_send(e);
-                    Ok(())
+                    Box::pin(ctx.send(e).map_err(|_|()))
                 }
             }
         }

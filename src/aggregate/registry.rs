@@ -1,13 +1,8 @@
-use crate::application::InternalApplication;
 use crate::Application;
-use crate::{
-    aggregate::AggregateInstance, event::EventApplier, Aggregate, Command, CommandExecutorError,
-    Dispatch,
-};
-use actix::prelude::{Actor, Addr, AsyncContext};
+use crate::{aggregate::AggregateInstance, Aggregate, Command, CommandExecutorError, Dispatch};
+use actix::prelude::{Actor, Addr};
+use actix_interop::{critical_section, with_ctx, FutureInterop};
 use event_store::prelude::ReadVersion;
-use std::collections::HashMap;
-use std::convert::TryFrom;
 use tracing::trace;
 use tracing::Instrument;
 
@@ -22,7 +17,6 @@ impl<A: Aggregate> ::actix::Supervised for AggregateInstanceRegistry<A> {}
 impl<A: Aggregate> ::actix::Actor for AggregateInstanceRegistry<A> {
     type Context = ::actix::Context<Self>;
 }
-use actix_interop::{critical_section, with_ctx, FutureInterop};
 
 impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
     for AggregateInstanceRegistry<C::Executor>
@@ -41,11 +35,11 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                 async move {
                     let correlation_id = cmd.metadatas.correlation_id;
                     let id = cmd.command.identifier();
-                    let addr: Addr<_> = if let Some(addr) =
+                    let addr_r: Result<Addr<_>, ()> = if let Some(addr) =
                         with_ctx(|actor: &mut Self, _| actor.registry.get(&id).cloned())
                     {
                         trace!("Instance already started");
-                        addr
+                        Ok(addr)
                     } else {
                         // start it?
                         trace!("Instance not found");
@@ -69,53 +63,69 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                         let identity = id.clone();
                         let addr = AggregateInstance::create(move |ctx_agg| {
                             trace!("Creating aggregate instance");
-                            let ctx_address = ctx_agg.address();
-                            let mut inner = C::Executor::default();
+                            let inner = C::Executor::default();
 
-                            let resolvers = inner.on_start(&identity, ctx_agg);
-                            let mut instance = AggregateInstance { inner, resolvers };
+                            inner.on_start(&identity, ctx_agg);
+                            let current_version = 0;
 
-                            for event in events {
-                                trace!("resolving and appling {:?}", event);
-                                instance.resolve_and_apply(event, ctx_address.clone());
+                            AggregateInstance {
+                                inner,
+                                current_version,
                             }
-                            instance
                         });
+
+                        for event in events {
+                            trace!("Applying {:?}", event.event_type);
+                            match C::Executor::get_event_resolver(&event.event_type) {
+                                Some(resolver) => {
+                                    if let Err(_) = (resolver)(event, addr.clone()).await {
+                                        return Err(CommandExecutorError::Any);
+                                    }
+                                }
+                                None => {
+                                    println!("No resolver");
+                                }
+                            }
+                        }
 
                         with_ctx(|actor: &mut Self, _| {
                             actor.registry.insert(id.clone(), addr.clone())
                         });
-                        addr
+                        Ok(addr)
                     };
 
-                    match addr.send(cmd).await {
-                        Ok(res) => {
-                            if let Ok(ref events) = res {
-                                trace!("Generated {:?}", events.len());
-                                let ev: Vec<&_> = events.iter().collect();
-                                match crate::event_store::EventStore::<A>::with_appender(
-                                    event_store::prelude::Appender::with_correlation_id(
-                                        correlation_id,
+                    if let Ok(addr) = addr_r {
+                        match addr.send(cmd).await {
+                            Ok(res) => {
+                                if let Ok(ref events) = res {
+                                    trace!("Generated {:?}", events.len());
+                                    let ev: Vec<&_> = events.iter().collect();
+                                    match crate::event_store::EventStore::<A>::with_appender(
+                                        event_store::prelude::Appender::with_correlation_id(
+                                            correlation_id,
+                                        )
+                                        .events(&ev[..])
+                                        .unwrap()
+                                        .to(&id)
+                                        .unwrap()
+                                        .expected_version(
+                                            event_store::prelude::ExpectedVersion::AnyVersion,
+                                        ),
                                     )
-                                    .events(&ev[..])
-                                    .unwrap()
-                                    .to(&id)
-                                    .unwrap()
-                                    .expected_version(
-                                        event_store::prelude::ExpectedVersion::AnyVersion,
-                                    ),
-                                )
-                                // TODO deal with mailbox error
-                                .await
-                                {
-                                    Ok(Ok(_)) => res,
-                                    _ => Err(CommandExecutorError::Any),
+                                    // TODO deal with mailbox error
+                                    .await
+                                    {
+                                        Ok(Ok(_)) => res,
+                                        _ => Err(CommandExecutorError::Any),
+                                    }
+                                } else {
+                                    Err(CommandExecutorError::Any)
                                 }
-                            } else {
-                                Err(CommandExecutorError::Any)
                             }
+                            Err(_) => Err(CommandExecutorError::Any),
                         }
-                        Err(_) => Err(CommandExecutorError::Any),
+                    } else {
+                        Err(CommandExecutorError::Any)
                     }
                 }
                 .instrument(tracing::Span::current()),

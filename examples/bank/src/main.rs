@@ -19,7 +19,7 @@ use events::*;
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(http::find_all);
     cfg.service(http::find);
-    // cfg.service(http::create);
+    cfg.service(http::create);
     cfg.service(http::update);
     cfg.service(http::delete);
 }

@@ -30,6 +30,11 @@ pub struct EventEnvelope<E: Event> {
     pub meta: EventMetadatas,
 }
 
+#[doc(hidden)]
+#[derive(Debug, Clone, Message)]
+#[rtype(result = "Result<(), ()>")]
+pub struct ResolveAndApply(pub RecordedEvent);
+
 #[derive(Message)]
 #[rtype("Result<Vec<RecordedEvent>, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteReader(pub(crate) event_store::prelude::Reader);

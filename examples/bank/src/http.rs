@@ -30,13 +30,13 @@ pub async fn find(_id: web::Path<Uuid>) -> impl Responder {
     HttpResponse::InternalServerError().body("Unimplemented")
 }
 
-// #[post("/accounts")]
-// pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
-//     match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
-//         Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
-//         Err(e) => HttpResponse::Ok().json(e),            // <- send response
-//     }
-// }
+#[post("/accounts")]
+pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
+    match Router::<DefaultApp>::dispatch(account.clone(), CommandMetadatas::default()).await {
+        Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
+        Err(e) => HttpResponse::Ok().json(e),            // <- send response
+    }
+}
 
 #[put("/accounts/{id}")]
 pub async fn update(

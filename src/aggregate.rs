@@ -104,8 +104,7 @@
 mod instance;
 mod registry;
 
-use std::collections::HashMap;
-
+use futures::Future;
 pub use instance::AggregateInstance;
 
 #[doc(hidden)]
@@ -120,8 +119,12 @@ pub trait EventRegistryItem<A: Aggregate> {
 pub trait EventResolverItem<A: Aggregate> {
     fn get_resolver(
         &self,
-    ) -> fn(event_store::prelude::RecordedEvent, actix::Addr<AggregateInstance<A>>) -> Result<(), ()>;
-    fn get_name(&self) -> &'static str;
+    ) -> fn(
+        event_store::prelude::RecordedEvent,
+        actix::Addr<AggregateInstance<A>>,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>>;
+
+    fn get_names(&self) -> &[&'static str];
 }
 
 /// Define an Aggregate
@@ -144,8 +147,8 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     #[doc(hidden)]
     type EventRegistry: inventory::Collect + EventRegistryItem<Self>;
 
-    #[doc(hidden)]
-    type EventResolver: inventory::Collect + EventResolverItem<Self>;
+    // #[doc(hidden)]
+    // type EventResolver: inventory::Collect + EventResolverItem<Self>;
 
     /// Define the identity of this kind of Aggregate.
     ///
@@ -155,28 +158,34 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     /// Defining the identity as `account` will create streams `account-UUID`.
     fn identity() -> &'static str;
 
-    #[doc(hidden)]
-    fn on_start(
-        &self,
-        stream: &str,
-        ctx: &actix::Context<AggregateInstance<Self>>,
-    ) -> HashMap<
-        &'static str,
-        fn(
+    fn get_event_resolver(
+        event_name: &str,
+    ) -> Option<
+        &fn(
             event_store::prelude::RecordedEvent,
             actix::Addr<AggregateInstance<Self>>,
-        ) -> std::result::Result<(), ()>,
-    > {
+        ) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>,
+    >;
+
+    #[doc(hidden)]
+    fn on_start(&self, stream: &str, ctx: &actix::Context<AggregateInstance<Self>>) {
+        // ) -> HashMap<
+        //     &'static str,
+        //     fn(
+        //         event_store::prelude::RecordedEvent,
+        //         actix::Addr<AggregateInstance<Self>>,
+        //     ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>>,
+        // > {
         for flag in inventory::iter::<Self::EventRegistry> {
             (flag.get_resolver())(stream, ctx);
         }
 
-        let mut resolvers = HashMap::new();
+        // let mut resolvers = HashMap::new();
 
-        for flag in inventory::iter::<Self::EventResolver> {
-            resolvers.insert(flag.get_name(), flag.get_resolver());
-        }
+        // for flag in inventory::iter::<Self::EventResolver> {
+        //     resolvers.insert(flag.get_name(), flag.get_resolver());
+        // }
 
-        resolvers
+        // resolvers
     }
 }

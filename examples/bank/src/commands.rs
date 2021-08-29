@@ -21,11 +21,10 @@ impl Command for DeleteAccount {
     }
 }
 
-// #[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-// #[command(event = "AccountOpened", aggregate = "Account")]
+#[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+#[command(event = "AccountOpened", aggregate = "Account")]
 pub struct OpenAccount {
-    // #[command(identifier)]
+    #[command(identifier)]
     pub account_id: Uuid,
     pub name: String,
 }

@@ -3,7 +3,7 @@ use crate::DefaultApp;
 
 chekov::macros::apply_event!(DefaultApp, Account, AccountUpdated, apply_account_updated);
 chekov::macros::apply_event!(DefaultApp, Account, AccountDeleted, apply_account_deleted);
-// chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);
+chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);
 
 impl CommandExecutor<DeleteAccount> for Account {
     fn execute(cmd: DeleteAccount, _: &Self) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
@@ -13,17 +13,17 @@ impl CommandExecutor<DeleteAccount> for Account {
     }
 }
 
-// impl CommandExecutor<OpenAccount> for Account {
-//     fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
-//         match state.status {
-//             AccountStatus::Initialized => Ok(vec![AccountOpened {
-//                 account_id: cmd.account_id,
-//                 name: cmd.name,
-//             }]),
-//             _ => Err(CommandExecutorError::Any),
-//         }
-//     }
-// }
+impl CommandExecutor<OpenAccount> for Account {
+    fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
+        match state.status {
+            AccountStatus::Initialized => Ok(vec![AccountOpened {
+                account_id: cmd.account_id,
+                name: cmd.name,
+            }]),
+            _ => Err(CommandExecutorError::Any),
+        }
+    }
+}
 
 impl CommandExecutor<UpdateAccount> for Account {
     fn execute(
@@ -39,7 +39,6 @@ impl CommandExecutor<UpdateAccount> for Account {
 }
 
 fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), ApplyError> {
-    println!("Applying AccountOpened");
     state.account_id = Some(event.account_id);
     state.status = AccountStatus::Active;
 
@@ -47,8 +46,6 @@ fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), 
 }
 
 fn apply_account_updated(state: &mut Account, event: &AccountUpdated) -> Result<(), ApplyError> {
-    println!("Applying AccountUpdated");
-
     match event {
         AccountUpdated::NameChanged(_, _, new_name) => {
             state.name = new_name.to_string();
@@ -59,7 +56,6 @@ fn apply_account_updated(state: &mut Account, event: &AccountUpdated) -> Result<
 }
 
 fn apply_account_deleted(state: &mut Account, _event: &AccountDeleted) -> Result<(), ApplyError> {
-    println!("Applying AccountDeleted");
     state.status = AccountStatus::Deleted;
 
     Ok(())
