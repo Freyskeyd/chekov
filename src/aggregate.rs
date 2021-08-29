@@ -158,6 +158,7 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     /// Defining the identity as `account` will create streams `account-UUID`.
     fn identity() -> &'static str;
 
+    #[doc(hidden)]
     fn get_event_resolver(
         event_name: &str,
     ) -> Option<
@@ -169,23 +170,8 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
 
     #[doc(hidden)]
     fn on_start(&self, stream: &str, ctx: &actix::Context<AggregateInstance<Self>>) {
-        // ) -> HashMap<
-        //     &'static str,
-        //     fn(
-        //         event_store::prelude::RecordedEvent,
-        //         actix::Addr<AggregateInstance<Self>>,
-        //     ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>>,
-        // > {
         for flag in inventory::iter::<Self::EventRegistry> {
             (flag.get_resolver())(stream, ctx);
         }
-
-        // let mut resolvers = HashMap::new();
-
-        // for flag in inventory::iter::<Self::EventResolver> {
-        //     resolvers.insert(flag.get_name(), flag.get_resolver());
-        // }
-
-        // resolvers
     }
 }
