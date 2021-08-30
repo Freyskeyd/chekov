@@ -1,9 +1,11 @@
 use crate::event::Event;
-use crate::{command, Aggregate, Application};
 use crate::{command::Command, message::EventEnvelope};
 use crate::{command::CommandExecutor, error::CommandExecutorError};
 use crate::{message::Dispatch, prelude::EventApplier};
+use crate::{Aggregate, Application};
+use actix::prelude::*;
 use actix::{Addr, Handler};
+use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent};
 use tracing::trace;
 use uuid::Uuid;
 
@@ -16,6 +18,56 @@ pub struct AggregateInstance<A: Aggregate> {
 }
 
 impl<A: Aggregate> AggregateInstance<A> {
+    pub(crate) async fn new<APP: Application>(
+        identity: String,
+        correlation_id: Uuid,
+    ) -> Result<Addr<Self>, CommandExecutorError> {
+        let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
+
+        let addr = AggregateInstance::create(move |ctx| {
+            trace!("Creating aggregate instance");
+            let inner = A::default();
+
+            inner.on_start(&identity, ctx);
+            let current_version = 0;
+
+            let instance = AggregateInstance {
+                inner,
+                current_version,
+            };
+            instance
+        });
+
+        for event in events.unwrap() {
+            match A::get_event_resolver(&event.event_type) {
+                Some(resolver) => {
+                    let res = (resolver)(event, addr.clone()).await;
+                    if let Err(_) = res {
+                        return Err(CommandExecutorError::Any);
+                    }
+                }
+                None => {
+                    println!("No resolver");
+                }
+            }
+        }
+
+        Ok(addr)
+    }
+
+    async fn fetch_existing_state<APP: Application>(
+        stream_id: String,
+        correlation_id: Uuid,
+    ) -> Result<Vec<RecordedEvent>, EventStoreError> {
+        crate::event_store::EventStore::<APP>::with_reader(
+            event_store::prelude::Reader::with_correlation_id(correlation_id)
+                .stream(stream_id)
+                .unwrap()
+                .from(ReadVersion::Origin)
+                .limit(10),
+        )
+        .await?
+    }
     fn apply<T>(&mut self, event: &T)
     where
         T: Event,
@@ -58,13 +110,11 @@ impl<A: Aggregate> AggregateInstance<A> {
     }
 }
 
-impl<A: Aggregate> ::actix::Actor for AggregateInstance<A> {
-    type Context = ::actix::Context<Self>;
+impl<A: Aggregate> Actor for AggregateInstance<A> {
+    type Context = Context<Self>;
 }
 
-impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
-    for AggregateInstance<C::Executor>
-{
+impl<C: Command, A: Application> Handler<Dispatch<C, A>> for AggregateInstance<C::Executor> {
     type Result = Result<Vec<C::Event>, CommandExecutorError>;
 
     #[tracing::instrument(
@@ -78,7 +128,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
     }
 }
 
-impl<A: Aggregate, T: Event> ::actix::Handler<EventEnvelope<T>> for AggregateInstance<A>
+impl<A: Aggregate, T: Event> Handler<EventEnvelope<T>> for AggregateInstance<A>
 where
     A: EventApplier<T>,
 {

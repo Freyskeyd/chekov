@@ -93,6 +93,7 @@ pub fn generate_aggregate(
             fn get_event_resolver(event_name: &str) -> Option<&fn(event_store::prelude::RecordedEvent, actix::Addr<chekov::prelude::AggregateInstance<#struct_name>>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>> {
                 #aggregate_static_resolver.get(event_name)
             }
+
             fn identity() -> &'static str {
                 #identity
             }
