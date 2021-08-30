@@ -177,20 +177,6 @@
 <span id="175">175</span>
 <span id="176">176</span>
 <span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
-<span id="190">190</span>
-<span id="191">191</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -352,6 +338,7 @@
     <span class="doccomment">/// Defining the identity as `account` will create streams `account-UUID`.</span>
     <span class="kw">fn</span> <span class="ident">identity</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
 
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="kw">fn</span> <span class="ident">get_event_resolver</span>(
         <span class="ident">event_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>
@@ -363,24 +350,9 @@
 
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="kw">fn</span> <span class="ident">on_start</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="comment">// ) -&gt; HashMap&lt;</span>
-        <span class="comment">//     &amp;&#39;static str,</span>
-        <span class="comment">//     fn(</span>
-        <span class="comment">//         event_store::prelude::RecordedEvent,</span>
-        <span class="comment">//         actix::Addr&lt;AggregateInstance&lt;Self&gt;&gt;,</span>
-        <span class="comment">//     ) -&gt; std::pin::Pin&lt;Box&lt;dyn Future&lt;Output = Result&lt;(), ()&gt;&gt; + Send&gt;&gt;,</span>
-        <span class="comment">// &gt; {</span>
         <span class="kw">for</span> <span class="ident">flag</span> <span class="kw">in</span> <span class="ident">inventory::iter</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="ident">::EventRegistry</span><span class="op">&gt;</span> {
             (<span class="ident">flag</span>.<span class="ident">get_resolver</span>())(<span class="ident">stream</span>, <span class="ident">ctx</span>);
         }
-
-        <span class="comment">// let mut resolvers = HashMap::new();</span>
-
-        <span class="comment">// for flag in inventory::iter::&lt;Self::EventResolver&gt; {</span>
-        <span class="comment">//     resolvers.insert(flag.get_name(), flag.get_resolver());</span>
-        <span class="comment">// }</span>
-
-        <span class="comment">// resolvers</span>
     }
 }
 </pre></div>
