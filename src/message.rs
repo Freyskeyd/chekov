@@ -2,6 +2,7 @@ use super::Application;
 use super::Command;
 use super::CommandExecutorError;
 use crate::command::CommandMetadatas;
+use crate::Event;
 use actix::prelude::*;
 use event_store::prelude::*;
 use uuid::Uuid;

@@ -1,12 +1,12 @@
 //! Struct and Trait correlated to Event
-use std::any::TypeId;
-use std::collections::BTreeMap;
-
 use crate::error::ApplyError;
+use crate::Aggregate;
 use crate::{message::EventMetadatas, Application, SubscriberManager};
 use actix::Actor;
 use event_store::prelude::RecordedEvent;
 use futures::Future;
+use std::any::TypeId;
+use std::collections::BTreeMap;
 
 pub(crate) mod handler;
 
@@ -19,7 +19,7 @@ pub type BoxedResolver<A> =
 // pub type BoxedDeserializer = Box<dyn Fn(RecordedEvent) -> Box<dyn ErasedGeneric>>;
 
 /// Receive an immutable event to handle
-pub trait Handler<E: event_store::Event> {
+pub trait Handler<E: crate::event::Event> {
     fn handle(
         &mut self,
         event: &E,
@@ -27,7 +27,8 @@ pub trait Handler<E: event_store::Event> {
 }
 
 /// Define an Event which can be produced and consumed
-pub trait Event: event_store::prelude::Event {
+// pub trait Event: event_store::prelude::Event {
+pub trait Event: Send {
     fn into_envelope<'de>(event: RecordedEvent) -> Result<crate::message::EventEnvelope<Self>, ()>
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
@@ -62,7 +63,7 @@ pub trait Event: event_store::prelude::Event {
     fn register<'de, A: Application>() -> (Vec<&'static str>, BoxedResolver<A>)
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static + Clone,
+        Self: 'static + Clone + event_store::Event,
     {
         (Self::all_event_types(), Self::lazy_deserialize())
     }
@@ -81,15 +82,26 @@ pub type EventResolverFn<T> =
     ) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>;
 
 #[doc(hidden)]
-pub struct EventResolverRegistry<T: Actor> {
+pub struct EventResolverRegistry<T: Actor, A: Aggregate> {
     pub names: BTreeMap<&'static str, TypeId>,
     pub resolvers: BTreeMap<TypeId, EventResolverFn<T>>,
+    pub appliers:
+        BTreeMap<TypeId, fn(&mut A, event_store::prelude::RecordedEvent) -> Result<(), ApplyError>>,
 }
 
-impl<T: Actor> EventResolverRegistry<T> {
+impl<T: Actor, A: Aggregate> EventResolverRegistry<T, A> {
     pub fn get(&self, event_name: &str) -> Option<&EventResolverFn<T>> {
         let type_id = self.names.get(event_name)?;
 
         self.resolvers.get(type_id)
+    }
+
+    pub fn get_applier(
+        &self,
+        event_name: &str,
+    ) -> Option<&fn(&mut A, event_store::prelude::RecordedEvent) -> Result<(), ApplyError>> {
+        let type_id = self.names.get(event_name)?;
+
+        self.appliers.get(type_id)
     }
 }

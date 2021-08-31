@@ -1,4 +1,4 @@
-use crate::message::EventEnvelope;
+use crate::{message::EventEnvelope, Event};
 // use crate::Chekov;
 use actix::prelude::*;
 use actix_interop::{with_ctx, FutureInterop};
@@ -46,7 +46,7 @@ pub trait EventHandler: Sized + std::marker::Unpin + 'static {
         Self: EventHandler,
     {
     }
-    fn listen<A: Application, M: BrokerMsg + event_store::Event + std::fmt::Debug>(
+    fn listen<A: Application, M: BrokerMsg + Event + std::fmt::Debug>(
         &self,
         ctx: &mut actix::Context<EventHandlerInstance<A, Self>>,
     ) where
@@ -75,8 +75,8 @@ pub struct EventHandlerInstance<A: Application, E: EventHandler> {
     pub(crate) _name: String,
 }
 
-impl<A: Application, E: EventHandler, T: event_store::Event + 'static>
-    ::actix::Handler<EventEnvelope<T>> for EventHandlerInstance<A, E>
+impl<A: Application, E: EventHandler, T: Event + 'static> ::actix::Handler<EventEnvelope<T>>
+    for EventHandlerInstance<A, E>
 where
     E: crate::event::Handler<T>,
 {

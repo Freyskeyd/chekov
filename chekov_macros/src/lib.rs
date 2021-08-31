@@ -107,6 +107,14 @@ pub fn apply_event(item: TokenStream) -> TokenStream {
                     let e = #event::into_envelope(event).unwrap();
 
                     Box::pin(ctx.send(e).map_err(|_|()))
+                },
+                applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), chekov::prelude::ApplyError> {
+                    use chekov::Event;
+                    use futures::TryFutureExt;
+
+                    let e = #event::into_envelope(event).unwrap();
+
+                    aggregate.apply(&e.event)
                 }
             }
         }

@@ -1,4 +1,5 @@
 use crate::event::Event;
+use crate::prelude::ApplyError;
 use crate::{command::Command, message::EventEnvelope};
 use crate::{command::CommandExecutor, error::CommandExecutorError};
 use crate::{message::Dispatch, prelude::EventApplier};
@@ -24,33 +25,27 @@ impl<A: Aggregate> AggregateInstance<A> {
     ) -> Result<Addr<Self>, CommandExecutorError> {
         let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
 
-        let addr = AggregateInstance::create(move |ctx| {
-            trace!("Creating aggregate instance");
-            let inner = A::default();
+        trace!("Creating aggregate instance");
 
-            inner.on_start(&identity, ctx);
-            let current_version = 0;
+        let inner = A::default();
+        let current_version = 0;
 
-            let instance = AggregateInstance {
-                inner,
-                current_version,
-            };
-            instance
-        });
+        let mut instance = AggregateInstance {
+            inner,
+            current_version,
+        };
 
         for event in events.unwrap() {
-            match A::get_event_resolver(&event.event_type) {
-                Some(resolver) => {
-                    let res = (resolver)(event, addr.clone()).await;
-                    if let Err(_) = res {
-                        return Err(CommandExecutorError::Any);
-                    }
-                }
-                None => {
-                    println!("No resolver");
-                }
+            if let Err(_) = instance.apply_recorded_event(event) {
+                return Err(CommandExecutorError::Any);
             }
         }
+
+        let addr = AggregateInstance::create(move |ctx| {
+            instance.inner.on_start(&identity, ctx);
+
+            instance
+        });
 
         Ok(addr)
     }
@@ -68,12 +63,18 @@ impl<A: Aggregate> AggregateInstance<A> {
         )
         .await?
     }
+
     fn apply<T>(&mut self, event: &T)
     where
         T: Event,
         A: EventApplier<T>,
     {
         let _ = self.inner.apply(event);
+    }
+
+    fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError> {
+        println!("APPLYING {:?}", event.event_type);
+        self.inner.apply_recorded_event(event)
     }
 
     pub(crate) async fn execute_command<APP: Application, C: Command<Executor = A>>(

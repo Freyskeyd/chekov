@@ -79,7 +79,12 @@ impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
 }
 
 impl<A: Application> DefaultEventResolver<A> {
-    pub fn register<'de, E: Event + Clone + serde::Deserialize<'de> + 'static>(mut self) -> Self {
+    pub fn register<
+        'de,
+        E: Event + event_store::Event + Clone + serde::Deserialize<'de> + 'static,
+    >(
+        mut self,
+    ) -> Self {
         let (type_string, resolver): (Vec<&'static str>, _) = E::register();
 
         let tty = TypeId::of::<E>();

@@ -104,11 +104,14 @@
 mod instance;
 mod registry;
 
+use event_store::prelude::RecordedEvent;
 use futures::Future;
 pub use instance::AggregateInstance;
 
 #[doc(hidden)]
 pub use registry::AggregateInstanceRegistry;
+
+use crate::{prelude::ApplyError, Event, EventApplier};
 
 #[doc(hidden)]
 pub trait EventRegistryItem<A: Aggregate> {
@@ -147,8 +150,7 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     #[doc(hidden)]
     type EventRegistry: inventory::Collect + EventRegistryItem<Self>;
 
-    // #[doc(hidden)]
-    // type EventResolver: inventory::Collect + EventResolverItem<Self>;
+    fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError>;
 
     /// Define the identity of this kind of Aggregate.
     ///

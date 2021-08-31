@@ -14,7 +14,7 @@ pub use metadata::CommandMetadatas;
 /// Define a Command which can be dispatch
 pub trait Command: std::fmt::Debug + Send + 'static {
     /// The Event that can be generated for this command
-    type Event: Event;
+    type Event: Event + event_store::Event;
 
     /// The Executor that will execute the command and produce the events
     ///
