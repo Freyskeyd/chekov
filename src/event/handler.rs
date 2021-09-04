@@ -1,9 +1,5 @@
-use crate::{
-    message::{EventEnvelope, ResolveAndApplyMany},
-    Event,
-};
+use crate::message::ResolveAndApplyMany;
 use actix::prelude::*;
-use actix_interop::{with_ctx, FutureInterop};
 use tracing::trace;
 
 use crate::Application;
@@ -39,24 +35,28 @@ pub trait BrokerMsg: Message<Result = Result<(), ()>> + Send + Clone + 'static {
 impl<M> BrokerMsg for M where M: Message<Result = Result<(), ()>> + Send + Clone + 'static {}
 
 /// Define a struct as an EventHandler
-pub trait EventHandler: Sized + std::marker::Unpin + 'static {
+#[async_trait::async_trait]
+pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {
     fn builder(self) -> EventHandlerBuilder<Self> {
         EventHandlerBuilder::new(self)
     }
 
-    fn listen<A: Application, M: BrokerMsg + Event + std::fmt::Debug>(
-        &self,
-        ctx: &mut actix::Context<EventHandlerInstance<A, Self>>,
-    ) {
+    async fn handle_recorded_event(
+        state: &mut Self,
+        event: event_store::prelude::RecordedEvent,
+    ) -> Result<(), ()>;
+
+    fn listen<A: Application>(&self, ctx: &mut actix::Context<EventHandlerInstance<A, Self>>) {
         let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
         let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
         broker.do_send(Subscribe("$all".into(), recipient));
     }
 
-    fn started<A: Application>(&mut self, _ctx: &mut actix::Context<EventHandlerInstance<A, Self>>)
+    fn started<A: Application>(&mut self, ctx: &mut actix::Context<EventHandlerInstance<A, Self>>)
     where
         Self: EventHandler,
     {
+        self.listen(ctx);
     }
 }
 
@@ -68,25 +68,8 @@ pub struct Subscribe(pub String, pub Recipient<ResolveAndApplyMany>);
 /// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {
     _phantom: std::marker::PhantomData<A>,
-    pub(crate) _handler: E,
+    pub(crate) handler: E,
     pub(crate) _name: String,
-}
-
-impl<A: Application, E: EventHandler, T: Event + 'static> ::actix::Handler<EventEnvelope<T>>
-    for EventHandlerInstance<A, E>
-where
-    E: crate::event::Handler<T>,
-{
-    type Result = ();
-
-    #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, ctx))]
-    fn handle(&mut self, msg: EventEnvelope<T>, ctx: &mut Self::Context) -> Self::Result {
-        let fut = async move {
-            let _ = with_ctx(|actor: &mut Self, _| actor._handler.handle(&msg.event)).await;
-        };
-
-        ctx.spawn(fut.interop_actor(self).map(|_, _, _| ()));
-    }
 }
 
 impl<A: Application, E: EventHandler> EventHandlerInstance<A, E> {
@@ -97,7 +80,7 @@ impl<A: Application, E: EventHandler> EventHandlerInstance<A, E> {
 
             EventHandlerInstance {
                 _phantom: std::marker::PhantomData,
-                _handler: builder.handler,
+                handler: builder.handler,
                 _name: builder.name,
             }
         })
@@ -108,25 +91,29 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        EventHandler::started(&mut self._handler, ctx);
+        EventHandler::started(&mut self.handler, ctx);
     }
 }
 
 impl<A: Application, E: EventHandler> ::actix::Handler<ResolveAndApplyMany>
     for EventHandlerInstance<A, E>
 {
-    type Result = Result<(), ()>;
+    type Result = ResponseActFuture<Self, Result<(), ()>>;
 
-    #[tracing::instrument(name = "EventHandlerInstance", skip(self, _msg, _ctx))]
-    fn handle(&mut self, _msg: ResolveAndApplyMany, _ctx: &mut Self::Context) -> Self::Result {
-        //TODO create Registry event
-        //
-        Ok(())
+    #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
+    fn handle(&mut self, msg: ResolveAndApplyMany, _ctx: &mut Self::Context) -> Self::Result {
+        let mut handler = self.handler.clone();
+        let events = msg.0;
 
-        // let fut = async move {
-        //     let _ = with_ctx(|actor: &mut Self, _| actor._handler.handle(&msg.event)).await;
-        // };
+        let fut = async move {
+            for event in events {
+                EventHandler::handle_recorded_event(&mut handler, event).await?;
+            }
+            Ok(())
+        }
+        .into_actor(self)
+        .map(|_res: Result<(), ()>, _actor, _ctx| Ok(()));
 
-        // ctx.spawn(fut.interop_actor(self).map(|_, _, _| ()));
+        Box::pin(fut)
     }
 }

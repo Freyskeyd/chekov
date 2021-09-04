@@ -6,30 +6,27 @@ use syn::*;
 
 #[derive(Debug, Clone, FromDeriveInput)]
 #[darling(attributes(aggregate), supports(struct_named))]
-struct AggregateAttrs {
+struct EventHandlerAttrs {
     ident: Ident,
     generics: Generics,
-
-    identity: String,
 }
 
-pub fn generate_aggregate(
+pub fn generate_event_handler(
     input: &DeriveInput,
     _: &DataStruct,
 ) -> Result<SynTokenStream, SynTokenStream> {
-    let container: AggregateAttrs = match FromDeriveInput::from_derive_input(input) {
+    let container: EventHandlerAttrs = match FromDeriveInput::from_derive_input(input) {
         Ok(v) => v,
         Err(e) => return Err(e.write_errors()),
     };
 
     let struct_name = container.ident;
-    let identity = container.identity;
 
     let aggregate_event_resolver =
-        format_ident!("{}EventResolverRegistry", struct_name.to_string());
+        format_ident!("{}EventHandlerEventRegistry", struct_name.to_string(),);
 
     let aggregate_static_resolver = format_ident!(
-        "{}_STATIC_EVENT_RESOLVER",
+        "{}_STATIC_EVENT_HANDLER_EVENT_RESOLVER",
         struct_name.to_string().to_uppercase()
     );
 
@@ -38,50 +35,41 @@ pub fn generate_aggregate(
         pub struct #aggregate_event_resolver {
             names: Vec<&'static str>,
             type_id: std::any::TypeId,
-            applier: chekov::event::EventApplierFn<#struct_name>
-        }
-
-        impl chekov::aggregate::EventResolverItem<#struct_name> for #aggregate_event_resolver {
-            fn get_names(&self) -> &[&'static str] {
-                self.names.as_ref()
-            }
+            handler: fn(&mut #struct_name, event_store::prelude::RecordedEvent)  -> BoxFuture<Result<(), ()>>
         }
 
         inventory::collect!(#aggregate_event_resolver);
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
-            static ref #aggregate_static_resolver: chekov::event::EventResolverRegistry<#struct_name> = {
-                let mut appliers = std::collections::BTreeMap::new();
+            static ref #aggregate_static_resolver: chekov::event::EventHandlerResolverRegistry<#struct_name> = {
+                let mut handlers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
                 for registered in inventory::iter::<#aggregate_event_resolver> {
-                    appliers.insert(registered.type_id, registered.applier);
+                    handlers.insert(registered.type_id, registered.handler);
 
                     registered.names.iter().for_each(|name|{
                         names.insert(name.clone(), registered.type_id);
                     });
                 }
 
-                chekov::event::EventResolverRegistry {
+                chekov::event::EventHandlerResolverRegistry {
                     names,
-                    appliers
+                    handlers
                 }
             };
         }
 
-        impl chekov::Aggregate for #struct_name {
+        #[chekov::async_trait::async_trait]
+        impl chekov::EventHandler for #struct_name {
 
-            fn apply_recorded_event(&mut self, event: event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError> {
-                if let Some(resolver) = #aggregate_static_resolver.get_applier(&event.event_type) {
-                    let _ = (resolver)(self, event);
+            async fn handle_recorded_event(state: &mut Self, event: event_store::prelude::RecordedEvent) -> Result<(), ()> {
+                if let Some(resolver) = #aggregate_static_resolver.get(&event.event_type) {
+                    return (resolver)(state, event).await;
                 }
 
                 Ok(())
-            }
-
-            fn identity() -> &'static str {
-                #identity
             }
         }
     })

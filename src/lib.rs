@@ -58,6 +58,9 @@ use router::Router;
 pub use subscriber::SubscriberManager;
 
 pub use chekov_macros::applier;
+pub use chekov_macros::event_handler;
+
+pub use async_trait;
 
 pub trait EventResolver<A: Application> {
     fn resolve(
