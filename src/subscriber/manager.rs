@@ -1,8 +1,11 @@
 use super::{EventNotification, Listener};
+use crate::event::handler::Subscribe;
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
+use actix::{Actor, Handler, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use event_store::prelude::RecordedEvent;
+use event_store::EventStore;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -11,8 +14,8 @@ use tracing::{trace, Instrument};
 /// Deal with Application subscriptions
 pub struct SubscriberManager<A: Application> {
     listener: Option<Addr<Listener<A>>>,
-    _event_store: actix::Addr<event_store::EventStore<A::Storage>>,
-    subscribers: BTreeMap<String, Vec<actix::Recipient<ResolveAndApplyMany>>>,
+    _event_store: Addr<EventStore<A::Storage>>,
+    subscribers: BTreeMap<String, Vec<Recipient<ResolveAndApplyMany>>>,
 }
 
 impl<A: Application> std::default::Default for SubscriberManager<A> {
@@ -23,7 +26,7 @@ impl<A: Application> std::default::Default for SubscriberManager<A> {
 
 impl<A: Application> SubscriberManager<A> {
     pub(crate) fn new(
-        event_store: Addr<event_store::EventStore<A::Storage>>,
+        event_store: Addr<EventStore<A::Storage>>,
         _: HashMap<String, TypeId>,
     ) -> Self {
         Self {
@@ -46,10 +49,10 @@ impl<A: Application> SubscriberManager<A> {
     }
 }
 
-impl<A: Application> actix::registry::SystemService for SubscriberManager<A> {}
-impl<A: Application> actix::Supervised for SubscriberManager<A> {}
+impl<A: Application> SystemService for SubscriberManager<A> {}
+impl<A: Application> Supervised for SubscriberManager<A> {}
 
-impl<A: Application> actix::Actor for SubscriberManager<A> {
+impl<A: Application> Actor for SubscriberManager<A> {
     type Context = Context<Self>;
 
     #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
@@ -68,14 +71,14 @@ impl<A: Application> actix::Actor for SubscriberManager<A> {
     }
 }
 
-impl<A: Application> actix::Handler<crate::event::handler::Subscribe> for SubscriberManager<A> {
+impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
     type Result = ();
-    fn handle(&mut self, subscription: crate::event::handler::Subscribe, _ctx: &mut Self::Context) {
+    fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) {
         self.add_sub(&subscription.0, subscription.1);
     }
 }
 
-impl<A> actix::Handler<EventNotification> for SubscriberManager<A>
+impl<A> Handler<EventNotification> for SubscriberManager<A>
 where
     A: Application,
 {

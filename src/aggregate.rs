@@ -24,7 +24,6 @@
 //!
 //! ```rust
 //! # use chekov::prelude::*;
-//! # use chekov::application::DefaultEventResolver;
 //! # use event_store::prelude::*;
 //! # use chekov::macros::*;
 //! # use serde::{Deserialize, Serialize};
@@ -48,7 +47,6 @@
 //! #
 //! # impl chekov::Application for DefaultApp {
 //! #     type Storage = PostgresBackend;
-//! #     type EventResolver = DefaultEventResolver<Self>;
 //! # }
 //! #
 //! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
@@ -105,21 +103,19 @@
 mod instance;
 mod registry;
 
+use crate::message::ResolveAndApplyMany;
+use crate::{event::handler::Subscribe, prelude::ApplyError, Application};
 use actix::AsyncContext;
 use actix::SystemService;
 use event_store::prelude::RecordedEvent;
-pub use instance::AggregateInstance;
 
+#[doc(hidden)]
+pub mod resolver;
+
+#[doc(hidden)]
+pub use instance::AggregateInstance;
 #[doc(hidden)]
 pub use registry::AggregateInstanceRegistry;
-
-use crate::message::ResolveAndApplyMany;
-use crate::{event::handler::Subscribe, prelude::ApplyError, Application};
-
-#[doc(hidden)]
-pub trait EventResolverItem<A: Aggregate> {
-    fn get_names(&self) -> &[&'static str];
-}
 
 /// Define an Aggregate
 ///

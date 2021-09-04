@@ -38,10 +38,10 @@ pub fn generate_aggregate(
         pub struct #aggregate_event_resolver {
             names: Vec<&'static str>,
             type_id: std::any::TypeId,
-            applier: chekov::event::EventApplierFn<#struct_name>
+            applier: chekov::aggregate::resolver::EventApplierFn<#struct_name>
         }
 
-        impl chekov::aggregate::EventResolverItem<#struct_name> for #aggregate_event_resolver {
+        impl chekov::aggregate::resolver::EventResolverItem<#struct_name> for #aggregate_event_resolver {
             fn get_names(&self) -> &[&'static str] {
                 self.names.as_ref()
             }
@@ -51,7 +51,7 @@ pub fn generate_aggregate(
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
-            static ref #aggregate_static_resolver: chekov::event::EventResolverRegistry<#struct_name> = {
+            static ref #aggregate_static_resolver: chekov::aggregate::resolver::EventResolverRegistry<#struct_name> = {
                 let mut appliers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
@@ -63,7 +63,7 @@ pub fn generate_aggregate(
                     });
                 }
 
-                chekov::event::EventResolverRegistry {
+                chekov::aggregate::resolver::EventResolverRegistry {
                     names,
                     appliers
                 }

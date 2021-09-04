@@ -19,7 +19,7 @@ impl Responder for Account {
 
 #[get("/accounts")]
 pub async fn find_all(db_pool: web::Data<PgPool>) -> impl Responder {
-    let result = Account::find_all(db_pool.acquire().await.unwrap()).await;
+    let result = AccountRepository::find_all(db_pool.acquire().await.unwrap()).await;
     match result {
         Ok(todos) => HttpResponse::Ok().json(todos),
         _ => HttpResponse::BadRequest().body("Error trying to read all todos from database"),

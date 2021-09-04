@@ -3,12 +3,8 @@
 mod builder;
 mod internal;
 
-use std::{any::TypeId, collections::HashMap};
-
 pub use builder::ApplicationBuilder;
 pub(crate) use internal::InternalApplication;
-
-use crate::{event::BoxedResolver, EventResolver, SubscriberManager};
 
 /// Application are high order logical seperator.
 ///
@@ -30,16 +26,11 @@ use crate::{event::BoxedResolver, EventResolver, SubscriberManager};
 /// impl chekov::Application for DefaultApp {
 ///     // Define that this application will use a PostgresBackend as event_store
 ///     type Storage = event_store::prelude::PostgresBackend;
-///     // Define that this application will use a DefaultEventResolver as event_resolver
-///     type EventResolver = chekov::application::DefaultEventResolver<Self>;
 /// }
 /// ```
 pub trait Application: Unpin + 'static + Send + std::default::Default {
     /// The type of storage used by the application
     type Storage: event_store::prelude::Storage;
-
-    /// The type of the event_resolver, see EventResolver documentation to know more about it.
-    type EventResolver: crate::EventResolver<Self>;
 
     /// Used to initiate the launch of the application
     ///
@@ -54,26 +45,5 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
     /// You can configure it or use the default value which is the struct full qualified name.
     fn get_name() -> &'static str {
         std::any::type_name::<Self>()
-    }
-}
-
-#[derive(Default)]
-pub struct DefaultEventResolver<A: Application> {
-    tty_str: HashMap<&'static str, TypeId>,
-    resolvers: HashMap<TypeId, BoxedResolver<A>>,
-}
-
-impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
-    fn resolve(
-        &self,
-        notify: actix::Addr<SubscriberManager<A>>,
-        event_name: &str,
-        event: event_store::prelude::RecordedEvent,
-    ) {
-        if let Some(ty) = self.tty_str.get(event_name) {
-            if let Some(formatter) = self.resolvers.get(ty) {
-                let _ = (formatter)(event, notify);
-            }
-        }
     }
 }

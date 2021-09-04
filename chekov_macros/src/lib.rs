@@ -240,7 +240,6 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
     let mut event: Option<Ident> = None;
     for segment in &object.segments {
         let PathSegment { ident, arguments } = segment;
-        //TODO Rename EventHandler
         if ident == "Handler" {
             if let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) =
                 arguments

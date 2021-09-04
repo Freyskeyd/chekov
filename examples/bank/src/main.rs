@@ -5,7 +5,7 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use chekov::{application::DefaultEventResolver, prelude::*};
+use chekov::prelude::*;
 use event_store::prelude::*;
 use sqlx::PgPool;
 
@@ -27,7 +27,6 @@ struct DefaultApp {}
 
 impl chekov::Application for DefaultApp {
     type Storage = PostgresBackend;
-    type EventResolver = DefaultEventResolver<Self>;
 }
 
 #[actix::main]

@@ -1,7 +1,6 @@
 use actix::prelude::*;
 use sqlx::postgres::PgNotification;
 use std::{convert::TryFrom, str::FromStr};
-use uuid::Uuid;
 
 mod listener;
 mod manager;
@@ -14,13 +13,6 @@ pub use subscriber::Subscriber;
 #[derive(Debug, Message)]
 #[rtype(result = "()")]
 struct Notif(PgNotification);
-
-#[doc(hidden)]
-#[derive(Message)]
-#[rtype(result = "()")]
-struct Subscribe {
-    _subscriber_id: Uuid,
-}
 
 #[derive(Clone, Debug, Message)]
 #[rtype(result = "()")]

@@ -42,7 +42,7 @@ pub fn generate_event_handler(
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
-            static ref #aggregate_static_resolver: chekov::event::EventHandlerResolverRegistry<#struct_name> = {
+            static ref #aggregate_static_resolver: chekov::event::resolver::EventHandlerResolverRegistry<#struct_name> = {
                 let mut handlers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
@@ -54,7 +54,7 @@ pub fn generate_event_handler(
                     });
                 }
 
-                chekov::event::EventHandlerResolverRegistry {
+                chekov::event::resolver::EventHandlerResolverRegistry {
                     names,
                     handlers
                 }

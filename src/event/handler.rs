@@ -31,9 +31,6 @@ where
     }
 }
 
-pub trait BrokerMsg: Message<Result = Result<(), ()>> + Send + Clone + 'static {}
-impl<M> BrokerMsg for M where M: Message<Result = Result<(), ()>> + Send + Clone + 'static {}
-
 /// Define a struct as an EventHandler
 #[async_trait::async_trait]
 pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {

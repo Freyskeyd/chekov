@@ -18,7 +18,6 @@
 //! // eventbus's event with the `DefaultEventResolver`.
 //! impl chekov::Application for DefaultApp {
 //!     type Storage = event_store::prelude::PostgresBackend;
-//!     type EventResolver = chekov::application::DefaultEventResolver<Self>;
 //! }
 //! ```
 pub use chekov_macros as macros;
