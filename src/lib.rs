@@ -57,6 +57,8 @@ use message::Dispatch;
 use router::Router;
 pub use subscriber::SubscriberManager;
 
+pub use chekov_macros::applier;
+
 pub trait EventResolver<A: Application> {
     fn resolve(
         &self,
@@ -64,9 +66,4 @@ pub trait EventResolver<A: Application> {
         event_name: &str,
         event: RecordedEvent,
     );
-    // fn resolve_event(
-    //     &self,
-    //     event_name: &str,
-    //     event: RecordedEvent,
-    // ) -> Option<Box<dyn ErasedGeneric>>;
 }

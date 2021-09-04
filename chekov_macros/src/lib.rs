@@ -46,49 +46,147 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
     }
 }
 
-#[derive(Debug)]
-struct ApplyEvent {
-    event: proc_macro2::Ident,
-    apply_to: proc_macro2::Ident,
+#[proc_macro_attribute]
+pub fn applier(args: TokenStream, input: TokenStream) -> TokenStream {
+    // let ser = true;
+    // let de = true;
+    expand(args, input)
 }
 
-impl syn::parse::Parse for ApplyEvent {
-    fn parse(input: syn::parse::ParseStream) -> Result<Self> {
-        let apply_to: syn::Ident = input.parse()?;
-        input.parse::<Token![,]>()?;
-        let event: syn::Ident = input.parse()?;
+use syn::parse::{Parse, ParseStream};
+use syn::{Error, ItemImpl, TypePath};
 
-        Ok(ApplyEvent { event, apply_to })
+#[allow(dead_code)]
+pub(crate) enum TraitArgs {
+    External,
+    Internal { tag: LitStr },
+    Adjacent { tag: LitStr, content: LitStr },
+}
+
+pub(crate) struct ImplArgs {
+    #[allow(dead_code)]
+    pub name: Option<LitStr>,
+}
+
+pub(crate) enum Input {
+    Trait(ItemTrait),
+    Impl(ItemImpl),
+}
+
+mod kw {
+    syn::custom_keyword!(tag);
+    syn::custom_keyword!(content);
+    syn::custom_keyword!(name);
+}
+impl Parse for Input {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut attrs = Attribute::parse_outer(input)?;
+
+        let ahead = input.fork();
+        ahead.parse::<Visibility>()?;
+        ahead.parse::<Option<Token![unsafe]>>()?;
+
+        if ahead.peek(Token![trait]) {
+            let mut item: ItemTrait = input.parse()?;
+            attrs.extend(item.attrs);
+            item.attrs = attrs;
+            Ok(Input::Trait(item))
+        } else if ahead.peek(Token![impl]) {
+            let mut item: ItemImpl = input.parse()?;
+            if item.trait_.is_none() {
+                let impl_token = item.impl_token;
+                let ty = item.self_ty;
+                let span = quote!(#impl_token #ty);
+                let msg = "expected impl Trait for Type";
+                return Err(Error::new_spanned(span, msg));
+            }
+            attrs.extend(item.attrs);
+            item.attrs = attrs;
+            Ok(Input::Impl(item))
+        } else {
+            Err(input.error("expected trait or impl block"))
+        }
     }
 }
 
-#[proc_macro]
-pub fn apply_event(item: TokenStream) -> TokenStream {
-    let apply: ApplyEvent = parse_macro_input!(item);
+impl Parse for ImplArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let name = if input.is_empty() {
+            None
+        } else {
+            input.parse::<kw::name>()?;
+            input.parse::<Token![=]>()?;
+            let name: LitStr = input.parse()?;
+            Some(name)
+        };
+        Ok(ImplArgs { name })
+    }
+}
 
-    let event = apply.event;
-    let apply_to = apply.apply_to;
+fn expand(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as Input);
+
+    match input {
+        Input::Trait(_) => {
+            panic!("`applier` can't be used on Trait.")
+        }
+        Input::Impl(input) => {
+            let args = parse_macro_input!(args as ImplArgs);
+            expand_applier(args, input)
+        }
+    }
+}
+
+pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
+    let object = &input.trait_.as_ref().unwrap().1;
+    let this = &input.self_ty;
+
+    let apply_to = if let syn::Type::Path(TypePath { ref path, .. }) = **this {
+        path.get_ident().unwrap()
+    } else {
+        panic!()
+    };
 
     let aggregate_event_resolver = format_ident!("{}EventResolverRegistry", apply_to.to_string(),);
 
-    let toks = quote! {
-
-        inventory::submit! {
-            use event_store::Event;
-            #aggregate_event_resolver {
-                names: #event::all_event_types(),
-                type_id: std::any::TypeId::of::<#event>(),
-                applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), chekov::prelude::ApplyError> {
-                    use chekov::Event;
-                    use futures::TryFutureExt;
-
-                    let e = #event::into_envelope(event).unwrap();
-
-                    aggregate.apply(&e.event)
+    let mut event: Option<Ident> = None;
+    for segment in &object.segments {
+        let PathSegment { ident, arguments } = segment;
+        if ident == "EventApplier" {
+            if let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) =
+                arguments
+            {
+                if let Some(GenericArgument::Type(syn::Type::Path(syn::TypePath {
+                    path, ..
+                }))) = args.first()
+                {
+                    event = path.get_ident().cloned();
                 }
             }
         }
+    }
+    let mut expanded = quote! {
+        #input
     };
 
-    toks.into()
+    let event = event.unwrap();
+    expanded.extend(quote! {
+            inventory::submit! {
+                use event_store::Event;
+                #aggregate_event_resolver {
+                    names: #event::all_event_types(),
+                    type_id: std::any::TypeId::of::<#event>(),
+                    applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), chekov::prelude::ApplyError> {
+                        use chekov::Event;
+                        use futures::TryFutureExt;
+
+                        let e = #event::into_envelope(event).unwrap();
+
+                        aggregate.apply(&e.event)
+                    }
+                }
+            }
+        });
+
+    expanded.into()
 }

@@ -90,9 +90,8 @@
 //!     }
 //! }
 //!
-//! // Applying events
-//! chekov::macros::apply_event!(Account, AccountOpened);
 //!
+//! #[chekov::applier]
 //! impl EventApplier<AccountOpened> for Account {
 //!     fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
 //!         self.account_id = Some(event.account_id);

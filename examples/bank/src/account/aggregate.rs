@@ -1,8 +1,6 @@
 use super::*;
 
-chekov::macros::apply_event!(Account, AccountUpdated);
-chekov::macros::apply_event!(Account, AccountDeleted);
-chekov::macros::apply_event!(Account, AccountOpened);
+use chekov::event::EventApplier;
 
 impl CommandExecutor<DeleteAccount> for Account {
     fn execute(cmd: DeleteAccount, _: &Self) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
@@ -36,7 +34,9 @@ impl CommandExecutor<UpdateAccount> for Account {
         )])
     }
 }
-impl chekov::event::EventApplier<AccountOpened> for Account {
+
+#[chekov::applier]
+impl EventApplier<AccountOpened> for Account {
     fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
         println!("Account open applied");
         self.account_id = Some(event.account_id);
@@ -46,7 +46,8 @@ impl chekov::event::EventApplier<AccountOpened> for Account {
     }
 }
 
-impl chekov::event::EventApplier<AccountUpdated> for Account {
+#[chekov::applier]
+impl EventApplier<AccountUpdated> for Account {
     fn apply(&mut self, event: &AccountUpdated) -> Result<(), ApplyError> {
         if let AccountUpdated::NameChanged(_, _, new_name) = event {
             self.name = new_name.to_string();
@@ -55,7 +56,8 @@ impl chekov::event::EventApplier<AccountUpdated> for Account {
     }
 }
 
-impl chekov::event::EventApplier<AccountDeleted> for Account {
+#[chekov::applier]
+impl EventApplier<AccountDeleted> for Account {
     fn apply(&mut self, _: &AccountDeleted) -> Result<(), ApplyError> {
         self.status = AccountStatus::Deleted;
 
