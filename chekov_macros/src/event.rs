@@ -191,9 +191,7 @@ impl From<EventState> for Result<SynTokenStream, SynTokenStream> {
 
 pub fn generate_event(input: &DeriveInput) -> Result<SynTokenStream, SynTokenStream> {
     match FromDeriveInput::from_derive_input(input) {
-        Ok::<EventAttrs, _>(container) => EventState::from_container(container.clone()).into(),
-        Err(e) => {
-            return Err(e.write_errors());
-        }
+        Ok::<EventAttrs, _>(container) => EventState::from_container(container).into(),
+        Err(e) => Err(e.write_errors()),
     }
 }

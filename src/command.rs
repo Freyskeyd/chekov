@@ -2,7 +2,7 @@ use crate::event::Event;
 use crate::Aggregate;
 use crate::CommandExecutorError;
 use crate::{event::*, message::Dispatch, Application};
-use actix::ArbiterService;
+use actix::SystemService;
 use uuid::Uuid;
 
 mod consistency;
@@ -22,7 +22,7 @@ pub trait Command: std::fmt::Debug + Send + 'static {
     type Executor: CommandExecutor<Self> + EventApplier<Self::Event>;
 
     /// The registry where the command will be dispatched
-    type ExecutorRegistry: ArbiterService;
+    type ExecutorRegistry: SystemService;
 
     /// Returns the correlation id of the command
     fn get_correlation_id(&self) -> Uuid {

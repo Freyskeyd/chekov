@@ -1,20 +1,18 @@
-use super::{EventNotification, Listener, Subscribe};
-use crate::application::InternalApplication;
-use crate::{message::EventEnvelope, Application};
+use super::{EventNotification, Listener};
+use crate::message::ResolveAndApplyMany;
+use crate::Application;
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
-use actix_interop::FutureInterop;
-use fnv::FnvHasher;
-use std::any::{Any, TypeId};
-use std::{collections::HashMap, hash::BuildHasherDefault};
+use event_store::prelude::RecordedEvent;
+use std::any::TypeId;
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 use tracing::{trace, Instrument};
-
-type TypeMap<A> = HashMap<String, A, BuildHasherDefault<FnvHasher>>;
 
 /// Deal with Application subscriptions
 pub struct SubscriberManager<A: Application> {
     listener: Option<Addr<Listener<A>>>,
     _event_store: actix::Addr<event_store::EventStore<A::Storage>>,
-    sub_map: TypeMap<Vec<(TypeId, Box<dyn Any>)>>,
+    subscribers: BTreeMap<String, Vec<actix::Recipient<ResolveAndApplyMany>>>,
 }
 
 impl<A: Application> std::default::Default for SubscriberManager<A> {
@@ -31,27 +29,20 @@ impl<A: Application> SubscriberManager<A> {
         Self {
             listener: None,
             _event_store: event_store,
-            sub_map: TypeMap::default(),
+            subscribers: BTreeMap::new(),
         }
     }
 
-    fn add_sub<M: crate::event::handler::BrokerMsg>(
-        &mut self,
-        stream: &str,
-        sub: Recipient<M>,
-        _id: &str,
-    ) {
-        let msg_id = TypeId::of::<M>();
+    fn add_sub(&mut self, stream: &str, sub: Recipient<ResolveAndApplyMany>) {
         let stream_id = stream.to_string();
-        let boxed = Box::new(sub);
-        if let Some(subs) = self.sub_map.get_mut(&stream_id) {
-            trace!("Broker: Adding to {:?} subscription list.", msg_id);
-            subs.push((msg_id, boxed));
+        if let Some(subs) = self.subscribers.get_mut(&stream_id) {
+            trace!("Broker: Adding to subscription list.");
+            subs.push(sub);
             return;
         }
 
-        trace!("Broker: Creating {:?} subscription list.", msg_id);
-        self.sub_map.insert(stream_id, vec![(msg_id, boxed)]);
+        trace!("Broker: Creating subscription list.");
+        self.subscribers.insert(stream_id, vec![sub]);
     }
 }
 
@@ -77,40 +68,13 @@ impl<A: Application> actix::Actor for SubscriberManager<A> {
     }
 }
 
-impl<A: Application, M: crate::event::handler::BrokerMsg + std::fmt::Debug>
-    actix::Handler<crate::event::handler::Subscribe<M>> for SubscriberManager<A>
-{
+impl<A: Application> actix::Handler<crate::event::handler::Subscribe> for SubscriberManager<A> {
     type Result = ();
-    fn handle(
-        &mut self,
-        subscription: crate::event::handler::Subscribe<M>,
-        _ctx: &mut Self::Context,
-    ) {
-        self.add_sub(&subscription.0, subscription.1, &subscription.2);
+    fn handle(&mut self, subscription: crate::event::handler::Subscribe, _ctx: &mut Self::Context) {
+        self.add_sub(&subscription.0, subscription.1);
     }
 }
-impl<A, T> actix::Handler<EventEnvelope<T>> for SubscriberManager<A>
-where
-    A: Application,
-    T: crate::event::Event + Clone + 'static,
-{
-    type Result = ();
 
-    #[tracing::instrument(name = "SubscriberManager", skip(self, msg, _ctx), fields(app = %A::get_name()))]
-    fn handle(&mut self, msg: EventEnvelope<T>, _ctx: &mut Self::Context) -> Self::Result {
-        trace!("{:?}", msg.meta);
-        if let Some(subs) = self.sub_map.get_mut(&msg.meta.stream_name) {
-            subs.iter()
-                .filter_map(|(id, addr)| {
-                    addr.downcast_ref::<Recipient<EventEnvelope<T>>>()
-                        .map(|rec| (id, rec))
-                })
-                .for_each(|(_, addr)| {
-                    let _ = addr.do_send(msg.clone());
-                });
-        }
-    }
-}
 impl<A> actix::Handler<EventNotification> for SubscriberManager<A>
 where
     A: Application,
@@ -124,8 +88,9 @@ where
             subscription.stream_uuid
         );
         let _ = ctx.address();
+        let stream_uuid = subscription.stream_uuid.clone();
         let fut = async move {
-            let result = match crate::event_store::EventStore::<A>::with_reader(
+            match crate::event_store::EventStore::<A>::with_reader(
                 event_store::read()
                     .stream(&subscription.stream_uuid)
                     .unwrap()
@@ -148,32 +113,20 @@ where
                         event.stream_uuid = subscription.stream_uuid.to_string();
                         event
                     })
-                    .collect(),
+                    .collect::<Vec<RecordedEvent>>(),
                 Err(_) => panic!(""),
-            };
-
-            InternalApplication::<A>::resolve_many(result).await;
-            // Call eventmapper with event name -> return event Real type,
-            // try to build a Recipient<Type>
-            // for event in result {
-            // A::EventResolver::resolve(addr.clone(), &event.event_type.clone(), event);
-            // }
+            }
         }
         .in_current_span()
-        .interop_actor(self)
-        .map(|_res, _actor, _ctx| {});
+        .into_actor(self)
+        .map(move |res, actor, _ctx| {
+            if let Some(subs) = actor.subscribers.get(&stream_uuid) {
+                for sub in subs {
+                    let _ = sub.try_send(ResolveAndApplyMany(res.clone()));
+                }
+            }
+        });
 
         ctx.spawn(fut);
-    }
-}
-
-impl<A: Application> actix::Handler<Subscribe> for SubscriberManager<A> {
-    type Result = ();
-    fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) {
-        trace!(
-            "Registering {} as subscriber on {}",
-            subscription.subscriber_id,
-            "$all"
-        );
     }
 }

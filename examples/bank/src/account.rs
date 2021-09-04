@@ -11,14 +11,14 @@ mod projector;
 pub use aggregate::*;
 pub use projector::*;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum AccountStatus {
     Initialized,
     Active,
     Deleted,
 }
 
-#[derive(chekov::macros::Aggregate, Serialize)]
+#[derive(Debug, chekov::macros::Aggregate, Serialize)]
 #[aggregate(identity = "account")]
 pub struct Account {
     pub account_id: Option<Uuid>,

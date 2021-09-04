@@ -36,6 +36,11 @@ pub struct EventEnvelope<E: Event> {
 #[rtype(result = "Result<(), ()>")]
 pub struct ResolveAndApply(pub RecordedEvent);
 
+#[doc(hidden)]
+#[derive(Debug, Clone, Message)]
+#[rtype(result = "Result<(), ()>")]
+pub struct ResolveAndApplyMany(pub Vec<RecordedEvent>);
+
 #[derive(Message)]
 #[rtype("Result<Vec<RecordedEvent>, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteReader(pub(crate) event_store::prelude::Reader);
@@ -47,3 +52,9 @@ pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 #[derive(Message)]
 #[rtype("Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteStreamInfo(pub(crate) String);
+
+// #[derive(Message)]
+// #[rtype("Result<(), ()>")]
+// pub struct Handle {
+//     event: RecordedEvent,
+// }

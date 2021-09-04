@@ -14,8 +14,6 @@ mod commands;
 mod events;
 mod http;
 
-use events::*;
-
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg.service(http::find_all);
     cfg.service(http::find);
@@ -30,16 +28,6 @@ struct DefaultApp {}
 impl chekov::Application for DefaultApp {
     type Storage = PostgresBackend;
     type EventResolver = DefaultEventResolver<Self>;
-}
-
-#[allow(dead_code)]
-fn configure_events<A: chekov::Application>() -> DefaultEventResolver<A> {
-    DefaultEventResolver::default()
-        .register::<AccountOpened>()
-        .register::<AccountUpdated>()
-        .register::<AccountDeleted>()
-        .register::<MoneyMovementEvent>()
-        .register::<UserRegistered>()
 }
 
 #[actix::main]
@@ -58,7 +46,6 @@ async fn main() -> std::io::Result<()> {
         .storage(PostgresBackend::with_url(
             "postgresql://postgres:postgres@localhost/event_store_bank",
         ))
-        .event_resolver(configure_events())
         .launch()
         .await;
 

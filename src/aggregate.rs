@@ -31,7 +31,7 @@
 //! # use uuid::Uuid;
 //! # use actix::Message;
 //! #
-//! # #[derive(Serialize)]
+//! # #[derive(Debug, Serialize)]
 //! # pub enum AccountStatus {
 //! #     Initialized,
 //! #     Active,
@@ -52,7 +52,7 @@
 //! # }
 //! #
 //! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
-//! # #[rtype(result = "()")]
+//! # #[rtype(result = "Result<(), ()>")]
 //! # pub struct AccountOpened {
 //! #     pub account_id: Uuid,
 //! #     pub name: String,
@@ -66,7 +66,7 @@
 //! #     pub name: String,
 //! # }
 //! #
-//! #[derive(Default, Aggregate)]
+//! #[derive(Debug, Default, Aggregate)]
 //! #[aggregate(identity = "account")]
 //! pub struct Account {
 //!     account_id: Option<uuid::Uuid>,
@@ -91,42 +91,34 @@
 //! }
 //!
 //! // Applying events
-//! chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);
+//! chekov::macros::apply_event!(Account, AccountOpened);
 //!
-//! fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), ApplyError> {
-//!     state.account_id = Some(event.account_id);
-//!     state.status = AccountStatus::Active;
+//! impl EventApplier<AccountOpened> for Account {
+//!     fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
+//!         self.account_id = Some(event.account_id);
+//!         self.status = AccountStatus::Active;
 //!
-//!     Ok(())
+//!         Ok(())
+//!     }
 //! }
 //! ```
 
 mod instance;
 mod registry;
 
+use actix::AsyncContext;
+use actix::SystemService;
 use event_store::prelude::RecordedEvent;
-use futures::Future;
 pub use instance::AggregateInstance;
 
 #[doc(hidden)]
 pub use registry::AggregateInstanceRegistry;
 
-use crate::{prelude::ApplyError, Event, EventApplier};
-
-#[doc(hidden)]
-pub trait EventRegistryItem<A: Aggregate> {
-    fn get_resolver(&self) -> &dyn Fn(&str, &actix::Context<AggregateInstance<A>>);
-}
+use crate::message::ResolveAndApplyMany;
+use crate::{event::handler::Subscribe, prelude::ApplyError, Application};
 
 #[doc(hidden)]
 pub trait EventResolverItem<A: Aggregate> {
-    fn get_resolver(
-        &self,
-    ) -> fn(
-        event_store::prelude::RecordedEvent,
-        actix::Addr<AggregateInstance<A>>,
-    ) -> std::pin::Pin<Box<dyn Future<Output = Result<(), ()>> + Send>>;
-
     fn get_names(&self) -> &[&'static str];
 }
 
@@ -139,17 +131,14 @@ pub trait EventResolverItem<A: Aggregate> {
 /// # use chekov::prelude::*;
 /// # use chekov::macros::*;
 ///
-/// #[derive(Default, Aggregate)]
+/// #[derive(Debug, Default, Aggregate)]
 /// #[aggregate(identity = "account")]
 /// struct Account {
 ///     account_id: Option<uuid::Uuid>
 /// }
 /// ```
 ///
-pub trait Aggregate: Default + std::marker::Unpin + 'static {
-    #[doc(hidden)]
-    type EventRegistry: inventory::Collect + EventRegistryItem<Self>;
-
+pub trait Aggregate: std::fmt::Debug + Default + std::marker::Unpin + 'static {
     fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError>;
 
     /// Define the identity of this kind of Aggregate.
@@ -161,19 +150,13 @@ pub trait Aggregate: Default + std::marker::Unpin + 'static {
     fn identity() -> &'static str;
 
     #[doc(hidden)]
-    fn get_event_resolver(
-        event_name: &str,
-    ) -> Option<
-        &fn(
-            event_store::prelude::RecordedEvent,
-            actix::Addr<AggregateInstance<Self>>,
-        ) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>,
-    >;
-
-    #[doc(hidden)]
-    fn on_start(&self, stream: &str, ctx: &actix::Context<AggregateInstance<Self>>) {
-        for flag in inventory::iter::<Self::EventRegistry> {
-            (flag.get_resolver())(stream, ctx);
-        }
+    fn on_start<A: Application>(
+        &mut self,
+        stream: &str,
+        ctx: &actix::Context<AggregateInstance<Self>>,
+    ) {
+        let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
+        let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+        broker.do_send(Subscribe(stream.into(), recipient));
     }
 }

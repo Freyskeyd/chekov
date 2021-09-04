@@ -10,10 +10,24 @@ pub struct AggregateInstanceRegistry<A: Aggregate> {
     registry: ::std::collections::HashMap<String, ::actix::Addr<AggregateInstance<A>>>,
 }
 
-impl<A: Aggregate> ::actix::registry::ArbiterService for AggregateInstanceRegistry<A> {}
+impl<A: Aggregate> ::actix::registry::SystemService for AggregateInstanceRegistry<A> {}
 impl<A: Aggregate> ::actix::Supervised for AggregateInstanceRegistry<A> {}
 impl<A: Aggregate> ::actix::Actor for AggregateInstanceRegistry<A> {
     type Context = ::actix::Context<Self>;
+
+    fn started(&mut self, _ctx: &mut Self::Context) {
+        trace!(
+            "AggregateInstanceRegistry {:?} started",
+            std::any::type_name::<Self>()
+        );
+    }
+
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        trace!(
+            "AggregateInstanceRegistry {:?} stopped",
+            std::any::type_name::<Self>()
+        );
+    }
 }
 
 impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
@@ -27,6 +41,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
         fields(correlation_id = %cmd.metadatas.correlation_id, aggregate_id = %cmd.command.identifier(), aggregate_type = %::std::any::type_name::<C::Executor>())
     )]
     fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
+        println!("Registry: {:?}", self.registry);
         // Open aggregate
         if let Some(addr) = self.registry.get(&cmd.command.identifier()).cloned() {
             trace!("Instance already started");
@@ -51,14 +66,19 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                 async move { fut.await }
                     .instrument(tracing::Span::current())
                     .into_actor(self)
-                    .then(move |result, actor, _ctx| {
+                    .map(move |result, actor, _| {
                         let addr = match result {
                             Ok(addr) => {
-                                actor.registry.insert(stream_id.clone(), addr.clone());
+                                actor.registry.insert(stream_id, addr.clone());
+                                println!("Registry: {:?}", actor.registry);
                                 addr
                             }
                             Err(_) => todo!(),
                         };
+
+                        addr
+                    })
+                    .then(move |addr, actor, _ctx| {
                         AggregateInstance::execute_command(addr, cmd)
                             .instrument(tracing::Span::current())
                             .into_actor(actor)

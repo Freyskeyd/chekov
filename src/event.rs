@@ -1,8 +1,7 @@
 //! Struct and Trait correlated to Event
 use crate::error::ApplyError;
 use crate::Aggregate;
-use crate::{message::EventMetadatas, Application, SubscriberManager};
-use actix::Actor;
+use crate::{message::EventMetadatas, SubscriberManager};
 use event_store::prelude::RecordedEvent;
 use futures::Future;
 use std::any::TypeId;
@@ -45,28 +44,6 @@ pub trait Event: Send {
             },
         })
     }
-
-    fn lazy_deserialize<'de, A: Application>() -> BoxedResolver<A>
-    where
-        Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static + Clone,
-    {
-        Box::new(
-            |event: RecordedEvent, resolver: actix::Addr<SubscriberManager<A>>| -> Result<(), ()> {
-                resolver.do_send(Self::into_envelope(event)?);
-
-                Ok(())
-            },
-        )
-    }
-
-    fn register<'de, A: Application>() -> (Vec<&'static str>, BoxedResolver<A>)
-    where
-        Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static + Clone + event_store::Event,
-    {
-        (Self::all_event_types(), Self::lazy_deserialize())
-    }
 }
 
 /// Define an event applier
@@ -75,31 +52,17 @@ pub trait EventApplier<E: Event> {
 }
 
 #[doc(hidden)]
-pub type EventResolverFn<T> =
-    fn(
-        event_store::prelude::RecordedEvent,
-        actix::Addr<T>,
-    ) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>;
+pub type EventApplierFn<A> =
+    fn(&mut A, event_store::prelude::RecordedEvent) -> Result<(), ApplyError>;
 
 #[doc(hidden)]
-pub struct EventResolverRegistry<T: Actor, A: Aggregate> {
+pub struct EventResolverRegistry<A: Aggregate> {
     pub names: BTreeMap<&'static str, TypeId>,
-    pub resolvers: BTreeMap<TypeId, EventResolverFn<T>>,
-    pub appliers:
-        BTreeMap<TypeId, fn(&mut A, event_store::prelude::RecordedEvent) -> Result<(), ApplyError>>,
+    pub appliers: BTreeMap<TypeId, EventApplierFn<A>>,
 }
 
-impl<T: Actor, A: Aggregate> EventResolverRegistry<T, A> {
-    pub fn get(&self, event_name: &str) -> Option<&EventResolverFn<T>> {
-        let type_id = self.names.get(event_name)?;
-
-        self.resolvers.get(type_id)
-    }
-
-    pub fn get_applier(
-        &self,
-        event_name: &str,
-    ) -> Option<&fn(&mut A, event_store::prelude::RecordedEvent) -> Result<(), ApplyError>> {
+impl<A: Aggregate> EventResolverRegistry<A> {
+    pub fn get_applier(&self, event_name: &str) -> Option<&EventApplierFn<A>> {
         let type_id = self.names.get(event_name)?;
 
         self.appliers.get(type_id)

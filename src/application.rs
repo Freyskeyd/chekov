@@ -8,7 +8,7 @@ use std::{any::TypeId, collections::HashMap};
 pub use builder::ApplicationBuilder;
 pub(crate) use internal::InternalApplication;
 
-use crate::{event::BoxedResolver, Event, EventResolver, SubscriberManager};
+use crate::{event::BoxedResolver, EventResolver, SubscriberManager};
 
 /// Application are high order logical seperator.
 ///
@@ -75,28 +75,5 @@ impl<A: Application> EventResolver<A> for DefaultEventResolver<A> {
                 let _ = (formatter)(event, notify);
             }
         }
-    }
-}
-
-impl<A: Application> DefaultEventResolver<A> {
-    pub fn register<
-        'de,
-        E: Event + event_store::Event + Clone + serde::Deserialize<'de> + 'static,
-    >(
-        mut self,
-    ) -> Self {
-        let (type_string, resolver): (Vec<&'static str>, _) = E::register();
-
-        let tty = TypeId::of::<E>();
-
-        if self.resolvers.insert(tty, resolver).is_some() {
-            panic!("Resolver already defined for this type");
-        }
-
-        type_string.into_iter().for_each(|s| {
-            self.tty_str.insert(s, tty);
-        });
-
-        self
     }
 }

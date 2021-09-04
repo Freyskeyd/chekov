@@ -1,5 +1,7 @@
-use crate::{message::EventEnvelope, Event};
-// use crate::Chekov;
+use crate::{
+    message::{EventEnvelope, ResolveAndApplyMany},
+    Event,
+};
 use actix::prelude::*;
 use actix_interop::{with_ctx, FutureInterop};
 use tracing::trace;
@@ -33,45 +35,40 @@ where
     }
 }
 
-pub trait BrokerMsg: Message<Result = ()> + Send + Clone + 'static {}
-impl<M> BrokerMsg for M where M: Message<Result = ()> + Send + Clone + 'static {}
+pub trait BrokerMsg: Message<Result = Result<(), ()>> + Send + Clone + 'static {}
+impl<M> BrokerMsg for M where M: Message<Result = Result<(), ()>> + Send + Clone + 'static {}
 
 /// Define a struct as an EventHandler
 pub trait EventHandler: Sized + std::marker::Unpin + 'static {
     fn builder(self) -> EventHandlerBuilder<Self> {
         EventHandlerBuilder::new(self)
     }
+
+    fn listen<A: Application, M: BrokerMsg + Event + std::fmt::Debug>(
+        &self,
+        ctx: &mut actix::Context<EventHandlerInstance<A, Self>>,
+    ) {
+        let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
+        let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+        broker.do_send(Subscribe("$all".into(), recipient));
+    }
+
     fn started<A: Application>(&mut self, _ctx: &mut actix::Context<EventHandlerInstance<A, Self>>)
     where
         Self: EventHandler,
     {
-    }
-    fn listen<A: Application, M: BrokerMsg + Event + std::fmt::Debug>(
-        &self,
-        ctx: &mut actix::Context<EventHandlerInstance<A, Self>>,
-    ) where
-        Self: crate::event::Handler<M>,
-    {
-        let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
-        let recipient = ctx.address().recipient::<EventEnvelope<M>>();
-        broker.do_send(Subscribe(
-            "$all".into(),
-            recipient,
-            std::any::type_name::<M>().to_string(),
-        ));
     }
 }
 
 #[doc(hidden)]
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
-pub struct Subscribe<M: BrokerMsg>(pub String, pub Recipient<M>, pub String);
+pub struct Subscribe(pub String, pub Recipient<ResolveAndApplyMany>);
 
 /// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {
     _phantom: std::marker::PhantomData<A>,
     pub(crate) _handler: E,
-    // pub(crate) _subscribtion: Addr<Subscriber>,
     pub(crate) _name: String,
 }
 
@@ -106,10 +103,30 @@ impl<A: Application, E: EventHandler> EventHandlerInstance<A, E> {
         })
     }
 }
+
 impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E> {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self._handler.started(ctx);
+        EventHandler::started(&mut self._handler, ctx);
+    }
+}
+
+impl<A: Application, E: EventHandler> ::actix::Handler<ResolveAndApplyMany>
+    for EventHandlerInstance<A, E>
+{
+    type Result = Result<(), ()>;
+
+    #[tracing::instrument(name = "EventHandlerInstance", skip(self, _msg, _ctx))]
+    fn handle(&mut self, _msg: ResolveAndApplyMany, _ctx: &mut Self::Context) -> Self::Result {
+        //TODO create Registry event
+        //
+        Ok(())
+
+        // let fut = async move {
+        //     let _ = with_ctx(|actor: &mut Self, _| actor._handler.handle(&msg.event)).await;
+        // };
+
+        // ctx.spawn(fut.interop_actor(self).map(|_, _, _| ()));
     }
 }

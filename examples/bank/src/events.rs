@@ -9,14 +9,14 @@ pub struct AccountDeleted {
 }
 
 #[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
-#[rtype(result = "()")]
+#[rtype(result = "Result<(), ()>")]
 pub struct AccountOpened {
     pub account_id: Uuid,
     pub name: String,
 }
 
 #[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
-#[rtype(result = "()")]
+#[rtype(result = "Result<(), ()>")]
 pub enum AccountUpdated {
     NameChanged(Uuid, String, String),
     Deleted,

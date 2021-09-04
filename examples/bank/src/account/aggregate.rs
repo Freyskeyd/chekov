@@ -1,11 +1,8 @@
-use std::time::Duration;
-
 use super::*;
-use crate::DefaultApp;
 
-chekov::macros::apply_event!(DefaultApp, Account, AccountUpdated, apply_account_updated);
-chekov::macros::apply_event!(DefaultApp, Account, AccountDeleted, apply_account_deleted);
-chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);
+chekov::macros::apply_event!(Account, AccountUpdated);
+chekov::macros::apply_event!(Account, AccountDeleted);
+chekov::macros::apply_event!(Account, AccountOpened);
 
 impl CommandExecutor<DeleteAccount> for Account {
     fn execute(cmd: DeleteAccount, _: &Self) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
@@ -33,32 +30,35 @@ impl CommandExecutor<UpdateAccount> for Account {
         state: &Self,
     ) -> Result<Vec<AccountUpdated>, CommandExecutorError> {
         Ok(vec![AccountUpdated::NameChanged(
-            state.account_id.unwrap().clone(),
+            state.account_id.unwrap(),
             state.name.clone(),
-            cmd.name.clone(),
+            cmd.name,
         )])
     }
 }
+impl chekov::event::EventApplier<AccountOpened> for Account {
+    fn apply(&mut self, event: &AccountOpened) -> Result<(), ApplyError> {
+        println!("Account open applied");
+        self.account_id = Some(event.account_id);
+        self.status = AccountStatus::Active;
 
-fn apply_account_open(state: &mut Account, event: &AccountOpened) -> Result<(), ApplyError> {
-    state.account_id = Some(event.account_id);
-    state.status = AccountStatus::Active;
-
-    Ok(())
-}
-
-fn apply_account_updated(state: &mut Account, event: &AccountUpdated) -> Result<(), ApplyError> {
-    match event {
-        AccountUpdated::NameChanged(_, _, new_name) => {
-            state.name = new_name.to_string();
-        }
-        _ => {}
+        Ok(())
     }
-    Ok(())
 }
 
-fn apply_account_deleted(state: &mut Account, _event: &AccountDeleted) -> Result<(), ApplyError> {
-    state.status = AccountStatus::Deleted;
+impl chekov::event::EventApplier<AccountUpdated> for Account {
+    fn apply(&mut self, event: &AccountUpdated) -> Result<(), ApplyError> {
+        if let AccountUpdated::NameChanged(_, _, new_name) = event {
+            self.name = new_name.to_string();
+        }
+        Ok(())
+    }
+}
 
-    Ok(())
+impl chekov::event::EventApplier<AccountDeleted> for Account {
+    fn apply(&mut self, _: &AccountDeleted) -> Result<(), ApplyError> {
+        self.status = AccountStatus::Deleted;
+
+        Ok(())
+    }
 }

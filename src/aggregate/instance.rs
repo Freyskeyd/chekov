@@ -1,4 +1,5 @@
 use crate::event::Event;
+use crate::message::{ResolveAndApply, ResolveAndApplyMany};
 use crate::prelude::ApplyError;
 use crate::{command::Command, message::EventEnvelope};
 use crate::{command::CommandExecutor, error::CommandExecutorError};
@@ -11,7 +12,7 @@ use tracing::trace;
 use uuid::Uuid;
 
 /// Deals with the lifetime of a particular aggregate
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct AggregateInstance<A: Aggregate> {
     pub(crate) inner: A,
     #[allow(dead_code)]
@@ -36,13 +37,13 @@ impl<A: Aggregate> AggregateInstance<A> {
         };
 
         for event in events.unwrap() {
-            if let Err(_) = instance.apply_recorded_event(event) {
+            if instance.apply_recorded_event(event).is_err() {
                 return Err(CommandExecutorError::Any);
             }
         }
 
         let addr = AggregateInstance::create(move |ctx| {
-            instance.inner.on_start(&identity, ctx);
+            instance.inner.on_start::<APP>(&identity, ctx);
 
             instance
         });
@@ -113,6 +114,14 @@ impl<A: Aggregate> AggregateInstance<A> {
 
 impl<A: Aggregate> Actor for AggregateInstance<A> {
     type Context = Context<Self>;
+
+    fn started(&mut self, _ctx: &mut Self::Context) {
+        trace!("Aggregate {:?} started", std::any::type_name::<Self>());
+    }
+
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        trace!("Aggregate {:?} stopped", std::any::type_name::<Self>());
+    }
 }
 
 impl<C: Command, A: Application> Handler<Dispatch<C, A>> for AggregateInstance<C::Executor> {
@@ -137,5 +146,25 @@ where
 
     fn handle(&mut self, msg: EventEnvelope<T>, _: &mut Self::Context) -> Self::Result {
         self.apply(&msg.event);
+    }
+}
+
+impl<A: Aggregate> Handler<ResolveAndApply> for AggregateInstance<A> {
+    type Result = Result<(), ()>;
+
+    fn handle(&mut self, msg: ResolveAndApply, _: &mut Self::Context) -> Self::Result {
+        self.apply_recorded_event(msg.0).map_err(|_| ())
+    }
+}
+
+impl<A: Aggregate> Handler<ResolveAndApplyMany> for AggregateInstance<A> {
+    type Result = Result<(), ()>;
+
+    fn handle(&mut self, msg: ResolveAndApplyMany, _: &mut Self::Context) -> Self::Result {
+        for event in msg.0 {
+            let _ = self.apply_recorded_event(event);
+        }
+
+        Ok(())
     }
 }

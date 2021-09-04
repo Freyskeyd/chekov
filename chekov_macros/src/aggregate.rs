@@ -25,8 +25,6 @@ pub fn generate_aggregate(
     let struct_name = container.ident;
     let identity = container.identity;
 
-    let registry = format_ident!("{}EventRegistration", struct_name.to_string());
-
     let aggregate_event_resolver =
         format_ident!("{}EventResolverRegistry", struct_name.to_string());
 
@@ -37,34 +35,13 @@ pub fn generate_aggregate(
 
     Ok(quote! {
 
-        pub struct #registry {
-            resolver: Box<dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>)>,
-            // applier: Box<dyn Fn(&mut #struct_name, event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError>>
-        }
-
-        impl chekov::aggregate::EventRegistryItem<#struct_name> for #registry {
-            fn get_resolver(&self) -> &dyn Fn(&str, &actix::Context<chekov::prelude::AggregateInstance<#struct_name>>) {
-                &self.resolver
-            }
-            // fn get_applier(&self) -> &dyn Fn(&mut #struct_name, event: event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError> {
-            //     &self.applier
-            // }
-        }
-
-        inventory::collect!(#registry);
-
         pub struct #aggregate_event_resolver {
             names: Vec<&'static str>,
             type_id: std::any::TypeId,
-            deserializer: chekov::event::EventResolverFn<chekov::prelude::AggregateInstance<#struct_name>>,
-            applier: fn(&mut #struct_name, event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError>
+            applier: chekov::event::EventApplierFn<#struct_name>
         }
 
         impl chekov::aggregate::EventResolverItem<#struct_name> for #aggregate_event_resolver {
-            fn get_resolver(&self) -> chekov::event::EventResolverFn<chekov::prelude::AggregateInstance<#struct_name>> {
-                self.deserializer
-            }
-
             fn get_names(&self) -> &[&'static str] {
                 self.names.as_ref()
             }
@@ -74,13 +51,11 @@ pub fn generate_aggregate(
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
-            static ref #aggregate_static_resolver: chekov::event::EventResolverRegistry<chekov::prelude::AggregateInstance<#struct_name>, #struct_name> = {
-                let mut resolvers = std::collections::BTreeMap::new();
+            static ref #aggregate_static_resolver: chekov::event::EventResolverRegistry<#struct_name> = {
                 let mut appliers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
                 for registered in inventory::iter::<#aggregate_event_resolver> {
-                    resolvers.insert(registered.type_id, registered.deserializer);
                     appliers.insert(registered.type_id, registered.applier);
 
                     registered.names.iter().for_each(|name|{
@@ -90,24 +65,18 @@ pub fn generate_aggregate(
 
                 chekov::event::EventResolverRegistry {
                     names,
-                    resolvers,
                     appliers
                 }
             };
         }
         impl chekov::Aggregate for #struct_name {
-            type EventRegistry = #registry;
 
             fn apply_recorded_event(&mut self, event: event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError> {
                 if let Some(resolver) = #aggregate_static_resolver.get_applier(&event.event_type) {
-                    (resolver)(self, event);
+                    let _ = (resolver)(self, event);
                 }
 
                 Ok(())
-            }
-
-            fn get_event_resolver(event_name: &str) -> Option<&fn(event_store::prelude::RecordedEvent, actix::Addr<chekov::prelude::AggregateInstance<#struct_name>>) -> std::pin::Pin<Box<dyn futures::Future<Output = Result<(), ()>> + Send>>> {
-                #aggregate_static_resolver.get(event_name)
             }
 
             fn identity() -> &'static str {

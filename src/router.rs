@@ -2,7 +2,7 @@ use crate::{
     command::Command, command::CommandMetadatas, message::Dispatch, Application,
     CommandExecutorError,
 };
-use actix::prelude::{ArbiterService, WrapFuture};
+use actix::{prelude::WrapFuture, SystemService};
 use tracing::trace;
 
 #[doc(hidden)]
@@ -16,7 +16,7 @@ impl<A: Application> ::actix::Actor for Router<A> {
     type Context = ::actix::Context<Self>;
 }
 
-impl<A: Application> ::actix::registry::ArbiterService for Router<A> {}
+impl<A: Application> ::actix::registry::SystemService for Router<A> {}
 impl<A: Application> ::actix::Supervised for Router<A> {}
 
 impl<A: Application, T: Command> ::actix::Handler<Dispatch<T, A>> for Router<A>
@@ -28,7 +28,7 @@ where
     #[tracing::instrument(name = "Router", skip(self, _ctx, msg), fields(correlation_id = %msg.metadatas.correlation_id))]
     fn handle(&mut self, msg: Dispatch<T, A>, _ctx: &mut Self::Context) -> Self::Result {
         let to =
-            <T::ExecutorRegistry as ArbiterService>::from_registry().recipient::<Dispatch<T, A>>();
+            <T::ExecutorRegistry as SystemService>::from_registry().recipient::<Dispatch<T, A>>();
         trace!(
             to = ::std::any::type_name::<T::ExecutorRegistry>(),
             "Route command",

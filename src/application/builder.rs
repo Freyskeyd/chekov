@@ -8,6 +8,7 @@ use event_store::prelude::Storage;
 use futures::Future;
 use std::any::TypeId;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::pin::Pin;
 use tracing::trace;
 
@@ -132,13 +133,14 @@ where
         .start();
 
         ::actix::SystemRegistry::set(event_store);
-        ::actix::Registry::set(addr);
+        ::actix::SystemRegistry::set(addr);
         ::actix::SystemRegistry::set(subscriber_manager_addr);
         ::actix::SystemRegistry::set(
             InternalApplication::<A> {
-                event_resolver: self
-                    .event_resolver
-                    .expect("An event resolver must be defined"),
+                _phantom: PhantomData
+                // event_resolver: self
+                //     .event_resolver
+                //     .expect("An event resolver must be defined"),
             }
             .start(),
         );

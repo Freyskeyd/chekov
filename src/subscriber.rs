@@ -19,7 +19,7 @@ struct Notif(PgNotification);
 #[derive(Message)]
 #[rtype(result = "()")]
 struct Subscribe {
-    subscriber_id: Uuid,
+    _subscriber_id: Uuid,
 }
 
 #[derive(Clone, Debug, Message)]
