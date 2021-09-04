@@ -146,6 +146,8 @@
 <span id="144">144</span>
 <span id="145">145</span>
 <span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::EventHandler</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
@@ -157,6 +159,7 @@
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">std::any::TypeId</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 <span class="kw">use</span> <span class="ident">std::pin::Pin</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
@@ -281,13 +284,14 @@
         .<span class="ident">start</span>();
 
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>);
-        <span class="ident">::actix::Registry::set</span>(<span class="ident">addr</span>);
+        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(
             <span class="ident">InternalApplication</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-                <span class="ident">event_resolver</span>: <span class="self">self</span>
-                    .<span class="ident">event_resolver</span>
-                    .<span class="ident">expect</span>(<span class="string">&quot;An event resolver must be defined&quot;</span>),
+                <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>
+                <span class="comment">// event_resolver: self</span>
+                <span class="comment">//     .event_resolver</span>
+                <span class="comment">//     .expect(&quot;An event resolver must be defined&quot;),</span>
             }
             .<span class="ident">start</span>(),
         );

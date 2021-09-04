@@ -162,21 +162,6 @@
 <span id="160">160</span>
 <span id="161">161</span>
 <span id="162">162</span>
-<span id="163">163</span>
-<span id="164">164</span>
-<span id="165">165</span>
-<span id="166">166</span>
-<span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -211,7 +196,7 @@
 <span class="doccomment">//! # use uuid::Uuid;</span>
 <span class="doccomment">//! # use actix::Message;</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! # #[derive(Serialize)]</span>
+<span class="doccomment">//! # #[derive(Debug, Serialize)]</span>
 <span class="doccomment">//! # pub enum AccountStatus {</span>
 <span class="doccomment">//! #     Initialized,</span>
 <span class="doccomment">//! #     Active,</span>
@@ -232,7 +217,7 @@
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]</span>
-<span class="doccomment">//! # #[rtype(result = &quot;()&quot;)]</span>
+<span class="doccomment">//! # #[rtype(result = &quot;Result&lt;(), ()&gt;&quot;)]</span>
 <span class="doccomment">//! # pub struct AccountOpened {</span>
 <span class="doccomment">//! #     pub account_id: Uuid,</span>
 <span class="doccomment">//! #     pub name: String,</span>
@@ -246,7 +231,7 @@
 <span class="doccomment">//! #     pub name: String,</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! #[derive(Default, Aggregate)]</span>
+<span class="doccomment">//! #[derive(Debug, Default, Aggregate)]</span>
 <span class="doccomment">//! #[aggregate(identity = &quot;account&quot;)]</span>
 <span class="doccomment">//! pub struct Account {</span>
 <span class="doccomment">//!     account_id: Option&lt;uuid::Uuid&gt;,</span>
@@ -271,39 +256,34 @@
 <span class="doccomment">//! }</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Applying events</span>
-<span class="doccomment">//! chekov::macros::apply_event!(DefaultApp, Account, AccountOpened, apply_account_open);</span>
+<span class="doccomment">//! chekov::macros::apply_event!(Account, AccountOpened);</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! fn apply_account_open(state: &amp;mut Account, event: &amp;AccountOpened) -&gt; Result&lt;(), ApplyError&gt; {</span>
-<span class="doccomment">//!     state.account_id = Some(event.account_id);</span>
-<span class="doccomment">//!     state.status = AccountStatus::Active;</span>
+<span class="doccomment">//! impl EventApplier&lt;AccountOpened&gt; for Account {</span>
+<span class="doccomment">//!     fn apply(&amp;mut self, event: &amp;AccountOpened) -&gt; Result&lt;(), ApplyError&gt; {</span>
+<span class="doccomment">//!         self.account_id = Some(event.account_id);</span>
+<span class="doccomment">//!         self.status = AccountStatus::Active;</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//!     Ok(())</span>
+<span class="doccomment">//!         Ok(())</span>
+<span class="doccomment">//!     }</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//! ```</span>
 
 <span class="kw">mod</span> <span class="ident">instance</span>;
 <span class="kw">mod</span> <span class="ident">registry</span>;
 
-<span class="kw">use</span> <span class="ident">futures::Future</span>;
+<span class="kw">use</span> <span class="ident">actix::AsyncContext</span>;
+<span class="kw">use</span> <span class="ident">actix::SystemService</span>;
+<span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">instance::AggregateInstance</span>;
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">registry::AggregateInstanceRegistry</span>;
 
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventRegistryItem</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">get_resolver</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw">dyn</span> <span class="ident">Fn</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span>);
-}
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::ResolveAndApplyMany</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::Subscribe</span>, <span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventResolverItem</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">get_resolver</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">fn</span>(
-        <span class="ident">event_store::prelude::RecordedEvent</span>,
-        <span class="ident">actix::Addr</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::pin::Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-
     <span class="kw">fn</span> <span class="ident">get_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>];
 }
 
@@ -316,19 +296,15 @@
 <span class="doccomment">/// # use chekov::prelude::*;</span>
 <span class="doccomment">/// # use chekov::macros::*;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// #[derive(Default, Aggregate)]</span>
+<span class="doccomment">/// #[derive(Debug, Default, Aggregate)]</span>
 <span class="doccomment">/// #[aggregate(identity = &quot;account&quot;)]</span>
 <span class="doccomment">/// struct Account {</span>
 <span class="doccomment">///     account_id: Option&lt;uuid::Uuid&gt;</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>: <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">type</span> <span class="ident">EventRegistry</span>: <span class="ident">inventory::Collect</span> <span class="op">+</span> <span class="ident">EventRegistryItem</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
-
-    <span class="comment">// #[doc(hidden)]</span>
-    <span class="comment">// type EventResolver: inventory::Collect + EventResolverItem&lt;Self&gt;;</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
+    <span class="kw">fn</span> <span class="ident">apply_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Define the identity of this kind of Aggregate.</span>
     <span class="doccomment">///</span>
@@ -339,20 +315,14 @@
     <span class="kw">fn</span> <span class="ident">identity</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
 
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">get_event_resolver</span>(
-        <span class="ident">event_name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span>
-        <span class="kw-2">&amp;</span><span class="kw">fn</span>(
-            <span class="ident">event_store::prelude::RecordedEvent</span>,
-            <span class="ident">actix::Addr</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">std::pin::Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">futures::Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="op">&gt;</span>;
-
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">on_start</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">for</span> <span class="ident">flag</span> <span class="kw">in</span> <span class="ident">inventory::iter</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="ident">::EventRegistry</span><span class="op">&gt;</span> {
-            (<span class="ident">flag</span>.<span class="ident">get_resolver</span>())(<span class="ident">stream</span>, <span class="ident">ctx</span>);
-        }
+    <span class="kw">fn</span> <span class="ident">on_start</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(
+        <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
+        <span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    ) {
+        <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
+        <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>();
+        <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">stream</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>));
     }
 }
 </pre></div>

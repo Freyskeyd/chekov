@@ -48,11 +48,24 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::Application</span>;
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::Command</span>;
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::CommandExecutorError</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::command::CommandMetadatas</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Event</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
@@ -86,6 +99,11 @@
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;(), ()&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ResolveAndApply</span>(<span class="kw">pub</span> <span class="ident">RecordedEvent</span>);
 
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;(), ()&gt;&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ResolveAndApplyMany</span>(<span class="kw">pub</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>);
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;Vec&lt;RecordedEvent&gt;, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteReader</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">event_store::prelude::Reader</span>);
@@ -97,5 +115,11 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;event_store::prelude::Stream, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteStreamInfo</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">String</span>);
+
+<span class="comment">// #[derive(Message)]</span>
+<span class="comment">// #[rtype(&quot;Result&lt;(), ()&gt;&quot;)]</span>
+<span class="comment">// pub struct Handle {</span>
+<span class="comment">//     event: RecordedEvent,</span>
+<span class="comment">// }</span>
 </pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="chekov" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
