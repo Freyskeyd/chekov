@@ -157,10 +157,6 @@
 <span id="155">155</span>
 <span id="156">156</span>
 <span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
-<span id="160">160</span>
-<span id="161">161</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -188,7 +184,6 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
 <span class="doccomment">//! # use chekov::prelude::*;</span>
-<span class="doccomment">//! # use chekov::application::DefaultEventResolver;</span>
 <span class="doccomment">//! # use event_store::prelude::*;</span>
 <span class="doccomment">//! # use chekov::macros::*;</span>
 <span class="doccomment">//! # use serde::{Deserialize, Serialize};</span>
@@ -212,7 +207,6 @@
 <span class="doccomment">//! #</span>
 <span class="doccomment">//! # impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">//! #     type Storage = PostgresBackend;</span>
-<span class="doccomment">//! #     type EventResolver = DefaultEventResolver&lt;Self&gt;;</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]</span>
@@ -269,21 +263,19 @@
 <span class="kw">mod</span> <span class="ident">instance</span>;
 <span class="kw">mod</span> <span class="ident">registry</span>;
 
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::ResolveAndApplyMany</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::Subscribe</span>, <span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
 <span class="kw">use</span> <span class="ident">actix::AsyncContext</span>;
 <span class="kw">use</span> <span class="ident">actix::SystemService</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">instance::AggregateInstance</span>;
 
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">resolver</span>;
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">instance::AggregateInstance</span>;
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">registry::AggregateInstanceRegistry</span>;
-
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::ResolveAndApplyMany</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::Subscribe</span>, <span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
-
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventResolverItem</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">get_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>];
-}
 
 <span class="doccomment">/// Define an Aggregate</span>
 <span class="doccomment">///</span>

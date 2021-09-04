@@ -121,7 +121,7 @@
 
         <span class="macro">chekov::lazy_static!</span> {
             <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-            <span class="kw">static</span> <span class="kw-2">ref</span> #<span class="ident">aggregate_static_resolver</span>: <span class="ident">chekov::event::EventHandlerResolverRegistry</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="op">=</span> {
+            <span class="kw">static</span> <span class="kw-2">ref</span> #<span class="ident">aggregate_static_resolver</span>: <span class="ident">chekov::event::resolver::EventHandlerResolverRegistry</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="op">=</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handlers</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
 
@@ -133,7 +133,7 @@
                     });
                 }
 
-                <span class="ident">chekov::event::EventHandlerResolverRegistry</span> {
+                <span class="ident">chekov::event::resolver::EventHandlerResolverRegistry</span> {
                     <span class="ident">names</span>,
                     <span class="ident">handlers</span>
                 }

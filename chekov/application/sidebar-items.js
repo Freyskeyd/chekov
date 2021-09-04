@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ApplicationBuilder","Struct to configure and launch an `Application` instance"],["DefaultEventResolver",""]],"trait":[["Application","Application are high order logical seperator."]]});
+initSidebarItems({"struct":[["ApplicationBuilder","Struct to configure and launch an `Application` instance"]],"trait":[["Application","Application are high order logical seperator."]]});

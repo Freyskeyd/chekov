@@ -129,10 +129,10 @@
         <span class="kw">pub</span> <span class="kw">struct</span> #<span class="ident">aggregate_event_resolver</span> {
             <span class="ident">names</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span>,
             <span class="ident">type_id</span>: <span class="ident">std::any::TypeId</span>,
-            <span class="ident">applier</span>: <span class="ident">chekov::event::EventApplierFn</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span>
+            <span class="ident">applier</span>: <span class="ident">chekov::aggregate::resolver::EventApplierFn</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span>
         }
 
-        <span class="kw">impl</span> <span class="ident">chekov::aggregate::EventResolverItem</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="kw">for</span> #<span class="ident">aggregate_event_resolver</span> {
+        <span class="kw">impl</span> <span class="ident">chekov::aggregate::resolver::EventResolverItem</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="kw">for</span> #<span class="ident">aggregate_event_resolver</span> {
             <span class="kw">fn</span> <span class="ident">get_names</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>] {
                 <span class="self">self</span>.<span class="ident">names</span>.<span class="ident">as_ref</span>()
             }
@@ -142,7 +142,7 @@
 
         <span class="macro">chekov::lazy_static!</span> {
             <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-            <span class="kw">static</span> <span class="kw-2">ref</span> #<span class="ident">aggregate_static_resolver</span>: <span class="ident">chekov::event::EventResolverRegistry</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="op">=</span> {
+            <span class="kw">static</span> <span class="kw-2">ref</span> #<span class="ident">aggregate_static_resolver</span>: <span class="ident">chekov::aggregate::resolver::EventResolverRegistry</span><span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span> <span class="op">=</span> {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">appliers</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
 
@@ -154,7 +154,7 @@
                     });
                 }
 
-                <span class="ident">chekov::event::EventResolverRegistry</span> {
+                <span class="ident">chekov::aggregate::resolver::EventResolverRegistry</span> {
                     <span class="ident">names</span>,
                     <span class="ident">appliers</span>
                 }
