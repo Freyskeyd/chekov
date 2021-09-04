@@ -161,7 +161,6 @@
 <span id="159">159</span>
 <span id="160">160</span>
 <span id="161">161</span>
-<span id="162">162</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -255,9 +254,8 @@
 <span class="doccomment">//!     }</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! // Applying events</span>
-<span class="doccomment">//! chekov::macros::apply_event!(Account, AccountOpened);</span>
 <span class="doccomment">//!</span>
+<span class="doccomment">//! #[chekov::applier]</span>
 <span class="doccomment">//! impl EventApplier&lt;AccountOpened&gt; for Account {</span>
 <span class="doccomment">//!     fn apply(&amp;mut self, event: &amp;AccountOpened) -&gt; Result&lt;(), ApplyError&gt; {</span>
 <span class="doccomment">//!         self.account_id = Some(event.account_id);</span>

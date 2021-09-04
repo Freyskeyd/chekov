@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Aggregate",""],["Command",""],["Event",""]],"macro":[["apply_event",""]]});
+initSidebarItems({"attr":[["applier",""]],"derive":[["Aggregate",""],["Command",""],["Event",""]]});
