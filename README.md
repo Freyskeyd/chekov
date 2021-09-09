@@ -27,6 +27,9 @@
 
 - `Postgres` EventStore backend
 - Dispatch `Command` to `Aggregate`
+- Generate `Event` from `Aggregate`
+- Store and notify `Event` with subscriptions
+- Dispatch `Event` to `EventHandler`
 
 ## Getting started
 
@@ -34,7 +37,7 @@
 
 Chekov works only with `Postgres` backend for now. The choice is easy to make!
 
-But some more backends need to be implemented, [see the related issue](#).
+But some more backends need to be implemented, [see the related issue](#14).
 
 ### Defining Aggregates
 

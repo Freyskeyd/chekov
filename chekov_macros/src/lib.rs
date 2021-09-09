@@ -62,8 +62,6 @@ pub fn derive_event(input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn applier(args: TokenStream, input: TokenStream) -> TokenStream {
-    // let ser = true;
-    // let de = true;
     expand(args, input)
 }
 
@@ -190,12 +188,13 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
 
     let event = event.unwrap();
     expanded.extend(quote! {
-            inventory::submit! {
+            chekov::inventory::submit! {
+                #![crate = chekov]
                 use event_store::Event;
                 #aggregate_event_resolver {
                     names: #event::all_event_types(),
                     type_id: std::any::TypeId::of::<#event>(),
-                    applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), chekov::prelude::ApplyError> {
+                    applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), ApplyError> {
                         use chekov::Event;
                         use futures::TryFutureExt;
 
@@ -259,7 +258,8 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
 
     let event = event.unwrap();
     expanded.extend(quote! {
-        inventory::submit! {
+        chekov::inventory::submit! {
+            #![crate = chekov]
             use event_store::Event;
             #aggregate_event_resolver {
                 names: #event::all_event_types(),

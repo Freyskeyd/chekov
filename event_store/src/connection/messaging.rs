@@ -36,3 +36,8 @@ pub struct Read {
     pub(crate) version: usize,
     pub(crate) limit: usize,
 }
+
+#[derive(Copy, Clone)]
+enum Test {
+    Ok,
+}

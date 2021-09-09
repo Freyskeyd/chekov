@@ -1,8 +1,8 @@
+use crate::event::handler::EventHandlerBuilder;
 use crate::event::EventHandler;
 use crate::Application;
 use crate::Router;
 use crate::SubscriberManager;
-use crate::{event::handler::EventHandlerBuilder, EventResolver};
 use actix::Actor;
 use event_store::prelude::Storage;
 use futures::Future;
@@ -35,7 +35,6 @@ pub struct ApplicationBuilder<A: Application> {
     storage: Pin<Box<dyn Future<Output = A::Storage>>>,
     event_handlers: Vec<Pin<Box<dyn Future<Output = ()>>>>,
     eventmapper: HashMap<String, TypeId>,
-    event_resolver: Option<Box<dyn EventResolver<A>>>,
 }
 
 impl<A: Application> std::default::Default for ApplicationBuilder<A> {
@@ -45,7 +44,7 @@ impl<A: Application> std::default::Default for ApplicationBuilder<A> {
             app: std::marker::PhantomData,
             storage: Box::pin(async { A::Storage::default() }),
             eventmapper: HashMap::new(),
-            event_resolver: None,
+            // event_resolver: None,
         }
     }
 }
@@ -83,13 +82,6 @@ where
         self
     }
 
-    /// Adds an EventResolver instance for this application
-    pub fn event_resolver<E: 'static + EventResolver<A>>(mut self, resolver: E) -> Self {
-        self.event_resolver = Some(Box::new(resolver));
-
-        self
-    }
-
     /// Launch the application
     ///
     /// Meaning that:
@@ -97,7 +89,6 @@ where
     /// - An EventStore instance is started based on this storage
     /// - A Router is started to handle commands
     /// - A SubscriberManager is started to dispatch incomming events
-    /// - An InternalApplication is started to handle and manage the EventResolver
     #[tracing::instrument(name = "Chekov::Launch", skip(self), fields(app = %A::get_name()))]
     pub async fn launch(self) {
         trace!(
@@ -137,10 +128,7 @@ where
         ::actix::SystemRegistry::set(subscriber_manager_addr);
         ::actix::SystemRegistry::set(
             InternalApplication::<A> {
-                _phantom: PhantomData
-                // event_resolver: self
-                //     .event_resolver
-                //     .expect("An event resolver must be defined"),
+                _phantom: PhantomData,
             }
             .start(),
         );

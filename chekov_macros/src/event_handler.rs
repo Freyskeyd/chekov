@@ -38,7 +38,7 @@ pub fn generate_event_handler(
             handler: fn(&mut #struct_name, event_store::prelude::RecordedEvent)  -> BoxFuture<Result<(), ()>>
         }
 
-        inventory::collect!(#aggregate_event_resolver);
+        chekov::inventory::collect!(#aggregate_event_resolver);
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
@@ -46,7 +46,7 @@ pub fn generate_event_handler(
                 let mut handlers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
-                for registered in inventory::iter::<#aggregate_event_resolver> {
+                for registered in chekov::inventory::iter::<#aggregate_event_resolver> {
                     handlers.insert(registered.type_id, registered.handler);
 
                     registered.names.iter().for_each(|name|{

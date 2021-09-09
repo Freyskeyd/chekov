@@ -47,7 +47,7 @@ pub fn generate_aggregate(
             }
         }
 
-        inventory::collect!(#aggregate_event_resolver);
+        chekov::inventory::collect!(#aggregate_event_resolver);
 
         chekov::lazy_static! {
             #[derive(Clone, Debug)]
@@ -55,7 +55,7 @@ pub fn generate_aggregate(
                 let mut appliers = std::collections::BTreeMap::new();
                 let mut names = std::collections::BTreeMap::new();
 
-                for registered in inventory::iter::<#aggregate_event_resolver> {
+                for registered in chekov::inventory::iter::<#aggregate_event_resolver> {
                     appliers.insert(registered.type_id, registered.applier);
 
                     registered.names.iter().for_each(|name|{
@@ -69,7 +69,6 @@ pub fn generate_aggregate(
                 }
             };
         }
-
         impl chekov::Aggregate for #struct_name {
 
             fn apply_recorded_event(&mut self, event: event_store::prelude::RecordedEvent) -> Result<(), chekov::prelude::ApplyError> {

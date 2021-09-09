@@ -25,5 +25,3 @@ tracing-subscriber = "*"
 tracing-futures = "*"
 tracing-log = "*"
 
-inventory = "*"
-lazy_static = "*"

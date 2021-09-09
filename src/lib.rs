@@ -20,6 +20,7 @@
 //!     type Storage = event_store::prelude::PostgresBackend;
 //! }
 //! ```
+#[doc(inline)]
 pub use chekov_macros as macros;
 
 pub mod aggregate;
@@ -34,6 +35,7 @@ pub mod prelude;
 mod router;
 mod subscriber;
 
+#[doc(hidden)]
 pub use lazy_static::lazy_static;
 
 use ::event_store::prelude::RecordedEvent;
@@ -59,13 +61,7 @@ pub use subscriber::SubscriberManager;
 pub use chekov_macros::applier;
 pub use chekov_macros::event_handler;
 
+#[doc(hidden)]
 pub use async_trait;
-
-pub trait EventResolver<A: Application> {
-    fn resolve(
-        &self,
-        notify: actix::Addr<SubscriberManager<A>>,
-        event_name: &str,
-        event: RecordedEvent,
-    );
-}
+#[doc(hidden)]
+pub use inventory;
