@@ -117,7 +117,7 @@
             <span class="ident">handler</span>: <span class="kw">fn</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> #<span class="ident">struct_name</span>, <span class="ident">event_store::prelude::RecordedEvent</span>)  <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span>
         }
 
-        <span class="macro">inventory::collect!</span>(#<span class="ident">aggregate_event_resolver</span>);
+        <span class="macro">chekov::inventory::collect!</span>(#<span class="ident">aggregate_event_resolver</span>);
 
         <span class="macro">chekov::lazy_static!</span> {
             <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
@@ -125,7 +125,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handlers</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
 
-                <span class="kw">for</span> <span class="ident">registered</span> <span class="kw">in</span> <span class="ident">inventory::iter</span>::<span class="op">&lt;</span>#<span class="ident">aggregate_event_resolver</span><span class="op">&gt;</span> {
+                <span class="kw">for</span> <span class="ident">registered</span> <span class="kw">in</span> <span class="ident">chekov::inventory::iter</span>::<span class="op">&lt;</span>#<span class="ident">aggregate_event_resolver</span><span class="op">&gt;</span> {
                     <span class="ident">handlers</span>.<span class="ident">insert</span>(<span class="ident">registered</span>.<span class="ident">type_id</span>, <span class="ident">registered</span>.<span class="ident">handler</span>);
 
                     <span class="ident">registered</span>.<span class="ident">names</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">name</span><span class="op">|</span>{

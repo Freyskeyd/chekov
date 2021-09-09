@@ -136,24 +136,12 @@
 <span id="134">134</span>
 <span id="135">135</span>
 <span id="136">136</span>
-<span id="137">137</span>
-<span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
-<span id="141">141</span>
-<span id="142">142</span>
-<span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
 </pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::handler::EventHandlerBuilder</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::EventHandler</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Router</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::SubscriberManager</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::EventHandlerBuilder</span>, <span class="ident">EventResolver</span>};
 <span class="kw">use</span> <span class="ident">actix::Actor</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::Storage</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
@@ -186,7 +174,6 @@
     <span class="ident">storage</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">event_handlers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">eventmapper</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">TypeId</span><span class="op">&gt;</span>,
-    <span class="ident">event_resolver</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">EventResolver</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">std::default::Default</span> <span class="kw">for</span> <span class="ident">ApplicationBuilder</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
@@ -196,7 +183,7 @@
             <span class="ident">app</span>: <span class="ident">std::marker::PhantomData</span>,
             <span class="ident">storage</span>: <span class="ident">Box::pin</span>(<span class="kw">async</span> { <span class="ident">A::Storage::default</span>() }),
             <span class="ident">eventmapper</span>: <span class="ident">HashMap::new</span>(),
-            <span class="ident">event_resolver</span>: <span class="prelude-val">None</span>,
+            <span class="comment">// event_resolver: None,</span>
         }
     }
 }
@@ -234,13 +221,6 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Adds an EventResolver instance for this application</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">event_resolver</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">EventResolver</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">resolver</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">event_resolver</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Box::new</span>(<span class="ident">resolver</span>));
-
-        <span class="self">self</span>
-    }
-
     <span class="doccomment">/// Launch the application</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Meaning that:</span>
@@ -248,7 +228,6 @@
     <span class="doccomment">/// - An EventStore instance is started based on this storage</span>
     <span class="doccomment">/// - A Router is started to handle commands</span>
     <span class="doccomment">/// - A SubscriberManager is started to dispatch incomming events</span>
-    <span class="doccomment">/// - An InternalApplication is started to handle and manage the EventResolver</span>
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;Chekov::Launch&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>), <span class="ident">fields</span>(<span class="ident">app</span> <span class="op">=</span> <span class="op">%</span><span class="ident">A::get_name</span>()))]</span>
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch</span>(<span class="self">self</span>) {
         <span class="macro">trace!</span>(
@@ -288,10 +267,7 @@
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(
             <span class="ident">InternalApplication</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-                <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>
-                <span class="comment">// event_resolver: self</span>
-                <span class="comment">//     .event_resolver</span>
-                <span class="comment">//     .expect(&quot;An event resolver must be defined&quot;),</span>
+                <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
             }
             .<span class="ident">start</span>(),
         );

@@ -1,0 +1,1 @@
+initSidebarItems({"attr":[["applier",""],["event_handler",""]],"derive":[["Aggregate",""],["Command",""],["Event",""],["EventHandler",""]]});

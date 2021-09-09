@@ -87,7 +87,6 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
-<span id="88">88</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="ident">darling</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span> <span class="kw">as</span> <span class="ident">SynTokenStream</span>;
@@ -138,7 +137,7 @@
             }
         }
 
-        <span class="macro">inventory::collect!</span>(#<span class="ident">aggregate_event_resolver</span>);
+        <span class="macro">chekov::inventory::collect!</span>(#<span class="ident">aggregate_event_resolver</span>);
 
         <span class="macro">chekov::lazy_static!</span> {
             <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
@@ -146,7 +145,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">appliers</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">names</span> <span class="op">=</span> <span class="ident">std::collections::BTreeMap::new</span>();
 
-                <span class="kw">for</span> <span class="ident">registered</span> <span class="kw">in</span> <span class="ident">inventory::iter</span>::<span class="op">&lt;</span>#<span class="ident">aggregate_event_resolver</span><span class="op">&gt;</span> {
+                <span class="kw">for</span> <span class="ident">registered</span> <span class="kw">in</span> <span class="ident">chekov::inventory::iter</span>::<span class="op">&lt;</span>#<span class="ident">aggregate_event_resolver</span><span class="op">&gt;</span> {
                     <span class="ident">appliers</span>.<span class="ident">insert</span>(<span class="ident">registered</span>.<span class="ident">type_id</span>, <span class="ident">registered</span>.<span class="ident">applier</span>);
 
                     <span class="ident">registered</span>.<span class="ident">names</span>.<span class="ident">iter</span>().<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">name</span><span class="op">|</span>{
@@ -160,7 +159,6 @@
                 }
             };
         }
-
         <span class="kw">impl</span> <span class="ident">chekov::Aggregate</span> <span class="kw">for</span> #<span class="ident">struct_name</span> {
 
             <span class="kw">fn</span> <span class="ident">apply_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">event_store::prelude::RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">chekov::prelude::ApplyError</span><span class="op">&gt;</span> {
