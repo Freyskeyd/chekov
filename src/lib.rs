@@ -20,15 +20,13 @@
 //!     type Storage = event_store::prelude::PostgresBackend;
 //! }
 //! ```
-#[doc(inline)]
-pub use chekov_macros as macros;
 
 pub mod aggregate;
 pub mod application;
 mod command;
 mod error;
 pub mod event;
-mod event_store;
+pub mod event_store;
 #[doc(hidden)]
 pub mod message;
 pub mod prelude;
@@ -38,7 +36,7 @@ mod subscriber;
 #[doc(hidden)]
 pub use lazy_static::lazy_static;
 
-use ::event_store::prelude::RecordedEvent;
+pub use ::event_store::prelude::RecordedEvent;
 #[doc(inline)]
 pub use aggregate::Aggregate;
 #[doc(inline)]
@@ -60,6 +58,10 @@ pub use subscriber::SubscriberManager;
 
 pub use chekov_macros::applier;
 pub use chekov_macros::event_handler;
+pub use chekov_macros::Aggregate;
+pub use chekov_macros::Command;
+pub use chekov_macros::Event;
+pub use chekov_macros::EventHandler;
 
 #[doc(hidden)]
 pub use async_trait;

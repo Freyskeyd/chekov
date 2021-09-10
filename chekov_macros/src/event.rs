@@ -79,9 +79,9 @@ impl EventState {
         };
 
         quote! {
-            impl std::convert::TryFrom<event_store::prelude::RecordedEvent> for #struct_name {
+            impl std::convert::TryFrom<chekov::RecordedEvent> for #struct_name {
                 type Error = ();
-                fn try_from(#input_name: event_store::prelude::RecordedEvent) -> std::result::Result<Self, Self::Error> {
+                fn try_from(#input_name: chekov::RecordedEvent) -> std::result::Result<Self, Self::Error> {
                     #try_from
                 }
             }
@@ -162,7 +162,7 @@ impl EventState {
         };
 
         quote! {
-            impl event_store::prelude::Event for #struct_name {
+            impl chekov::event_store::Event for #struct_name {
                 fn event_type(&self) -> &'static str {
                     #event_type
                 }

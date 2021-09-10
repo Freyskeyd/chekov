@@ -1,7 +1,7 @@
 use super::*;
 use futures::{future::BoxFuture, FutureExt};
 
-#[derive(chekov::macros::EventHandler, Clone)]
+#[derive(chekov::EventHandler, Clone)]
 pub struct AccountProjector {
     pub pool: PgPool,
 }

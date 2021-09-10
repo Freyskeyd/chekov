@@ -6,7 +6,6 @@ use actix_web::{
     App, HttpServer,
 };
 use chekov::prelude::*;
-use event_store::prelude::*;
 use sqlx::PgPool;
 
 mod account;
@@ -25,7 +24,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
 #[derive(Default)]
 struct DefaultApp {}
 
-impl chekov::Application for DefaultApp {
+impl Application for DefaultApp {
     type Storage = PostgresBackend;
 }
 

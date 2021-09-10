@@ -8,7 +8,7 @@
 
 <div align="center">
   
-  [![Actions Status](https://github.com/freyskeyd/chekov/workflows/CI/badge.svg)](https://github.com/Freyskeyd/chekov/actions) [![Coverage Status](https://coveralls.io/repos/github/Freyskeyd/chekov/badge.svg?branch=master&service=github)](https://coveralls.io/github/Freyskeyd/chekov?branch=master) [![dependency status](https://deps.rs/repo/github/freyskeyd/chekov/status.svg)](https://deps.rs/repo/github/freyskeyd/chekov) [![Crates.io](https://img.shields.io/crates/v/chekov.svg)](https://crates.io/crates/chekov) [![doc.rs](https://docs.rs/chekov/badge.svg)](https://docs.rs/chekov)
+  [![Actions Status](https://github.com/freyskeyd/chekov/workflows/CI/badge.svg)](https://github.com/Freyskeyd/chekov/actions) [![Coverage Status](https://coveralls.io/repos/github/Freyskeyd/chekov/badge.svg?branch=master&service=github)](https://coveralls.io/github/Freyskeyd/chekov?branch=master) [![dependency status](https://deps.rs/repo/github/freyskeyd/chekov/status.svg)](https://deps.rs/repo/github/freyskeyd/chekov) [![Crates.io](https://img.shields.io/crates/v/chekov.svg)](https://crates.io/crates/chekov) [![doc.rs](https://docs.rs/chekov/badge.svg)](https://docs.rs/chekov) [![doc-latest](https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square)](https://freyskeyd.github.io/chekov/chekov/)
 
 </div>
 

@@ -3,19 +3,19 @@ use serde::Deserialize;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::Event, Deserialize, Serialize)]
 pub struct AccountDeleted {
     pub account_id: Uuid,
 }
 
-#[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, Message, chekov::Event, Deserialize, Serialize)]
 #[rtype(result = "Result<(), ()>")]
 pub struct AccountOpened {
     pub account_id: Uuid,
     pub name: String,
 }
 
-#[derive(Clone, Debug, Message, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, Message, chekov::Event, Deserialize, Serialize)]
 #[rtype(result = "Result<(), ()>")]
 pub enum AccountUpdated {
     NameChanged(Uuid, String, String),
@@ -24,7 +24,7 @@ pub enum AccountUpdated {
     Disabled(String),
 }
 
-#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::Event, Deserialize, Serialize)]
 #[event(event_type = "Elixir.Conduit.Accounts.Events.UserRegistered")]
 pub struct UserRegistered {
     pub email: String,
@@ -33,7 +33,7 @@ pub struct UserRegistered {
     pub username: String,
 }
 
-#[derive(Clone, Debug, chekov::macros::Event, Deserialize, Serialize)]
+#[derive(Clone, Debug, chekov::Event, Deserialize, Serialize)]
 #[event(event_type = "MoneyMovement")]
 pub enum MoneyMovementEvent {
     Deposited {

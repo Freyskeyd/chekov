@@ -6,7 +6,6 @@ edition = "2018"
 workspace = "../../"
 
 [dependencies]
-event_store = { path = "../../event_store", features = ["verbose"] }
 chekov = { path = "../../"  }
 tokio = {version = "1", features = ["full"]}
 uuid = { version = "0.8", features = ["serde", "v4"] }

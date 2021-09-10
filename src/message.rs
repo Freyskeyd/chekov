@@ -12,7 +12,6 @@ use uuid::Uuid;
 pub struct Dispatch<C: Command, A: Application> {
     pub metadatas: CommandMetadatas,
     pub storage: std::marker::PhantomData<A>,
-    // pub to: actix::Recipient<Dispatch<T, S>>,
     pub command: C,
 }
 

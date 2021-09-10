@@ -17,8 +17,7 @@ pub async fn read_stream(
     let limit: i64 = limit.try_into().unwrap();
     trace!("Version {}, Limit: {}", version, limit);
     #[allow(clippy::used_underscore_binding)]
-    sqlx::query_as!(
-        RecordedEvent,
+    sqlx::query_as::<_, RecordedEvent>(
         r#"SELECT
         stream_events.stream_version as event_number,
         events.event_id as event_uuid,
@@ -39,10 +38,10 @@ pub async fn read_stream(
 	ORDER BY stream_events.stream_version ASC
         LIMIT $3;
          "#,
-        &stream_id,
-        &version,
-        &limit,
     )
+    .bind(&stream_id)
+    .bind(&version)
+    .bind(&limit)
     .fetch_all(conn)
     .await
 }
@@ -52,22 +51,22 @@ pub async fn stream_info(
 ) -> Result<Stream, sqlx::Error> {
     #[allow(clippy::used_underscore_binding)]
     #[allow(clippy::similar_names)]
-    sqlx::query_as!(
-        Stream,
-        "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1",
-        &stream_uuid
-    )
+    sqlx::query_as::<_, Stream>(
+        "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1"
+    ).bind(&stream_uuid)
         .fetch_one(conn)
         .await
 }
 
 pub async fn create_stream(
     pool: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
-    // pool: &sqlx::PgPool,
     stream_uuid: &str,
 ) -> Result<Stream, sqlx::Error> {
     #[allow(clippy::used_underscore_binding)]
-    sqlx::query_as!(Stream, "INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at", &stream_uuid).fetch_one(pool).await
+    sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
+      .bind(&stream_uuid)
+      .fetch_one(pool)
+      .await
 }
 
 fn create_append_indexes(events: usize) -> String {

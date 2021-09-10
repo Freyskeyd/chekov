@@ -190,11 +190,11 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     expanded.extend(quote! {
             chekov::inventory::submit! {
                 #![crate = chekov]
-                use event_store::Event;
+                use chekov::event_store::Event;
                 #aggregate_event_resolver {
                     names: #event::all_event_types(),
                     type_id: std::any::TypeId::of::<#event>(),
-                    applier: |aggregate: &mut #apply_to, event: event_store::prelude::RecordedEvent| -> Result<(), ApplyError> {
+                    applier: |aggregate: &mut #apply_to, event: chekov::RecordedEvent| -> Result<(), ApplyError> {
                         use chekov::Event;
                         use futures::TryFutureExt;
 
@@ -260,11 +260,11 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
     expanded.extend(quote! {
         chekov::inventory::submit! {
             #![crate = chekov]
-            use event_store::Event;
+            use chekov::event_store::Event;
             #aggregate_event_resolver {
                 names: #event::all_event_types(),
                 type_id: std::any::TypeId::of::<#event>(),
-                handler: |handler: &mut #apply_to, event: event_store::prelude::RecordedEvent|  -> BoxFuture<Result<(), ()>> {
+                handler: |handler: &mut #apply_to, event: chekov::RecordedEvent|  -> BoxFuture<Result<(), ()>> {
                     use chekov::Event;
                     use chekov::event::Handler;
                     use futures::TryFutureExt;

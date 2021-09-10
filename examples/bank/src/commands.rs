@@ -14,14 +14,14 @@ pub struct DeleteAccount {
 impl Command for DeleteAccount {
     type Event = AccountDeleted;
     type Executor = Account;
-    type ExecutorRegistry = AggregateInstanceRegistry<Account>;
+    type ExecutorRegistry = AggregateInstanceRegistry<Self::Executor>;
 
     fn identifier(&self) -> ::std::string::String {
         self.account_id.to_string()
     }
 }
 
-#[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+#[derive(Clone, Debug, chekov::Command, Serialize, Deserialize)]
 #[command(event = "AccountOpened", aggregate = "Account")]
 pub struct OpenAccount {
     #[command(identifier)]
@@ -29,7 +29,7 @@ pub struct OpenAccount {
     pub name: String,
 }
 
-#[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+#[derive(Clone, Debug, chekov::Command, Serialize, Deserialize)]
 #[command(event = "AccountUpdated", aggregate = "Account")]
 pub struct UpdateAccount {
     #[command(identifier)]

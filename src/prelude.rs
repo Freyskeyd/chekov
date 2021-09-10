@@ -10,6 +10,8 @@ pub use crate::error::{ApplyError, CommandExecutorError};
 pub use crate::event::handler::EventHandler;
 pub use crate::event::handler::Subscribe;
 pub use crate::event::EventApplier;
+pub use crate::event_store::{PostgresBackend, RecordedEvent};
 pub use crate::message::EventEnvelope;
 pub use crate::message::EventMetadatas;
 pub use crate::router::Router;
+pub use chekov_macros::Aggregate;

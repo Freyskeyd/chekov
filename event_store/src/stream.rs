@@ -1,7 +1,8 @@
 use chrono::DateTime;
+use sqlx::FromRow;
 
 /// A `Stream` represents an `Event` stream
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, FromRow)]
 pub struct Stream {
     pub(crate) stream_id: i64,
     /// The stream identifier which is unique

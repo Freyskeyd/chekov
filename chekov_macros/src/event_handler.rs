@@ -35,7 +35,7 @@ pub fn generate_event_handler(
         pub struct #aggregate_event_resolver {
             names: Vec<&'static str>,
             type_id: std::any::TypeId,
-            handler: fn(&mut #struct_name, event_store::prelude::RecordedEvent)  -> BoxFuture<Result<(), ()>>
+            handler: fn(&mut #struct_name, chekov::RecordedEvent)  -> BoxFuture<Result<(), ()>>
         }
 
         chekov::inventory::collect!(#aggregate_event_resolver);
@@ -64,7 +64,7 @@ pub fn generate_event_handler(
         #[chekov::async_trait::async_trait]
         impl chekov::EventHandler for #struct_name {
 
-            async fn handle_recorded_event(state: &mut Self, event: event_store::prelude::RecordedEvent) -> Result<(), ()> {
+            async fn handle_recorded_event(state: &mut Self, event: chekov::RecordedEvent) -> Result<(), ()> {
                 if let Some(resolver) = #aggregate_static_resolver.get(&event.event_type) {
                     return (resolver)(state, event).await;
                 }

@@ -1,5 +1,81 @@
 {
   "db": "PostgreSQL",
+  "2a84aec7440dcc425e4e0a0df09ea1091fdaad6fc1d191932fcced329369a4ee": {
+    "query": "SELECT\n        stream_events.stream_version as event_number,\n        events.event_id as event_uuid,\n        streams.stream_uuid,\n        stream_events.original_stream_version as stream_version,\n        events.event_type::text,\n        events.correlation_id,\n        events.causation_id,\n        events.data::jsonb,\n        events.metadata as \"metadata: String\",\n        events.created_at\n    FROM\n\tstream_events\n\tinner JOIN streams ON streams.stream_id = stream_events.original_stream_id\n\tinner JOIN events ON stream_events.event_id = events.event_id\n    WHERE\n\tstream_events.stream_id = $1 AND stream_events.stream_version >=$2\n\tORDER BY stream_events.stream_version ASC\n        LIMIT $3;\n         ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "event_number",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "event_uuid",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "stream_uuid",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "stream_version",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "event_type",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 5,
+          "name": "correlation_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 6,
+          "name": "causation_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 7,
+          "name": "data",
+          "type_info": "Jsonb"
+        },
+        {
+          "ordinal": 8,
+          "name": "metadata: String",
+          "type_info": "Jsonb"
+        },
+        {
+          "ordinal": 9,
+          "name": "created_at",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        true,
+        false
+      ]
+    }
+  },
   "5d9d868bd713ed1fdc7ec232741c67ae4d63d2126dcd5daf3fc8a7d0ba449af0": {
     "query": "INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at",
     "describe": {
@@ -85,82 +161,6 @@
         false,
         false,
         true
-      ]
-    }
-  },
-  "ed86cc39cf47a3893eb9e07b24e7c64b9e9057807baef2467f3e261ffca38177": {
-    "query": "SELECT\n        stream_events.stream_version as event_number,\n        events.event_id as event_uuid,\n        streams.stream_uuid,\n        stream_events.original_stream_version as stream_version,\n        events.event_type::text,\n        events.correlation_id,\n        events.causation_id,\n        events.data::jsonb,\n        events.metadata as \"metadata: String\",\n        events.created_at\n    FROM\n\tevents\n\tinner JOIN stream_events ON stream_events.event_id = events.event_id\n\tinner JOIN streams ON streams.stream_id = stream_events.original_stream_id\n    WHERE\n\tstreams.stream_uuid = $1 AND stream_events.stream_version >=$2\n\tORDER BY stream_events.stream_version ASC\n        LIMIT $3;\n         ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "event_number",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 1,
-          "name": "event_uuid",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 2,
-          "name": "stream_uuid",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 3,
-          "name": "stream_version",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 4,
-          "name": "event_type",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 5,
-          "name": "correlation_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 6,
-          "name": "causation_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 7,
-          "name": "data",
-          "type_info": "Jsonb"
-        },
-        {
-          "ordinal": 8,
-          "name": "metadata: String",
-          "type_info": "Jsonb"
-        },
-        {
-          "ordinal": 9,
-          "name": "created_at",
-          "type_info": "Timestamptz"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Int8",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        true,
-        true,
-        false,
-        true,
-        false
       ]
     }
   }

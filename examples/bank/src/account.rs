@@ -19,7 +19,7 @@ pub enum AccountStatus {
     Deleted,
 }
 
-#[derive(Debug, chekov::macros::Aggregate, Serialize)]
+#[derive(Debug, chekov::Aggregate, Serialize)]
 #[aggregate(identity = "account")]
 pub struct Account {
     pub account_id: Option<Uuid>,

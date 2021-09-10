@@ -24,8 +24,6 @@
 //!
 //! ```rust
 //! # use chekov::prelude::*;
-//! # use event_store::prelude::*;
-//! # use chekov::macros::*;
 //! # use serde::{Deserialize, Serialize};
 //! # use uuid::Uuid;
 //! # use actix::Message;
@@ -49,14 +47,14 @@
 //! #     type Storage = PostgresBackend;
 //! # }
 //! #
-//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]
+//! # #[derive(Clone, Message, Debug, chekov::Event, Deserialize, Serialize)]
 //! # #[rtype(result = "Result<(), ()>")]
 //! # pub struct AccountOpened {
 //! #     pub account_id: Uuid,
 //! #     pub name: String,
 //! # }
 //! #
-//! # #[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]
+//! # #[derive(Clone, Debug, chekov::Command, Serialize, Deserialize)]
 //! # #[command(event = "AccountOpened", aggregate = "Account")]
 //! # pub struct OpenAccount {
 //! #     #[command(identifier)]
@@ -124,7 +122,6 @@ pub use registry::AggregateInstanceRegistry;
 ///
 /// ```rust
 /// # use chekov::prelude::*;
-/// # use chekov::macros::*;
 ///
 /// #[derive(Debug, Default, Aggregate)]
 /// #[aggregate(identity = "account")]

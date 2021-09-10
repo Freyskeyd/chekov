@@ -1,12 +1,15 @@
 use crate::application::Application;
 use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo};
-use ::event_store::prelude::RecordedEvent;
+pub use ::event_store::prelude::Event;
+pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
 use uuid::Uuid;
 
-pub struct EventStore<A: Application> {
+pub use event_store::prelude::PostgresBackend;
+
+pub(crate) struct EventStore<A: Application> {
     pub(crate) addr: Addr<event_store::EventStore<A::Storage>>,
 }
 
