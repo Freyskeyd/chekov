@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["PostgresBackend",""],["RecordedEvent","A `RecordedEvent` represents an `Event` which have been append to a `Stream`"]],"trait":[["Event","Represent event that can be handled by an `EventStore`"]]});
