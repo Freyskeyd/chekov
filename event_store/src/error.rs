@@ -5,6 +5,7 @@ use std::fmt;
 #[derive(Debug, PartialEq)]
 pub enum EventStoreError {
     Any,
+    NoStorage,
     Storage(StorageError),
 }
 

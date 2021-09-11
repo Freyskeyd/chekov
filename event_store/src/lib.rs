@@ -12,17 +12,85 @@
 //!
 //! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.
 //!
+//! An `EventStore` needs a [`Storage`] that can be used to `append` and `reead` events from.
+//! [`Storage`] is using a `Backend` to talk to the underlying component.
 //!
-//! ## Appending an event
+//! Currently only two `Backend` are available:
+//!
+//! - [`PostgresBackend`]
+//! - [`InMemoryBackend`]
 //!
 //!
-//! Events are appended by using the fluent API exposed at the root level of the event_store crate:
+//! ## Construct the EventStore
+//!
+//! An `EventStore` is an actor that receive messages to interact with the storage. To create an
+//! `EventStore` you need to provide a valid struct that implement [`Storage`].
+//!
+//! ```rust
+//!
+//! use event_store::prelude::*;
+//! use actix::Actor;
+//!
+//! #[actix::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>>{
+//!     let addr: actix::Addr<EventStore<_>> = EventStore::builder()
+//!         .storage(InMemoryBackend::default())
+//!         .build()
+//!         .await?
+//!         .start();
+//!
+//!     Ok(())
+//! }
+//! ```
+//!
+//! ## Event
+//!
+//! The [`Event`] trait can be used on `struct` and `enum` to define type that can be serialize and
+//! append/read to and from the eventstore.
+//!
 //!
 //! ```rust
 //! use event_store::prelude::*;
-//! # use uuid::Uuid;
+//! use uuid::Uuid;
+//! use serde::{Deserialize, Serialize};
+//! use std::convert::TryFrom;
+//!
+//! #[derive(Deserialize, Serialize)]
+//! struct MyEvent {
+//!     account_id: Uuid
+//! }
+//!
+//! impl Event for MyEvent {
+//!     // This method is used by the system to define a human readble representation of the Event.
+//!     // For enum, each variant must be a unique `str`
+//!     fn event_type(&self) -> &'static str {
+//!         "MyEvent"
+//!     }
+//!
+//!     // Returns every human readable name that this type can be decoded to.
+//!     fn all_event_types() -> Vec<&'static str> {
+//!         vec!["MyEvent"]
+//!     }
+//! }
+//!
+//! impl TryFrom<RecordedEvent> for MyEvent {
+//!      type Error = ();
+//!      fn try_from(e: RecordedEvent) -> Result<Self, ()> {
+//!        serde_json::from_value(e.data).map_err(|_| ())
+//!      }
+//! }
+
+//! ```
+//!
+//! ## Appending an event
+//!
+//! [`Event`] can be append by using the fluent API exposed at the root level of the event_store crate:
+//!
+//! ```rust
+//! use event_store::prelude::*;
+//! use uuid::Uuid;
 //! # use std::convert::TryFrom;
-//! # use actix::Actor;
+//! use actix::Actor;
 //! #
 //! # #[derive(serde::Deserialize, serde::Serialize)]
 //! # struct MyEvent{
@@ -38,9 +106,14 @@
 //! #        serde_json::from_value(e.data).map_err(|_| ())
 //! #      }
 //! # }
-//! # #[actix::main]
-//! # async fn reading() -> Result<(), Box<dyn std::error::Error>>{
-//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();
+//!
+//! #[actix::main]
+//! async fn reading() -> Result<(), Box<dyn std::error::Error>>{
+//! let event_store = EventStore::builder()
+//!     .storage(InMemoryBackend::default())
+//!     .build()
+//!     .await?
+//!     .start();
 //!
 //! let stream_uuid = Uuid::new_v4().to_string();
 //! let my_event = MyEvent { account_id: Uuid::new_v4() };
@@ -50,34 +123,34 @@
 //!   .to(&stream_uuid)?
 //!   .execute(event_store)
 //!   .await;
-//! # Ok(())
-//! # }
+//!
+//!   Ok(())
+//! }
 //! ```
 //!
 //! ## Reading from stream
-//!
 //!
 //! A `Stream` can be read with the fluent API exposed at the root level of the event_store crate:
 //!
 //! ```rust
 //! use event_store::prelude::*;
-//! # use uuid::Uuid;
-//! # use actix::Actor;
-//! #
-//! # #[actix::main]
-//! # async fn reading() -> Result<(), Box<dyn std::error::Error>>{
-//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();
+//! use uuid::Uuid;
+//! use actix::Actor;
 //!
-//! let stream_uuid = Uuid::new_v4().to_string();
+//! #[actix::main]
+//! async fn reading() -> Result<(), Box<dyn std::error::Error>>{
+//!     let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();
 //!
-//! event_store::read()
-//!   .stream(&stream_uuid)?
-//!   .from(ReadVersion::Origin)
-//!   .limit(10)
-//!   .execute(event_store)
-//!   .await;
-//! # Ok(())
-//! # }
+//!     let stream_uuid = Uuid::new_v4().to_string();
+//!
+//!     event_store::read()
+//!         .stream(&stream_uuid)?
+//!         .from(ReadVersion::Origin)
+//!         .limit(10)
+//!         .execute(event_store)
+//!         .await;
+//!     Ok(())
+//! }
 //! ```
 
 mod connection;
@@ -99,6 +172,8 @@ use tracing::{debug, info, instrument, trace, warn};
 
 use read_version::ReadVersion;
 use std::borrow::Cow;
+pub use storage::inmemory::InMemoryBackend;
+pub use storage::postgres::PostgresBackend;
 use storage::{appender::Appender, reader::Reader, Storage};
 use tracing_futures::Instrument;
 use uuid::Uuid;
@@ -303,9 +378,9 @@ where
     /// For now this method can fail only if you haven't define a `Storage`
     // #[instrument(level = "trace", name = "my_name", skip(self))]
     #[instrument(level = "trace", name = "EventStoreBuilder::build", skip(self))]
-    pub async fn build(self) -> Result<EventStore<S>, ()> {
+    pub async fn build(self) -> Result<EventStore<S>, EventStoreError> {
         if self.storage.is_none() {
-            return Err(());
+            return Err(EventStoreError::NoStorage);
         }
 
         trace!("Creating EventStore with {} storage", S::storage_name());
