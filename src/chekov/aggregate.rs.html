@@ -152,9 +152,6 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -182,8 +179,6 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
 <span class="doccomment">//! # use chekov::prelude::*;</span>
-<span class="doccomment">//! # use event_store::prelude::*;</span>
-<span class="doccomment">//! # use chekov::macros::*;</span>
 <span class="doccomment">//! # use serde::{Deserialize, Serialize};</span>
 <span class="doccomment">//! # use uuid::Uuid;</span>
 <span class="doccomment">//! # use actix::Message;</span>
@@ -207,14 +202,14 @@
 <span class="doccomment">//! #     type Storage = PostgresBackend;</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::macros::Event, Deserialize, Serialize)]</span>
+<span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::Event, Deserialize, Serialize)]</span>
 <span class="doccomment">//! # #[rtype(result = &quot;Result&lt;(), ()&gt;&quot;)]</span>
 <span class="doccomment">//! # pub struct AccountOpened {</span>
 <span class="doccomment">//! #     pub account_id: Uuid,</span>
 <span class="doccomment">//! #     pub name: String,</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! # #[derive(Clone, Debug, chekov::macros::Command, Serialize, Deserialize)]</span>
+<span class="doccomment">//! # #[derive(Clone, Debug, chekov::Command, Serialize, Deserialize)]</span>
 <span class="doccomment">//! # #[command(event = &quot;AccountOpened&quot;, aggregate = &quot;Account&quot;)]</span>
 <span class="doccomment">//! # pub struct OpenAccount {</span>
 <span class="doccomment">//! #     #[command(identifier)]</span>
@@ -282,7 +277,6 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```rust</span>
 <span class="doccomment">/// # use chekov::prelude::*;</span>
-<span class="doccomment">/// # use chekov::macros::*;</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// #[derive(Debug, Default, Aggregate)]</span>
 <span class="doccomment">/// #[aggregate(identity = &quot;account&quot;)]</span>
