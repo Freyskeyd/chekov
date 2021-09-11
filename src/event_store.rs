@@ -46,7 +46,7 @@ where
 
     fn handle(&mut self, reader: ExecuteReader, _: &mut Self::Context) -> Self::Result {
         let addr = self.addr.clone();
-        Box::pin(async move { reader.0.execute_async(addr).await }.into_actor(self))
+        Box::pin(async move { reader.0.execute(addr).await }.into_actor(self))
     }
 }
 

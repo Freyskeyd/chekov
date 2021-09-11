@@ -8,7 +8,78 @@
 #![allow(clippy::toplevel_ref_arg)]
 #![allow(clippy::similar_names)]
 #![allow(dead_code)]
-//! The `event_store` crate
+//! # EventStore
+//!
+//! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.
+//!
+//!
+//! ## Appending an event
+//!
+//!
+//! Events are appended by using the fluent API exposed at the root level of the event_store crate:
+//!
+//! ```rust
+//! use event_store::prelude::*;
+//! # use uuid::Uuid;
+//! # use std::convert::TryFrom;
+//! # use actix::Actor;
+//! #
+//! # #[derive(serde::Deserialize, serde::Serialize)]
+//! # struct MyEvent{
+//! #     account_id: Uuid
+//! # }
+//! # impl Event for MyEvent {
+//! #     fn event_type(&self) -> &'static str { "MyEvent" }
+//! #     fn all_event_types() -> Vec<&'static str> { vec!["MyEvent"] }
+//! # }
+//! # impl TryFrom<RecordedEvent> for MyEvent {
+//! #     type Error = ();
+//! #      fn try_from(e: RecordedEvent) -> Result<Self, ()> {
+//! #        serde_json::from_value(e.data).map_err(|_| ())
+//! #      }
+//! # }
+//! # #[actix::main]
+//! # async fn reading() -> Result<(), Box<dyn std::error::Error>>{
+//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();
+//!
+//! let stream_uuid = Uuid::new_v4().to_string();
+//! let my_event = MyEvent { account_id: Uuid::new_v4() };
+//!
+//! event_store::append()
+//!   .event(&my_event)?
+//!   .to(&stream_uuid)?
+//!   .execute(event_store)
+//!   .await;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Reading from stream
+//!
+//!
+//! A `Stream` can be read with the fluent API exposed at the root level of the event_store crate:
+//!
+//! ```rust
+//! use event_store::prelude::*;
+//! # use uuid::Uuid;
+//! # use actix::Actor;
+//! #
+//! # #[actix::main]
+//! # async fn reading() -> Result<(), Box<dyn std::error::Error>>{
+//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();
+//!
+//! let stream_uuid = Uuid::new_v4().to_string();
+//!
+//! event_store::read()
+//!   .stream(&stream_uuid)?
+//!   .from(ReadVersion::Origin)
+//!   .limit(10)
+//!   .execute(event_store)
+//!   .await;
+//! # Ok(())
+//! # }
+//! ```
+
 mod connection;
 mod error;
 mod event;
@@ -26,11 +97,11 @@ use event::{ParseEventError, RecordedEvent};
 use expected_version::ExpectedVersion;
 use tracing::{debug, info, instrument, trace, warn};
 
-use tracing_futures::Instrument;
-use uuid::Uuid;
 use read_version::ReadVersion;
 use std::borrow::Cow;
 use storage::{appender::Appender, reader::Reader, Storage};
+use tracing_futures::Instrument;
+use uuid::Uuid;
 
 /// An `EventStore` that hold a storage connection
 #[derive(Clone)]
@@ -43,11 +114,6 @@ impl<S: Storage> std::default::Default for EventStore<S> {
         unimplemented!()
     }
 }
-
-// impl<S> ::actix::registry::SystemService for EventStore<S> where
-//     S: 'static + Storage + std::marker::Unpin + std::default::Default
-// {
-// }
 
 impl<S> ::actix::Supervised for EventStore<S> where S: 'static + Storage + std::marker::Unpin {}
 impl<S> ::actix::Actor for EventStore<S>

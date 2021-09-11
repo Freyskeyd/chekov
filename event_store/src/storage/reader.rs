@@ -78,7 +78,7 @@ impl Reader {
         self
     }
 
-    pub async fn execute_async<S: Storage>(
+    pub async fn execute<S: Storage>(
         self,
         event_store: Addr<EventStore<S>>,
     ) -> Result<Vec<RecordedEvent>, EventStoreError> {
