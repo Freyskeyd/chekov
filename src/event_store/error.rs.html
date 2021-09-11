@@ -45,6 +45,7 @@
 <span id="45">45</span>
 <span id="46">46</span>
 <span id="47">47</span>
+<span id="48">48</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::storage::StorageError</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ParseEventError</span>;
@@ -53,6 +54,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EventStoreError</span> {
     <span class="ident">Any</span>,
+    <span class="ident">NoStorage</span>,
     <span class="ident">Storage</span>(<span class="ident">StorageError</span>),
 }
 
