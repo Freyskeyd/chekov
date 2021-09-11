@@ -262,6 +262,72 @@
 <span id="262">262</span>
 <span id="263">263</span>
 <span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
 </pre><pre class="rust">
 <span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
@@ -273,7 +339,78 @@
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::toplevel_ref_arg</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::similar_names</span>)]</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-<span class="doccomment">//! The `event_store` crate</span>
+<span class="doccomment">//! # EventStore</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Appending an event</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Events are appended by using the fluent API exposed at the root level of the event_store crate:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use event_store::prelude::*;</span>
+<span class="doccomment">//! # use uuid::Uuid;</span>
+<span class="doccomment">//! # use std::convert::TryFrom;</span>
+<span class="doccomment">//! # use actix::Actor;</span>
+<span class="doccomment">//! #</span>
+<span class="doccomment">//! # #[derive(serde::Deserialize, serde::Serialize)]</span>
+<span class="doccomment">//! # struct MyEvent{</span>
+<span class="doccomment">//! #     account_id: Uuid</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! # impl Event for MyEvent {</span>
+<span class="doccomment">//! #     fn event_type(&amp;self) -&gt; &amp;&#39;static str { &quot;MyEvent&quot; }</span>
+<span class="doccomment">//! #     fn all_event_types() -&gt; Vec&lt;&amp;&#39;static str&gt; { vec![&quot;MyEvent&quot;] }</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! # impl TryFrom&lt;RecordedEvent&gt; for MyEvent {</span>
+<span class="doccomment">//! #     type Error = ();</span>
+<span class="doccomment">//! #      fn try_from(e: RecordedEvent) -&gt; Result&lt;Self, ()&gt; {</span>
+<span class="doccomment">//! #        serde_json::from_value(e.data).map_err(|_| ())</span>
+<span class="doccomment">//! #      }</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! # #[actix::main]</span>
+<span class="doccomment">//! # async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
+<span class="doccomment">//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let stream_uuid = Uuid::new_v4().to_string();</span>
+<span class="doccomment">//! let my_event = MyEvent { account_id: Uuid::new_v4() };</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! event_store::append()</span>
+<span class="doccomment">//!   .event(&amp;my_event)?</span>
+<span class="doccomment">//!   .to(&amp;stream_uuid)?</span>
+<span class="doccomment">//!   .execute(event_store)</span>
+<span class="doccomment">//!   .await;</span>
+<span class="doccomment">//! # Ok(())</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Reading from stream</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! A `Stream` can be read with the fluent API exposed at the root level of the event_store crate:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use event_store::prelude::*;</span>
+<span class="doccomment">//! # use uuid::Uuid;</span>
+<span class="doccomment">//! # use actix::Actor;</span>
+<span class="doccomment">//! #</span>
+<span class="doccomment">//! # #[actix::main]</span>
+<span class="doccomment">//! # async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
+<span class="doccomment">//! # let mut event_store = EventStore::builder().storage(InMemoryBackend::default()).build().await.unwrap().start();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let stream_uuid = Uuid::new_v4().to_string();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! event_store::read()</span>
+<span class="doccomment">//!   .stream(&amp;stream_uuid)?</span>
+<span class="doccomment">//!   .from(ReadVersion::Origin)</span>
+<span class="doccomment">//!   .limit(10)</span>
+<span class="doccomment">//!   .execute(event_store)</span>
+<span class="doccomment">//!   .await;</span>
+<span class="doccomment">//! # Ok(())</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! ```</span>
+
 <span class="kw">mod</span> <span class="ident">connection</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">event</span>;
@@ -291,11 +428,11 @@
 <span class="kw">use</span> <span class="ident">expected_version::ExpectedVersion</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">info</span>, <span class="ident">instrument</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
 
-<span class="kw">use</span> <span class="ident">tracing_futures::Instrument</span>;
-<span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 <span class="kw">use</span> <span class="ident">read_version::ReadVersion</span>;
 <span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>};
+<span class="kw">use</span> <span class="ident">tracing_futures::Instrument</span>;
+<span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="doccomment">/// An `EventStore` that hold a storage connection</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
@@ -308,11 +445,6 @@
         <span class="macro">unimplemented!</span>()
     }
 }
-
-<span class="comment">// impl&lt;S&gt; ::actix::registry::SystemService for EventStore&lt;S&gt; where</span>
-<span class="comment">//     S: &#39;static + Storage + std::marker::Unpin + std::default::Default</span>
-<span class="comment">// {</span>
-<span class="comment">// }</span>
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">::actix::Supervised</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">S</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Storage</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> {}
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">::actix::Actor</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
