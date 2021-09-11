@@ -1,7 +1,7 @@
 use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
+use actix::WrapFuture;
 use actix::{Actor, Context, Handler};
-use actix_interop::{with_ctx, FutureInterop};
 use std::borrow::Cow;
 use std::str::FromStr;
 use tracing::Instrument;
@@ -36,26 +36,24 @@ impl<S: Storage> Handler<Read> for Connection<S> {
 
     #[tracing::instrument(name = "Connection::Read", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Read, _ctx: &mut Context<Self>) -> Self::Result {
-        // let stream = msg.stream;
         let limit = msg.limit;
         let version = msg.version;
 
         trace!("Reading {} event(s)", msg.stream);
+        let fut = self
+            .storage
+            .read_stream(msg.stream, version, limit, msg.correlation_id);
 
-        async move {
-            match with_ctx(|actor: &mut Self, _| {
-                actor
-                    .storage
-                    .read_stream(msg.stream, version, limit, msg.correlation_id)
-            })
-            .await
-            {
-                Ok(events) => Ok(events),
-                Err(_) => Err(EventStoreError::Any),
+        Box::pin(
+            async move {
+                match fut.await {
+                    Ok(events) => Ok(events),
+                    Err(_) => Err(EventStoreError::Any),
+                }
             }
-        }
-        .instrument(tracing::Span::current())
-        .interop_actor_boxed(self)
+            .instrument(tracing::Span::current())
+            .into_actor(self),
+        )
     }
 }
 
@@ -65,20 +63,19 @@ impl<S: Storage> Handler<Append> for Connection<S> {
     #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Appending {} event(s) to {}", msg.events.len(), msg.stream);
+        let fut = self
+            .storage
+            .append_to_stream(&msg.stream, &msg.events, msg.correlation_id);
 
-        async move {
-            match with_ctx(|actor: &mut Self, _| {
-                actor
-                    .storage
-                    .append_to_stream(&msg.stream, &msg.events, msg.correlation_id)
-            })
-            .await
-            {
-                Ok(events_ids) => Ok(events_ids),
-                Err(_) => Err(EventStoreError::Any),
+        Box::pin(
+            async move {
+                match fut.await {
+                    Ok(events_ids) => Ok(events_ids),
+                    Err(_) => Err(EventStoreError::Any),
+                }
             }
-        }
-        .interop_actor_boxed(self)
+            .into_actor(self),
+        )
     }
 }
 
@@ -90,17 +87,17 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
         trace!("Creating {} stream", msg.stream_uuid);
 
         let stream = Stream::from_str(&msg.stream_uuid).unwrap();
-        async move {
-            match with_ctx(|actor: &mut Self, _| {
-                actor.storage.create_stream(stream, msg.correlation_id)
-            })
-            .await
-            {
-                Ok(s) => Ok(Cow::Owned(s)),
-                Err(_) => Err(EventStoreError::Any),
+        let fut = self.storage.create_stream(stream, msg.correlation_id);
+
+        Box::pin(
+            async move {
+                match fut.await {
+                    Ok(s) => Ok(Cow::Owned(s)),
+                    Err(_) => Err(EventStoreError::Any),
+                }
             }
-        }
-        .interop_actor_boxed(self)
+            .into_actor(self),
+        )
     }
 }
 
@@ -110,19 +107,19 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
     #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Execute StreamInfo for {}", msg.stream_uuid);
+        let fut = self
+            .storage
+            .read_stream_info(msg.stream_uuid, msg.correlation_id);
 
-        async move {
-            let res = with_ctx(|actor: &mut Self, _| {
-                actor
-                    .storage
-                    .read_stream_info(msg.stream_uuid, msg.correlation_id)
-            });
-            match res.await {
-                Ok(s) => Ok(Cow::Owned(s)),
-                Err(e) => Err(EventStoreError::Storage(e)),
+        Box::pin(
+            async move {
+                match fut.await {
+                    Ok(s) => Ok(Cow::Owned(s)),
+                    Err(e) => Err(EventStoreError::Storage(e)),
+                }
             }
-        }
-        .interop_actor_boxed(self)
+            .into_actor(self),
+        )
     }
 }
 

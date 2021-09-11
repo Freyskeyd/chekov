@@ -1,6 +1,6 @@
 [package]
 name = "event_store"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 edition = "2018"
 description = "Crate to deal with every aspect of an eventstore"
@@ -17,13 +17,11 @@ tokio = {version = "1", features = ["full"]}
 futures = "0.3"
 log = {version = "0.4"}
 actix = "0.12"
-sqlx = {git = "https://github.com/Freyskeyd/sqlx", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
+sqlx = {version = "0.5", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"]}
 chrono = {version = "0.4", features = ["serde"]}
-actix-interop = { git = "https://github.com/Freyskeyd/actix-interop" }
-# actix-interop = "0.2"
 
 tracing = "0.1"
-tracing-futures = { version = "*" }
+tracing-futures = { version = "0" }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"
