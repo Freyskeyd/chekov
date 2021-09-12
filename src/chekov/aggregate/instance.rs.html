@@ -211,6 +211,11 @@
 <span id="211">211</span>
 <span id="212">212</span>
 <span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::command::Command</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::Event</span>;
@@ -313,7 +318,7 @@
         <span class="kw-2">mut</span> <span class="ident">state</span>: <span class="ident">A</span>,
         <span class="ident">command</span>: <span class="ident">Dispatch</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">APP</span><span class="op">&gt;</span>,
         <span class="ident">current_version</span>: <span class="ident">i64</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">C::Event</span>, <span class="ident">A</span><span class="op">&gt;</span>
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">C::Event</span>, <span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">CommandExecutorError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">A</span>: <span class="ident">CommandExecutor</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
         <span class="ident">A</span>: <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">C::Event</span><span class="op">&gt;</span>,
@@ -329,10 +334,8 @@
             <span class="kw">let</span> <span class="ident">ev</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">events</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
             <span class="kw">match</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>::<span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span><span class="ident">::with_appender</span>(
                 <span class="ident">event_store::prelude::Appender::with_correlation_id</span>(<span class="ident">correlation_id</span>)
-                    .<span class="ident">events</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>[..])
-                    .<span class="ident">unwrap</span>()
-                    .<span class="ident">to</span>(<span class="kw-2">&amp;</span><span class="ident">stream_id</span>)
-                    .<span class="ident">unwrap</span>()
+                    .<span class="ident">events</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>[..])<span class="question-mark">?</span>
+                    .<span class="ident">to</span>(<span class="kw-2">&amp;</span><span class="ident">stream_id</span>)<span class="question-mark">?</span>
                     .<span class="ident">expected_version</span>(<span class="ident">event_store::prelude::ExpectedVersion::AnyVersion</span>),
             )
             <span class="comment">// TODO deal with mailbox error</span>
@@ -340,19 +343,24 @@
             {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="kw">let</span> <span class="ident">new_version</span> <span class="op">=</span> <span class="ident">current_version</span> <span class="op">+</span> <span class="ident">events</span>.<span class="ident">len</span>() <span class="kw">as</span> <span class="ident">i64</span>;
-                    <span class="ident">CommandExecutionResult::Ok</span>(<span class="ident">events</span>, <span class="ident">new_version</span>, <span class="ident">state</span>)
+                    <span class="prelude-val">Ok</span>(<span class="ident">CommandExecutionResult</span> {
+                        <span class="ident">events</span>,
+                        <span class="ident">new_version</span>,
+                        <span class="ident">state</span>,
+                    })
                 }
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CommandExecutionResult::Err</span>(<span class="ident">CommandExecutorError::Any</span>),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">CommandExecutorError::Any</span>),
             }
         } <span class="kw">else</span> {
-            <span class="ident">CommandExecutionResult::Err</span>(<span class="ident">CommandExecutorError::Any</span>)
+            <span class="prelude-val">Err</span>(<span class="ident">CommandExecutorError::Any</span>)
         }
     }
 }
 
-<span class="kw">enum</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="prelude-val">Ok</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>, <span class="ident">i64</span>, <span class="ident">A</span>),
-    <span class="prelude-val">Err</span>(<span class="ident">CommandExecutorError</span>),
+<span class="kw">struct</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">A</span><span class="op">&gt;</span> {
+    <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
+    <span class="ident">new_version</span>: <span class="ident">i64</span>,
+    <span class="ident">state</span>: <span class="ident">A</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">AggregateVersion</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
@@ -392,16 +400,18 @@
         <span class="ident">Box::pin</span>(
             <span class="kw">async</span> <span class="kw">move</span> { <span class="self">Self</span><span class="ident">::execute_and_apply</span>(<span class="ident">mutable_state</span>, <span class="ident">cmd</span>, <span class="ident">current_version</span>).<span class="kw">await</span> }
                 .<span class="ident">into_actor</span>(<span class="self">self</span>)
-                .<span class="ident">map</span>(
-                    <span class="op">|</span><span class="ident">result</span>: <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">C::Event</span>, <span class="ident">C::Executor</span><span class="op">&gt;</span>, <span class="ident">actor</span>, <span class="kw">_</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">result</span> {
-                        <span class="ident">CommandExecutionResult::Ok</span>(<span class="ident">e</span>, <span class="ident">new_version</span>, <span class="ident">new_state</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                            <span class="ident">actor</span>.<span class="ident">current_version</span> <span class="op">=</span> <span class="ident">new_version</span>;
-                            <span class="ident">actor</span>.<span class="ident">inner</span> <span class="op">=</span> <span class="ident">new_state</span>;
-                            <span class="prelude-val">Ok</span>(<span class="ident">e</span>)
-                        }
-                        <span class="ident">CommandExecutionResult::Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
-                    },
-                ),
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span>, <span class="ident">actor</span>, <span class="kw">_</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">result</span> {
+                    <span class="prelude-val">Ok</span>(<span class="ident">CommandExecutionResult</span> {
+                        <span class="ident">events</span>,
+                        <span class="ident">new_version</span>,
+                        <span class="ident">state</span>,
+                    }) <span class="op">=</span><span class="op">&gt;</span> {
+                        <span class="ident">actor</span>.<span class="ident">current_version</span> <span class="op">=</span> <span class="ident">new_version</span>;
+                        <span class="ident">actor</span>.<span class="ident">inner</span> <span class="op">=</span> <span class="ident">state</span>;
+                        <span class="prelude-val">Ok</span>(<span class="ident">events</span>)
+                    }
+                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
+                }),
         )
     }
 }
