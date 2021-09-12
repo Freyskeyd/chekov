@@ -20,7 +20,7 @@ categories = []
 authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 
 [dependencies]
-event_store = { version = "0.1" }
+event_store = { version = "0.1", path = "event_store" }
 chekov_macros = { version = "0.1", path = "chekov_macros" }
 fnv = "1.0.3"
 chrono = "0.4"
@@ -40,3 +40,6 @@ tracing-futures = { version = "0" }
 inventory = "0"
 lazy_static = "1.4.0"
 typetag = "0.1"
+
+[dev-dependencies]
+demonstrate = "0"

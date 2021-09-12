@@ -17,6 +17,12 @@ pub struct InMemoryBackend {
     events: HashMap<String, Vec<RecordedEvent>>,
 }
 
+impl InMemoryBackend {
+    pub async fn initiate() -> Result<Self, ()> {
+        Ok(Self::default())
+    }
+}
+
 impl Storage for InMemoryBackend {
     fn storage_name() -> &'static str {
         "InMemory"

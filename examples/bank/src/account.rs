@@ -12,14 +12,14 @@ pub use aggregate::*;
 pub use projector::*;
 pub use repository::*;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum AccountStatus {
     Initialized,
     Active,
     Deleted,
 }
 
-#[derive(Debug, chekov::Aggregate, Serialize)]
+#[derive(Debug, Clone, chekov::Aggregate, Serialize)]
 #[aggregate(identity = "account")]
 pub struct Account {
     pub account_id: Option<Uuid>,

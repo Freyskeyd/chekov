@@ -28,7 +28,7 @@
 //! # use uuid::Uuid;
 //! # use actix::Message;
 //! #
-//! # #[derive(Debug, Serialize)]
+//! # #[derive(Debug, Clone, Serialize)]
 //! # pub enum AccountStatus {
 //! #     Initialized,
 //! #     Active,
@@ -62,7 +62,7 @@
 //! #     pub name: String,
 //! # }
 //! #
-//! #[derive(Debug, Default, Aggregate)]
+//! #[derive(Debug, Clone, Default, Aggregate)]
 //! #[aggregate(identity = "account")]
 //! pub struct Account {
 //!     account_id: Option<uuid::Uuid>,
@@ -115,6 +115,8 @@ pub use instance::AggregateInstance;
 #[doc(hidden)]
 pub use registry::AggregateInstanceRegistry;
 
+use self::resolver::EventResolverRegistry;
+
 /// Define an Aggregate
 ///
 /// We don't recommend implementing this trait directly. use the `Aggregate` derive macro instead
@@ -123,15 +125,16 @@ pub use registry::AggregateInstanceRegistry;
 /// ```rust
 /// # use chekov::prelude::*;
 ///
-/// #[derive(Debug, Default, Aggregate)]
+/// #[derive(Debug, Clone, Default, Aggregate)]
 /// #[aggregate(identity = "account")]
 /// struct Account {
 ///     account_id: Option<uuid::Uuid>
 /// }
 /// ```
 ///
-pub trait Aggregate: std::fmt::Debug + Default + std::marker::Unpin + 'static {
-    fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError>;
+pub trait Aggregate: Clone + std::fmt::Debug + Default + std::marker::Unpin + 'static {
+    #[doc(hidden)]
+    fn get_event_resolver() -> &'static EventResolverRegistry<Self>;
 
     /// Define the identity of this kind of Aggregate.
     ///

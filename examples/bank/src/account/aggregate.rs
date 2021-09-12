@@ -1,6 +1,5 @@
 use super::*;
 
-use chekov::applier;
 use chekov::event::EventApplier;
 
 impl CommandExecutor<DeleteAccount> for Account {

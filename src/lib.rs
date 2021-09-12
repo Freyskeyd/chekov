@@ -67,3 +67,6 @@ pub use chekov_macros::EventHandler;
 pub use async_trait;
 #[doc(hidden)]
 pub use inventory;
+
+#[cfg(test)]
+mod tests;

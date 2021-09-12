@@ -41,7 +41,6 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
         fields(correlation_id = %cmd.metadatas.correlation_id, aggregate_id = %cmd.command.identifier(), aggregate_type = %::std::any::type_name::<C::Executor>())
     )]
     fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
-        println!("Registry: {:?}", self.registry);
         // Open aggregate
         if let Some(addr) = self.registry.get(&cmd.command.identifier()).cloned() {
             trace!("Instance already started");
@@ -70,7 +69,6 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                         let addr = match result {
                             Ok(addr) => {
                                 actor.registry.insert(stream_id, addr.clone());
-                                println!("Registry: {:?}", actor.registry);
                                 addr
                             }
                             Err(_) => todo!(),

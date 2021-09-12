@@ -51,3 +51,7 @@ pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 #[derive(Message)]
 #[rtype("Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteStreamInfo(pub(crate) String);
+
+#[derive(Message)]
+#[rtype("i64")]
+pub(crate) struct AggregateVersion;

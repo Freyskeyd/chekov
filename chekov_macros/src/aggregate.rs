@@ -69,14 +69,10 @@ pub fn generate_aggregate(
                 }
             };
         }
+
         impl chekov::Aggregate for #struct_name {
-
-            fn apply_recorded_event(&mut self, event: chekov::RecordedEvent) -> Result<(), chekov::prelude::ApplyError> {
-                if let Some(resolver) = #aggregate_static_resolver.get_applier(&event.event_type) {
-                    let _ = (resolver)(self, event);
-                }
-
-                Ok(())
+            fn get_event_resolver() -> &'static chekov::aggregate::resolver::EventResolverRegistry<Self> {
+                &*#aggregate_static_resolver
             }
 
             fn identity() -> &'static str {
