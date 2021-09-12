@@ -99,7 +99,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         mut state: A,
         command: Dispatch<C, APP>,
         current_version: i64,
-    ) -> CommandExecutionResult<C::Event, A>
+    ) -> Result<CommandExecutionResult<C::Event, A>, CommandExecutorError>
     where
         A: CommandExecutor<C>,
         A: EventApplier<C::Event>,
@@ -115,10 +115,8 @@ impl<A: Aggregate> AggregateInstance<A> {
             let ev: Vec<&_> = events.iter().collect();
             match crate::event_store::EventStore::<APP>::with_appender(
                 event_store::prelude::Appender::with_correlation_id(correlation_id)
-                    .events(&ev[..])
-                    .unwrap()
-                    .to(&stream_id)
-                    .unwrap()
+                    .events(&ev[..])?
+                    .to(&stream_id)?
                     .expected_version(event_store::prelude::ExpectedVersion::AnyVersion),
             )
             // TODO deal with mailbox error
@@ -126,19 +124,24 @@ impl<A: Aggregate> AggregateInstance<A> {
             {
                 Ok(Ok(_)) => {
                     let new_version = current_version + events.len() as i64;
-                    CommandExecutionResult::Ok(events, new_version, state)
+                    Ok(CommandExecutionResult {
+                        events,
+                        new_version,
+                        state,
+                    })
                 }
-                _ => CommandExecutionResult::Err(CommandExecutorError::Any),
+                _ => Err(CommandExecutorError::Any),
             }
         } else {
-            CommandExecutionResult::Err(CommandExecutorError::Any)
+            Err(CommandExecutorError::Any)
         }
     }
 }
 
-enum CommandExecutionResult<E, A> {
-    Ok(Vec<E>, i64, A),
-    Err(CommandExecutorError),
+struct CommandExecutionResult<E, A> {
+    events: Vec<E>,
+    new_version: i64,
+    state: A,
 }
 
 impl<A: Aggregate> Handler<AggregateVersion> for AggregateInstance<A> {
@@ -178,16 +181,18 @@ impl<C: Command, A: Application> Handler<Dispatch<C, A>> for AggregateInstance<C
         Box::pin(
             async move { Self::execute_and_apply(mutable_state, cmd, current_version).await }
                 .into_actor(self)
-                .map(
-                    |result: CommandExecutionResult<C::Event, C::Executor>, actor, _| match result {
-                        CommandExecutionResult::Ok(e, new_version, new_state) => {
-                            actor.current_version = new_version;
-                            actor.inner = new_state;
-                            Ok(e)
-                        }
-                        CommandExecutionResult::Err(e) => Err(e),
-                    },
-                ),
+                .map(|result, actor, _| match result {
+                    Ok(CommandExecutionResult {
+                        events,
+                        new_version,
+                        state,
+                    }) => {
+                        actor.current_version = new_version;
+                        actor.inner = state;
+                        Ok(events)
+                    }
+                    Err(e) => Err(e),
+                }),
         )
     }
 }
