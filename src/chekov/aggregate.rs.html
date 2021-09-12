@@ -152,6 +152,9 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -183,7 +186,7 @@
 <span class="doccomment">//! # use uuid::Uuid;</span>
 <span class="doccomment">//! # use actix::Message;</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! # #[derive(Debug, Serialize)]</span>
+<span class="doccomment">//! # #[derive(Debug, Clone, Serialize)]</span>
 <span class="doccomment">//! # pub enum AccountStatus {</span>
 <span class="doccomment">//! #     Initialized,</span>
 <span class="doccomment">//! #     Active,</span>
@@ -217,7 +220,7 @@
 <span class="doccomment">//! #     pub name: String,</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
-<span class="doccomment">//! #[derive(Debug, Default, Aggregate)]</span>
+<span class="doccomment">//! #[derive(Debug, Clone, Default, Aggregate)]</span>
 <span class="doccomment">//! #[aggregate(identity = &quot;account&quot;)]</span>
 <span class="doccomment">//! pub struct Account {</span>
 <span class="doccomment">//!     account_id: Option&lt;uuid::Uuid&gt;,</span>
@@ -270,6 +273,8 @@
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">registry::AggregateInstanceRegistry</span>;
 
+<span class="kw">use</span> <span class="self">self</span><span class="ident">::resolver::EventResolverRegistry</span>;
+
 <span class="doccomment">/// Define an Aggregate</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// We don&#39;t recommend implementing this trait directly. use the `Aggregate` derive macro instead</span>
@@ -278,15 +283,16 @@
 <span class="doccomment">/// ```rust</span>
 <span class="doccomment">/// # use chekov::prelude::*;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// #[derive(Debug, Default, Aggregate)]</span>
+<span class="doccomment">/// #[derive(Debug, Clone, Default, Aggregate)]</span>
 <span class="doccomment">/// #[aggregate(identity = &quot;account&quot;)]</span>
 <span class="doccomment">/// struct Account {</span>
 <span class="doccomment">///     account_id: Option&lt;uuid::Uuid&gt;</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
-    <span class="kw">fn</span> <span class="ident">apply_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span>;
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">get_event_resolver</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">EventResolverRegistry</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Define the identity of this kind of Aggregate.</span>
     <span class="doccomment">///</span>
