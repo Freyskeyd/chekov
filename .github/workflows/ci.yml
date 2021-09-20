@@ -120,6 +120,7 @@ jobs:
 
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v1.1.1
+        continue-on-error: true
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ${{ steps.coverage.outputs.report }}

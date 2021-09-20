@@ -15,8 +15,6 @@
 ## Table of Contents
 - [Features](#features)
 - [Getting started](#getting-started)
-- [Using Chekov](#using-chekov)
-- [Deployment](#deployment)
 - [FAQ](#faq)
 - [Need help?](#need-help)
 - [Contributing](#contributing)
@@ -26,8 +24,9 @@
 ## Features
 
 - `Postgres` EventStore backend
-- Dispatch `Command` to `Aggregate`
-- Generate `Event` from `Aggregate`
+- Dispatch `Command` to `Aggregate` or `CommandHandler`
+- Generate `Event` from `Aggregate` and persist them
+- Apply `Event` to `Aggregate`
 - Store and notify `Event` with subscriptions
 - Dispatch `Event` to `EventHandler`
 
@@ -109,3 +108,17 @@ struct UserCreated {
 ### Defining Saga
 
 Not implemented yet
+
+## FAQ
+
+### Does `Chekov` is production ready ?
+
+No its not. Some critical part of the project are still not implemented and a lot of code needs to be refactored before that.
+
+## Need Help?
+
+Feel free to open issue in case of bugs or features requests. [Discussions](https://github.com/Freyskeyd/chekov/discussions) are also a great starts if you have issue that are not bugs nor features requests.
+
+## Contributing
+
+The project is really early staged and have a lot of pending tasks, one major tasks is to produce a roadmap or some issues that can be used to expose the project vision. Feel free to open a [Discussions](https://github.com/Freyskeyd/chekov/discussions) around it if you want !
