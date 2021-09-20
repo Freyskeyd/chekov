@@ -42,6 +42,8 @@ impl Command for AppendItem {
 
     type ExecutorRegistry = AggregateInstanceRegistry<ExampleAggregate>;
 
+    type CommandHandler = NoHandler;
+
     fn identifier(&self) -> String {
         "example_aggregate".to_string()
     }

@@ -117,7 +117,7 @@ where
                         event
                     })
                     .collect::<Vec<RecordedEvent>>(),
-                Err(_) => panic!(""),
+                Err(e) => panic!("{:?}", e),
             }
         }
         .in_current_span()

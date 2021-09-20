@@ -4,6 +4,7 @@ services:
 
   postgres:
     image: postgres:13-beta1-alpine
+    container_name: chekov-pg
     environment:
       # POSTGRES_DB: event_store
       POSTGRES_USER: postgres

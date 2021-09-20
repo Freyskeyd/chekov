@@ -47,8 +47,7 @@ impl PostgresBackend {
 }
 
 impl std::convert::From<sqlx::Error> for StorageError {
-    fn from(e: sqlx::Error) -> Self {
-        println!("Postgres --> {:?}", e);
+    fn from(_: sqlx::Error) -> Self {
         Self::StreamDoesntExists
     }
 }
@@ -116,7 +115,10 @@ impl Storage for PostgresBackend {
                             match sql::read_stream(&mut conn, stream.stream_id, version, limit)
                                 .await
                             {
-                                Err(_) => Err(StorageError::StreamAlreadyExists),
+                                Err(e) => {
+                                    tracing::error!("{:?}", e);
+                                    Err(StorageError::StreamAlreadyExists)
+                                }
                                 Ok(s) => {
                                     info!("Read stream {} {}", stream_uuid, s.len());
                                     Ok(s)

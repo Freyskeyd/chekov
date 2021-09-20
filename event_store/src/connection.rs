@@ -48,7 +48,10 @@ impl<S: Storage> Handler<Read> for Connection<S> {
             async move {
                 match fut.await {
                     Ok(events) => Ok(events),
-                    Err(_) => Err(EventStoreError::Any),
+                    Err(e) => {
+                        tracing::error!("Connection error: {:?}", e);
+                        Err(EventStoreError::Any)
+                    }
                 }
             }
             .instrument(tracing::Span::current())

@@ -23,7 +23,7 @@
 
 pub mod aggregate;
 pub mod application;
-mod command;
+pub mod command;
 mod error;
 pub mod event;
 pub mod event_store;
@@ -57,6 +57,7 @@ use router::Router;
 pub use subscriber::SubscriberManager;
 
 pub use chekov_macros::applier;
+pub use chekov_macros::command_handler;
 pub use chekov_macros::event_handler;
 pub use chekov_macros::Aggregate;
 pub use chekov_macros::Command;

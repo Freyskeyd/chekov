@@ -17,13 +17,15 @@ impl fmt::Display for EventStoreError {
 impl std::error::Error for EventStoreError {}
 
 impl std::convert::From<actix::MailboxError> for EventStoreError {
-    fn from(_: actix::MailboxError) -> Self {
+    fn from(e: actix::MailboxError) -> Self {
+        tracing::error!("Error: {:?}", e);
         Self::Any
     }
 }
 
 impl std::convert::From<ParseEventError> for EventStoreError {
-    fn from(_: ParseEventError) -> Self {
+    fn from(e: ParseEventError) -> Self {
+        tracing::error!("Error: {:?}", e);
         Self::Any
     }
 }

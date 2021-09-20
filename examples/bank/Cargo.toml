@@ -16,7 +16,7 @@ log = "*"
 futures = "*"
 actix-web = "4.0.0-beta.8"
 
-sqlx = {git = "https://github.com/Freyskeyd/sqlx", features = ["postgres", "chrono", "time", "uuid", "json", "runtime-actix-native-tls"]}
+sqlx = {version = "0.5", features = ["postgres", "chrono", "time", "uuid", "json", "runtime-actix-native-tls"]}
 chrono = "0.4"
 
 tracing = {version ="*", features = []}

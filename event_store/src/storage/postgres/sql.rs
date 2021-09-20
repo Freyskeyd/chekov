@@ -27,7 +27,7 @@ pub async fn read_stream(
         events.correlation_id,
         events.causation_id,
         events.data::jsonb,
-        events.metadata as "metadata: String",
+        events.metadata::text,
         events.created_at
     FROM
 	stream_events

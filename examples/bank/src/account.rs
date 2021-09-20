@@ -12,7 +12,7 @@ pub use aggregate::*;
 pub use projector::*;
 pub use repository::*;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum AccountStatus {
     Initialized,
     Active,

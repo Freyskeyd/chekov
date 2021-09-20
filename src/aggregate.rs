@@ -132,7 +132,9 @@ use self::resolver::EventResolverRegistry;
 /// }
 /// ```
 ///
-pub trait Aggregate: Clone + std::fmt::Debug + Default + std::marker::Unpin + 'static {
+pub trait Aggregate:
+    Send + Clone + std::fmt::Debug + Default + std::marker::Unpin + 'static
+{
     #[doc(hidden)]
     fn get_event_resolver() -> &'static EventResolverRegistry<Self>;
 
@@ -155,3 +157,5 @@ pub trait Aggregate: Clone + std::fmt::Debug + Default + std::marker::Unpin + 's
         broker.do_send(Subscribe(stream.into(), recipient));
     }
 }
+
+pub type StaticState<A: Aggregate> = A;

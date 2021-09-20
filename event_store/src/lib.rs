@@ -8,7 +8,7 @@
 #![allow(clippy::toplevel_ref_arg)]
 #![allow(clippy::similar_names)]
 #![allow(dead_code)]
-//! # EventStore
+//! # `EventStore`
 //!
 //! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.
 //!
@@ -21,7 +21,7 @@
 //! - [`InMemoryBackend`]
 //!
 //!
-//! ## Construct the EventStore
+//! ## Construct the `EventStore`
 //!
 //! An `EventStore` is an actor that receive messages to interact with the storage. To create an
 //! `EventStore` you need to provide a valid struct that implement [`Storage`].
@@ -84,7 +84,7 @@
 //!
 //! ## Appending an event
 //!
-//! [`Event`] can be append by using the fluent API exposed at the root level of the event_store crate:
+//! [`Event`] can be append by using the fluent API exposed at the root level of the `event_store` crate:
 //!
 //! ```rust
 //! use event_store::prelude::*;
@@ -130,7 +130,7 @@
 //!
 //! ## Reading from stream
 //!
-//! A `Stream` can be read with the fluent API exposed at the root level of the event_store crate:
+//! A `Stream` can be read with the fluent API exposed at the root level of the `event_store` crate:
 //!
 //! ```rust
 //! use event_store::prelude::*;

@@ -2,6 +2,7 @@ use super::Application;
 use super::Command;
 use super::CommandExecutorError;
 use crate::command::CommandMetadatas;
+use crate::Aggregate;
 use crate::Event;
 use actix::prelude::*;
 use event_store::prelude::*;
@@ -13,6 +14,26 @@ pub struct Dispatch<C: Command, A: Application> {
     pub metadatas: CommandMetadatas,
     pub storage: std::marker::PhantomData<A>,
     pub command: C,
+}
+
+#[derive(Debug, Clone, Message)]
+#[rtype(result = "Result<(Vec<C::Event>, S), CommandExecutorError>")]
+pub struct DispatchWithState<S: Aggregate, C: Command, A: Application> {
+    pub metadatas: CommandMetadatas,
+    pub storage: std::marker::PhantomData<A>,
+    pub command: C,
+    pub state: S,
+}
+
+impl<S: Aggregate, C: Command, A: Application> DispatchWithState<S, C, A> {
+    pub(crate) fn from_dispatch(dispatch: Dispatch<C, A>, state: S) -> Self {
+        Self {
+            metadatas: dispatch.metadatas,
+            storage: dispatch.storage,
+            command: dispatch.command,
+            state,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -1,12 +1,12 @@
-use crate::command::Command;
+use crate::command::{Command, Handler, NoHandler};
 use crate::event::Event;
-use crate::message::{AggregateVersion, ResolveAndApply, ResolveAndApplyMany};
+use crate::message::{AggregateVersion, DispatchWithState, ResolveAndApply, ResolveAndApplyMany};
 use crate::prelude::ApplyError;
 use crate::{command::CommandExecutor, error::CommandExecutorError};
 use crate::{message::Dispatch, prelude::EventApplier};
 use crate::{Aggregate, Application};
 use actix::prelude::*;
-use actix::{Addr, Handler};
+use actix::{Addr, Handler as ActixHandler};
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent};
 use tracing::trace;
 use uuid::Uuid;
@@ -16,7 +16,6 @@ use super::resolver::EventResolverRegistry;
 /// Deals with the lifetime of a particular aggregate
 pub struct AggregateInstance<A: Aggregate> {
     pub(crate) inner: A,
-    #[allow(dead_code)]
     pub(crate) current_version: i64,
     pub(crate) resolver: &'static EventResolverRegistry<A>,
 }
@@ -91,49 +90,62 @@ impl<A: Aggregate> AggregateInstance<A> {
     pub(crate) async fn execute_command<APP: Application, C: Command<Executor = A>>(
         addr: Addr<Self>,
         cmd: Dispatch<C, APP>,
-    ) -> Result<Vec<C::Event>, CommandExecutorError> {
+    ) -> Result<Vec<C::Event>, CommandExecutorError>
+    where
+        A: CommandExecutor<C>,
+        C::CommandHandler: Handler<C, A>,
+    {
         addr.send(cmd).await?
     }
 
     async fn execute_and_apply<C: Command, APP: Application>(
-        mut state: A,
+        state: A,
         command: Dispatch<C, APP>,
         current_version: i64,
     ) -> Result<CommandExecutionResult<C::Event, A>, CommandExecutorError>
     where
         A: CommandExecutor<C>,
         A: EventApplier<C::Event>,
+        C::CommandHandler: Handler<C, A>,
     {
         let correlation_id = command.metadatas.correlation_id;
         let stream_id = command.command.identifier();
 
-        if let Ok(events) = A::execute(command.command, &state) {
-            // apply events
-            events
-                .iter()
-                .for_each(|event| Self::directly_apply(&mut state, event));
-            let ev: Vec<&_> = events.iter().collect();
-            match crate::event_store::EventStore::<APP>::with_appender(
-                event_store::prelude::Appender::with_correlation_id(correlation_id)
-                    .events(&ev[..])?
-                    .to(&stream_id)?
-                    .expected_version(event_store::prelude::ExpectedVersion::AnyVersion),
-            )
-            // TODO deal with mailbox error
-            .await
-            {
-                Ok(Ok(_)) => {
-                    let new_version = current_version + events.len() as i64;
-                    Ok(CommandExecutionResult {
-                        events,
-                        new_version,
-                        state,
-                    })
+        let execution_result: Result<(Vec<_>, A), CommandExecutorError> =
+            if std::any::TypeId::of::<C::CommandHandler>() == std::any::TypeId::of::<NoHandler>() {
+                A::execute(command.command, &state).map(|events| (events, state))
+            } else {
+                crate::command::CommandHandlerInstance::<C::CommandHandler>::from_registry()
+                    .send(DispatchWithState::from_dispatch(command, state))
+                    .await?
+            };
+        match execution_result {
+            Ok((events, mut state)) => {
+                events
+                    .iter()
+                    .for_each(|event| Self::directly_apply(&mut state, event));
+                let ev: Vec<&_> = events.iter().collect();
+                match crate::event_store::EventStore::<APP>::with_appender(
+                    event_store::prelude::Appender::with_correlation_id(correlation_id)
+                        .events(&ev[..])?
+                        .to(&stream_id)?
+                        .expected_version(event_store::prelude::ExpectedVersion::AnyVersion),
+                )
+                // TODO deal with mailbox error
+                .await
+                {
+                    Ok(Ok(_)) => {
+                        let new_version = current_version + events.len() as i64;
+                        Ok(CommandExecutionResult {
+                            events,
+                            new_version,
+                            state,
+                        })
+                    }
+                    _ => Err(CommandExecutorError::Any),
                 }
-                _ => Err(CommandExecutorError::Any),
             }
-        } else {
-            Err(CommandExecutorError::Any)
+            Err(_) => Err(CommandExecutorError::Any),
         }
     }
 }
@@ -144,7 +156,7 @@ struct CommandExecutionResult<E, A> {
     state: A,
 }
 
-impl<A: Aggregate> Handler<AggregateVersion> for AggregateInstance<A> {
+impl<A: Aggregate> ActixHandler<AggregateVersion> for AggregateInstance<A> {
     type Result = i64;
 
     fn handle(&mut self, _: AggregateVersion, _: &mut Self::Context) -> Self::Result {
@@ -164,7 +176,10 @@ impl<A: Aggregate> Actor for AggregateInstance<A> {
     }
 }
 
-impl<C: Command, A: Application> Handler<Dispatch<C, A>> for AggregateInstance<C::Executor> {
+impl<C: Command, A: Application> ActixHandler<Dispatch<C, A>> for AggregateInstance<C::Executor>
+where
+    C::CommandHandler: Handler<C, C::Executor>,
+{
     type Result = ResponseActFuture<Self, Result<Vec<C::Event>, CommandExecutorError>>;
 
     #[tracing::instrument(
@@ -197,7 +212,7 @@ impl<C: Command, A: Application> Handler<Dispatch<C, A>> for AggregateInstance<C
     }
 }
 
-impl<A: Aggregate> Handler<ResolveAndApply> for AggregateInstance<A> {
+impl<A: Aggregate> ActixHandler<ResolveAndApply> for AggregateInstance<A> {
     type Result = Result<(), ()>;
 
     fn handle(&mut self, msg: ResolveAndApply, _: &mut Self::Context) -> Self::Result {
@@ -205,7 +220,7 @@ impl<A: Aggregate> Handler<ResolveAndApply> for AggregateInstance<A> {
     }
 }
 
-impl<A: Aggregate> Handler<ResolveAndApplyMany> for AggregateInstance<A> {
+impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
     type Result = Result<(), ()>;
 
     fn handle(&mut self, msg: ResolveAndApplyMany, _: &mut Self::Context) -> Self::Result {

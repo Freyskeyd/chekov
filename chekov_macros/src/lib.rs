@@ -48,6 +48,19 @@ pub fn derive_event_handler(input: TokenStream) -> TokenStream {
     }
 }
 
+#[proc_macro_derive(CommandHandler, attributes(command_handler))]
+pub fn derive_command_handler(input: TokenStream) -> TokenStream {
+    let input: DeriveInput = parse_macro_input!(input);
+    if let Data::Struct(data) = &input.data {
+        match command::generate_command_handler(&input, data) {
+            Ok(toks) => toks.into(),
+            Err(toks) => toks.into(),
+        }
+    } else {
+        panic!("")
+    }
+}
+
 #[proc_macro_derive(Event, attributes(event))]
 pub fn derive_event(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
@@ -68,6 +81,11 @@ pub fn applier(args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn event_handler(args: TokenStream, input: TokenStream) -> TokenStream {
     expand_event_handler(args, input)
+}
+
+#[proc_macro_attribute]
+pub fn command_handler(args: TokenStream, input: TokenStream) -> TokenStream {
+    expand_command_handler(args, input)
 }
 
 use syn::parse::{Parse, ParseStream};
@@ -223,6 +241,20 @@ fn expand_event_handler(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
+fn expand_command_handler(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as Input);
+
+    match input {
+        Input::Trait(_) => {
+            panic!("`command_handler` can't be used on Trait.")
+        }
+        Input::Impl(input) => {
+            let args = parse_macro_input!(args as ImplArgs);
+            expand_command_handler_do(args, input)
+        }
+    }
+}
+
 pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -276,6 +308,14 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
             }
         }
     });
+
+    expanded.into()
+}
+
+pub(crate) fn expand_command_handler_do(_args: ImplArgs, input: ItemImpl) -> TokenStream {
+    let expanded = quote! {
+        #input
+    };
 
     expanded.into()
 }

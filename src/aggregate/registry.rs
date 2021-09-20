@@ -65,16 +65,12 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                 async move { fut.await }
                     .instrument(tracing::Span::current())
                     .into_actor(self)
-                    .map(move |result, actor, _| {
-                        let addr = match result {
-                            Ok(addr) => {
-                                actor.registry.insert(stream_id, addr.clone());
-                                addr
-                            }
-                            Err(_) => todo!(),
-                        };
-
-                        addr
+                    .map(move |result, actor, _| match result {
+                        Ok(addr) => {
+                            actor.registry.insert(stream_id, addr.clone());
+                            addr
+                        }
+                        Err(_) => todo!(),
                     })
                     .then(move |addr, actor, _ctx| {
                         AggregateInstance::execute_command(addr, cmd)

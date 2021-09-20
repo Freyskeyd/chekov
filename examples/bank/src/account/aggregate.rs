@@ -12,6 +12,7 @@ impl CommandExecutor<DeleteAccount> for Account {
 
 impl CommandExecutor<OpenAccount> for Account {
     fn execute(cmd: OpenAccount, state: &Self) -> Result<Vec<AccountOpened>, CommandExecutorError> {
+        println!("Status: {:?}", state);
         match state.status {
             AccountStatus::Initialized => Ok(vec![AccountOpened {
                 account_id: cmd.account_id,
