@@ -70,6 +70,7 @@
 <span id="70">70</span>
 <span id="71">71</span>
 <span id="72">72</span>
+<span id="73">73</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Chekov is a CQRS/ES Framework built on top of Actix actor framework.</span>
 <span class="doccomment">//!</span>
@@ -96,7 +97,7 @@
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">aggregate</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">application</span>;
-<span class="kw">mod</span> <span class="ident">command</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">command</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">event</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">event_store</span>;
@@ -130,6 +131,7 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">subscriber::SubscriberManager</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros::applier</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros::command_handler</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros::event_handler</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros::Aggregate</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">chekov_macros::Command</span>;

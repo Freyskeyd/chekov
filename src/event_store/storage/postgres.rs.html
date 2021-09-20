@@ -190,6 +190,8 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::UnsavedEvent</span>;
@@ -240,8 +242,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">std::convert::From</span><span class="op">&lt;</span><span class="ident">sqlx::Error</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StorageError</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">sqlx::Error</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="macro">println!</span>(<span class="string">&quot;Postgres --&gt; {:?}&quot;</span>, <span class="ident">e</span>);
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="kw">_</span>: <span class="ident">sqlx::Error</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span><span class="ident">::StreamDoesntExists</span>
     }
 }
@@ -309,7 +310,10 @@
                             <span class="kw">match</span> <span class="ident">sql::read_stream</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">conn</span>, <span class="ident">stream</span>.<span class="ident">stream_id</span>, <span class="ident">version</span>, <span class="ident">limit</span>)
                                 .<span class="kw">await</span>
                             {
-                                <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">StorageError::StreamAlreadyExists</span>),
+                                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                                    <span class="macro">tracing::error!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>);
+                                    <span class="prelude-val">Err</span>(<span class="ident">StorageError::StreamAlreadyExists</span>)
+                                }
                                 <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> {
                                     <span class="macro">info!</span>(<span class="string">&quot;Read stream {} {}&quot;</span>, <span class="ident">stream_uuid</span>, <span class="ident">s</span>.<span class="ident">len</span>());
                                     <span class="prelude-val">Ok</span>(<span class="ident">s</span>)

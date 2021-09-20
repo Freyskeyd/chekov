@@ -234,7 +234,7 @@
         events.correlation_id,
         events.causation_id,
         events.data::jsonb,
-        events.metadata as &quot;metadata: String&quot;,
+        events.metadata::text,
         events.created_at
     FROM
 	stream_events

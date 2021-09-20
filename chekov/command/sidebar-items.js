@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Consistency",""]],"struct":[["CommandMetadatas",""],["NoHandler",""]],"trait":[["Command","Define a Command which can be dispatch"],["CommandExecutor","Receives a command and an immutable State and optionally returns events"],["CommandHandler","Receives a command and an immutable Executor and optionally returns events"],["Handler",""]]});

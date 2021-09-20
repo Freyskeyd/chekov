@@ -279,6 +279,46 @@
 <span id="279">279</span>
 <span id="280">280</span>
 <span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
 </pre><pre class="rust">
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">proc_macro</span>;
 
@@ -330,6 +370,19 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">proc_macro_derive</span>(<span class="ident">CommandHandler</span>, <span class="ident">attributes</span>(<span class="ident">command_handler</span>))]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">derive_command_handler</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="kw">let</span> <span class="ident">input</span>: <span class="ident">DeriveInput</span> <span class="op">=</span> <span class="macro">parse_macro_input!</span>(<span class="ident">input</span>);
+    <span class="kw">if</span> <span class="kw">let</span> <span class="ident">Data::Struct</span>(<span class="ident">data</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">data</span> {
+        <span class="kw">match</span> <span class="ident">command::generate_command_handler</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>, <span class="ident">data</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">toks</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">toks</span>.<span class="ident">into</span>(),
+            <span class="prelude-val">Err</span>(<span class="ident">toks</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">toks</span>.<span class="ident">into</span>(),
+        }
+    } <span class="kw">else</span> {
+        <span class="macro">panic!</span>(<span class="string">&quot;&quot;</span>)
+    }
+}
+
 <span class="attribute">#[<span class="ident">proc_macro_derive</span>(<span class="ident">Event</span>, <span class="ident">attributes</span>(<span class="ident">event</span>))]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">derive_event</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="ident">input</span>: <span class="ident">DeriveInput</span> <span class="op">=</span> <span class="macro">parse_macro_input!</span>(<span class="ident">input</span>);
@@ -350,6 +403,11 @@
 <span class="attribute">#[<span class="ident">proc_macro_attribute</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">event_handler</span>(<span class="ident">args</span>: <span class="ident">TokenStream</span>, <span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
     <span class="ident">expand_event_handler</span>(<span class="ident">args</span>, <span class="ident">input</span>)
+}
+
+<span class="attribute">#[<span class="ident">proc_macro_attribute</span>]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">command_handler</span>(<span class="ident">args</span>: <span class="ident">TokenStream</span>, <span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="ident">expand_command_handler</span>(<span class="ident">args</span>, <span class="ident">input</span>)
 }
 
 <span class="kw">use</span> <span class="ident">syn::parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>};
@@ -505,6 +563,20 @@
     }
 }
 
+<span class="kw">fn</span> <span class="ident">expand_command_handler</span>(<span class="ident">args</span>: <span class="ident">TokenStream</span>, <span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="macro">parse_macro_input!</span>(<span class="ident">input</span> <span class="kw">as</span> <span class="ident">Input</span>);
+
+    <span class="kw">match</span> <span class="ident">input</span> {
+        <span class="ident">Input::Trait</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="macro">panic!</span>(<span class="string">&quot;`command_handler` can&#39;t be used on Trait.&quot;</span>)
+        }
+        <span class="ident">Input::Impl</span>(<span class="ident">input</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">args</span> <span class="op">=</span> <span class="macro">parse_macro_input!</span>(<span class="ident">args</span> <span class="kw">as</span> <span class="ident">ImplArgs</span>);
+            <span class="ident">expand_command_handler_do</span>(<span class="ident">args</span>, <span class="ident">input</span>)
+        }
+    }
+}
+
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">expand_event_handler_do</span>(<span class="ident">_args</span>: <span class="ident">ImplArgs</span>, <span class="ident">input</span>: <span class="ident">ItemImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="ident">object</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">trait_</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="number">1</span>;
     <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">self_ty</span>;
@@ -558,6 +630,14 @@
             }
         }
     });
+
+    <span class="ident">expanded</span>.<span class="ident">into</span>()
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">expand_command_handler_do</span>(<span class="ident">_args</span>: <span class="ident">ImplArgs</span>, <span class="ident">input</span>: <span class="ident">ItemImpl</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="kw">let</span> <span class="ident">expanded</span> <span class="op">=</span> <span class="macro">quote!</span> {
+        #<span class="ident">input</span>
+    };
 
     <span class="ident">expanded</span>.<span class="ident">into</span>()
 }

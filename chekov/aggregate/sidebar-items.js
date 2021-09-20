@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Aggregate","Define an Aggregate"]]});
+initSidebarItems({"trait":[["Aggregate","Define an Aggregate"]],"type":[["StaticState",""]]});
