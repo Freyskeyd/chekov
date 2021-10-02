@@ -155,10 +155,6 @@
 <span id="155">155</span>
 <span id="156">156</span>
 <span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
-<span id="160">160</span>
-<span id="161">161</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -234,10 +230,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Executing commands</span>
 <span class="doccomment">//! impl CommandExecutor&lt;OpenAccount&gt; for Account {</span>
-<span class="doccomment">//!     fn execute(</span>
-<span class="doccomment">//!         cmd: OpenAccount,</span>
-<span class="doccomment">//!         state: &amp;Self</span>
-<span class="doccomment">//!     ) -&gt; Result&lt;Vec&lt;AccountOpened&gt;, CommandExecutorError&gt; {</span>
+<span class="doccomment">//!     fn execute(cmd: OpenAccount, state: &amp;Self) -&gt; ExecutionResult&lt;AccountOpened&gt; {</span>
 <span class="doccomment">//!         match state.status {</span>
 <span class="doccomment">//!             AccountStatus::Initialized =&gt; Ok(vec![AccountOpened {</span>
 <span class="doccomment">//!                 account_id: cmd.account_id,</span>
@@ -294,9 +287,7 @@
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>:
-    <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>
-{
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Aggregate</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="kw">fn</span> <span class="ident">get_event_resolver</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">EventResolverRegistry</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
@@ -320,7 +311,8 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StaticState</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">A</span>;
+<span class="comment">// Type that represent a `StaticState`. The `State` will not be used if modified.</span>
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">StaticState</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">A</span>;
 </pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="chekov" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>

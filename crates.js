@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["chekov","chekov_macros","event_store"];
+window.ALL_CRATES = ["chekov","chekov_macros","event_store","gift_shop"];

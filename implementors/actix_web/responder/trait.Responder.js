@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["gift_shop"] = [{"text":"impl Responder for <a class=\"struct\" href=\"gift_shop/account/struct.Account.html\" title=\"struct gift_shop::account::Account\">Account</a>","synthetic":false,"types":["gift_shop::account::Account"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

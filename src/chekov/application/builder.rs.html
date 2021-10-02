@@ -134,13 +134,24 @@
 <span id="134">134</span>
 <span id="135">135</span>
 <span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::handler::EventHandlerBuilder</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::EventHandler</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::StartListening</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Router</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::SubscriberManager</span>;
 <span class="kw">use</span> <span class="ident">actix::Actor</span>;
+<span class="kw">use</span> <span class="ident">actix::SystemService</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::Storage</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">std::any::TypeId</span>;
@@ -171,17 +182,16 @@
     <span class="ident">app</span>: <span class="ident">std::marker::PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
     <span class="ident">storage</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">event_handlers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">eventmapper</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">TypeId</span><span class="op">&gt;</span>,
+    <span class="ident">listener_url</span>: <span class="ident">String</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">std::default::Default</span> <span class="kw">for</span> <span class="ident">ApplicationBuilder</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
+            <span class="ident">listener_url</span>: <span class="ident">String::new</span>(),
             <span class="ident">event_handlers</span>: <span class="ident">Vec::new</span>(),
             <span class="ident">app</span>: <span class="ident">std::marker::PhantomData</span>,
             <span class="ident">storage</span>: <span class="ident">Box::pin</span>(<span class="kw">async</span> { <span class="ident">A::Storage::default</span>() }),
-            <span class="ident">eventmapper</span>: <span class="ident">HashMap::new</span>(),
-            <span class="comment">// event_resolver: None,</span>
         }
     }
 }
@@ -190,6 +200,12 @@
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Application</span>,
 {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">listener_url</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">url</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="ident">listener_url</span> <span class="op">=</span> <span class="ident">url</span>;
+
+        <span class="self">self</span>
+    }
+
     <span class="doccomment">/// Adds an EventHandler to the application</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">event_handler</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">EventHandler</span> <span class="op">+</span> <span class="lifetime">&#39;static</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">handler</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">event_handlers</span>
@@ -240,6 +256,10 @@
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>();
 
+        <span class="kw">let</span> <span class="ident">subscriber_manager_addr</span> <span class="op">=</span> <span class="ident">SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="self">self</span>.<span class="ident">listener_url</span>).<span class="ident">start</span>();
+
+        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>);
+
         <span class="kw">use</span> <span class="ident">futures::future::join_all</span>;
 
         <span class="ident">join_all</span>(<span class="self">self</span>.<span class="ident">event_handlers</span>).<span class="kw">await</span>;
@@ -252,17 +272,15 @@
         };
 
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">router</span>.<span class="ident">start</span>();
-        <span class="kw">let</span> <span class="ident">subscriber_manager_addr</span> <span class="op">=</span>
-            <span class="ident">SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::new</span>(<span class="ident">event_store_addr</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">eventmapper</span>).<span class="ident">start</span>();
-
         <span class="kw">let</span> <span class="ident">event_store</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
             <span class="ident">addr</span>: <span class="ident">event_store_addr</span>,
         }
         .<span class="ident">start</span>();
 
+        <span class="ident">SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>().<span class="ident">do_send</span>(<span class="ident">StartListening</span>);
+
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">addr</span>);
-        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">subscriber_manager_addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(
             <span class="ident">InternalApplication</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
                 <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,

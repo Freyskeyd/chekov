@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AddGiftCardToOrder",""],["CancelOrder",""],["CreateGiftCard",""],["CreateOrder",""],["OpenAccount",""],["ValidateOrder",""]]});

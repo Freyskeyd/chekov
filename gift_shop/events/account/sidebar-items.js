@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["MoneyMovementEvent",""]],"struct":[["AccountOpened",""]]});

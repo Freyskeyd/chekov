@@ -44,7 +44,6 @@
 <span id="44">44</span>
 <span id="45">45</span>
 <span id="46">46</span>
-<span id="47">47</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Struct and Trait correlated to Event</span>
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::error::ApplyError</span>;
@@ -65,11 +64,10 @@
 
 <span class="doccomment">/// Define an Event which can be produced and consumed</span>
 <span class="comment">// pub trait Event: event_store::prelude::Event {</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">Send</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> {
     <span class="kw">fn</span> <span class="ident">into_envelope</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>(<span class="ident">event</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">crate</span><span class="ident">::message::EventEnvelope</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, ()<span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">serde::de::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
-        <span class="self">Self</span>: <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Clone</span>,
     {
         <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::deserialize</span>(<span class="ident">event</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())<span class="question-mark">?</span>;
 

@@ -57,8 +57,6 @@
 <span id="57">57</span>
 <span id="58">58</span>
 <span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::EventNotification</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Application</span>, <span class="ident">SubscriberManager</span>};
@@ -92,13 +90,11 @@
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">setup</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, ()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">sqlx::postgres::PgListener::connect</span>(
-            <span class="string">&quot;postgresql://postgres:postgres@localhost/event_store_bank&quot;</span>,
-        )
-        .<span class="kw">await</span>
-        .<span class="ident">unwrap</span>();
+    <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;Listener&quot;</span>, <span class="ident">skip</span>(<span class="ident">url</span>), <span class="ident">fields</span>(<span class="ident">app</span> <span class="op">=</span> <span class="op">%</span><span class="ident">A::get_name</span>()))]</span>
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">setup</span>(<span class="ident">url</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, ()<span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">listener</span> <span class="op">=</span> <span class="ident">sqlx::postgres::PgListener::connect</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
         <span class="ident">listener</span>.<span class="ident">listen</span>(<span class="string">&quot;events&quot;</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
+        <span class="macro">trace!</span>(<span class="string">&quot;Starting listener with {}&quot;</span>, <span class="ident">url</span>);
 
         <span class="prelude-val">Ok</span>(<span class="ident">Listener::create</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">ctx</span><span class="op">|</span> {
             <span class="ident">ctx</span>.<span class="ident">add_stream</span>(<span class="ident">listener</span>.<span class="ident">into_stream</span>());

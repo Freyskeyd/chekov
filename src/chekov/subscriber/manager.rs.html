@@ -133,10 +133,14 @@
 <span id="133">133</span>
 <span id="134">134</span>
 <span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventNotification</span>, <span class="ident">Listener</span>};
+<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">listener</span>, <span class="ident">EventNotification</span>, <span class="ident">Listener</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::handler::Subscribe</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::ResolveAndApplyMany</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message</span>::{<span class="ident">ResolveAndApplyMany</span>, <span class="ident">StartListening</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Handler</span>, <span class="ident">Supervised</span>, <span class="ident">SystemService</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">Addr</span>, <span class="ident">AsyncContext</span>, <span class="ident">Context</span>, <span class="ident">Recipient</span>, <span class="ident">WrapFuture</span>};
@@ -149,8 +153,8 @@
 
 <span class="doccomment">/// Deal with Application subscriptions</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SubscriberManager</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> {
+    <span class="ident">listener_url</span>: <span class="ident">String</span>,
     <span class="ident">listener</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Listener</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">_event_store</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">subscribers</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
@@ -161,13 +165,10 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">SubscriberManager</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">event_store</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-        <span class="kw">_</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">TypeId</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">listener_url</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
+            <span class="ident">listener_url</span>,
             <span class="ident">listener</span>: <span class="prelude-val">None</span>,
-            <span class="ident">_event_store</span>: <span class="ident">event_store</span>,
             <span class="ident">subscribers</span>: <span class="ident">BTreeMap::new</span>(),
         }
     }
@@ -192,11 +193,19 @@
     <span class="kw">type</span> <span class="ident">Context</span> <span class="op">=</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;SubscriberManager&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">ctx</span>), <span class="ident">fields</span>(<span class="ident">app</span> <span class="op">=</span> <span class="op">%</span><span class="ident">A::get_name</span>()))]</span>
-    <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {
+    <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {}
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">StartListening</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SubscriberManager</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> ();
+
+    <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;SubscriberManager&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">ctx</span>), <span class="ident">fields</span>(<span class="ident">app</span> <span class="op">=</span> <span class="op">%</span><span class="ident">A::get_name</span>()))]</span>
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">StartListening</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
+        <span class="kw">let</span> <span class="ident">listener_url</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener_url</span>.<span class="ident">clone</span>();
         <span class="ident">ctx</span>.<span class="ident">wait</span>(
             <span class="kw">async</span> {
-                <span class="macro">trace!</span>(<span class="string">&quot;Create a new SubscriberManager&quot;</span>);
-                <span class="ident">Listener::setup</span>().<span class="kw">await</span>.<span class="ident">unwrap</span>()
+                <span class="macro">trace!</span>(<span class="string">&quot;Start listener with {}&quot;</span>, <span class="ident">listener_url</span>);
+                <span class="ident">Listener::setup</span>(<span class="ident">listener_url</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>()
             }
             .<span class="ident">instrument</span>(<span class="ident">tracing::Span::current</span>())
             .<span class="ident">into_actor</span>(<span class="self">self</span>)
@@ -206,7 +215,6 @@
         );
     }
 }
-
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">Subscribe</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SubscriberManager</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> ();
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">subscription</span>: <span class="ident">Subscribe</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {

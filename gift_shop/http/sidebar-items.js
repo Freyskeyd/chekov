@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AddGiftCardToOrderPayload",""],["CreateGiftCardPayload",""],["OpenAccountPayload",""],["add_order_item",""],["create_account",""],["create_gift_card",""],["create_order",""]]});
