@@ -76,3 +76,7 @@ pub(crate) struct ExecuteStreamInfo(pub(crate) String);
 #[derive(Message)]
 #[rtype("i64")]
 pub(crate) struct AggregateVersion;
+
+#[derive(Message, Debug)]
+#[rtype("()")]
+pub(crate) struct StartListening;

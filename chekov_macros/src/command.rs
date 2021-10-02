@@ -101,7 +101,7 @@ pub fn generate_command_handler(
 
     Ok(quote! {
 
-        impl crate::CommandHandler for #struct_name {
+        impl chekov::CommandHandler for #struct_name {
 
         }
         impl actix::SystemService for #struct_name {}

@@ -7,6 +7,7 @@ pub use crate::command::CommandExecutor;
 pub use crate::command::CommandHandler;
 pub use crate::command::CommandMetadatas;
 pub use crate::command::Dispatchable;
+pub use crate::command::ExecutionResult;
 pub use crate::command::NoHandler;
 pub use crate::error::{ApplyError, CommandExecutorError};
 pub use crate::event::handler::EventHandler;

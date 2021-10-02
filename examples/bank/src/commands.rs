@@ -25,7 +25,7 @@ impl Command for DeleteAccount {
     }
 }
 
-#[derive(Clone, Debug, chekov::Command, Serialize, Deserialize)]
+#[derive(chekov::Command, Serialize, Deserialize)]
 #[command(
     event = "AccountOpened",
     aggregate = "Account",
@@ -56,16 +56,13 @@ impl chekov::command::Handler<OpenAccount, Account> for AccountValidator {
         state: StaticState<Account>,
     ) -> BoxFuture<'static, Result<Vec<AccountOpened>, CommandExecutorError>> {
         async move {
-            let result = if state.status != AccountStatus::Initialized {
+            if state.status != AccountStatus::Initialized {
                 println!("Can't execute becoze state status is {:?}", state.status);
                 Err(CommandExecutorError::Any)
             } else {
                 println!("Executing !");
                 Account::execute(command, &state)
-            };
-
-            println!("Result: {:?}", result);
-            result
+            }
         }
         .boxed()
     }

@@ -1,6 +1,6 @@
-use super::{EventNotification, Listener};
+use super::{listener, EventNotification, Listener};
 use crate::event::handler::Subscribe;
-use crate::message::ResolveAndApplyMany;
+use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
 use actix::{Actor, Handler, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
@@ -13,8 +13,8 @@ use tracing::{trace, Instrument};
 
 /// Deal with Application subscriptions
 pub struct SubscriberManager<A: Application> {
+    listener_url: String,
     listener: Option<Addr<Listener<A>>>,
-    _event_store: Addr<EventStore<A::Storage>>,
     subscribers: BTreeMap<String, Vec<Recipient<ResolveAndApplyMany>>>,
 }
 
@@ -25,13 +25,10 @@ impl<A: Application> std::default::Default for SubscriberManager<A> {
 }
 
 impl<A: Application> SubscriberManager<A> {
-    pub(crate) fn new(
-        event_store: Addr<EventStore<A::Storage>>,
-        _: HashMap<String, TypeId>,
-    ) -> Self {
+    pub(crate) fn new(listener_url: String) -> Self {
         Self {
+            listener_url,
             listener: None,
-            _event_store: event_store,
             subscribers: BTreeMap::new(),
         }
     }
@@ -56,11 +53,19 @@ impl<A: Application> Actor for SubscriberManager<A> {
     type Context = Context<Self>;
 
     #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
-    fn started(&mut self, ctx: &mut Self::Context) {
+    fn started(&mut self, ctx: &mut Self::Context) {}
+}
+
+impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
+    type Result = ();
+
+    #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
+    fn handle(&mut self, msg: StartListening, ctx: &mut Self::Context) -> Self::Result {
+        let listener_url = self.listener_url.clone();
         ctx.wait(
             async {
-                trace!("Create a new SubscriberManager");
-                Listener::setup().await.unwrap()
+                trace!("Start listener with {}", listener_url);
+                Listener::setup(listener_url).await.unwrap()
             }
             .instrument(tracing::Span::current())
             .into_actor(self)
@@ -70,7 +75,6 @@ impl<A: Application> Actor for SubscriberManager<A> {
         );
     }
 }
-
 impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
     type Result = ();
     fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) {

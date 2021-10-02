@@ -1,0 +1,26 @@
+[package]
+name = "gift_shop"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chekov = { path = "../../"  }
+tokio = {version = "1", features = ["full"]}
+uuid = { version = "0.8", features = ["serde", "v4"] }
+serde = "*"
+serde_json = "*"
+actix = "0.12"
+log = "*"
+futures = "*"
+actix-web = "4.0.0-beta.8"
+
+sqlx = {version = "0.5", features = ["postgres", "chrono", "time", "uuid", "json", "runtime-actix-native-tls"]}
+chrono = "0.4"
+
+tracing = {version ="*", features = []}
+tracing-subscriber = "*"
+tracing-futures = "*"
+tracing-log = "*"
+

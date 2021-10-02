@@ -72,10 +72,7 @@
 //!
 //! // Executing commands
 //! impl CommandExecutor<OpenAccount> for Account {
-//!     fn execute(
-//!         cmd: OpenAccount,
-//!         state: &Self
-//!     ) -> Result<Vec<AccountOpened>, CommandExecutorError> {
+//!     fn execute(cmd: OpenAccount, state: &Self) -> ExecutionResult<AccountOpened> {
 //!         match state.status {
 //!             AccountStatus::Initialized => Ok(vec![AccountOpened {
 //!                 account_id: cmd.account_id,
@@ -132,9 +129,7 @@ use self::resolver::EventResolverRegistry;
 /// }
 /// ```
 ///
-pub trait Aggregate:
-    Send + Clone + std::fmt::Debug + Default + std::marker::Unpin + 'static
-{
+pub trait Aggregate: Send + Clone + Default + std::marker::Unpin + 'static {
     #[doc(hidden)]
     fn get_event_resolver() -> &'static EventResolverRegistry<Self>;
 
@@ -158,4 +153,5 @@ pub trait Aggregate:
     }
 }
 
-pub type StaticState<A: Aggregate> = A;
+// Type that represent a `StaticState`. The `State` will not be used if modified.
+pub type StaticState<A> = A;

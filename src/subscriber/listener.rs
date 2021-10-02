@@ -30,13 +30,11 @@ impl<A: Application> Listener<A> {
         }
     }
 
-    pub async fn setup() -> Result<Addr<Self>, ()> {
-        let mut listener = sqlx::postgres::PgListener::connect(
-            "postgresql://postgres:postgres@localhost/event_store_bank",
-        )
-        .await
-        .unwrap();
+    #[tracing::instrument(name = "Listener", skip(url), fields(app = %A::get_name()))]
+    pub async fn setup(url: String) -> Result<Addr<Self>, ()> {
+        let mut listener = sqlx::postgres::PgListener::connect(&url).await.unwrap();
         listener.listen("events").await.unwrap();
+        trace!("Starting listener with {}", url);
 
         Ok(Listener::create(move |ctx| {
             ctx.add_stream(listener.into_stream());

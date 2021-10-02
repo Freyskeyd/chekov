@@ -1,9 +1,11 @@
 use crate::event::handler::EventHandlerBuilder;
 use crate::event::EventHandler;
+use crate::message::StartListening;
 use crate::Application;
 use crate::Router;
 use crate::SubscriberManager;
 use actix::Actor;
+use actix::SystemService;
 use event_store::prelude::Storage;
 use futures::Future;
 use std::any::TypeId;
@@ -34,17 +36,16 @@ pub struct ApplicationBuilder<A: Application> {
     app: std::marker::PhantomData<A>,
     storage: Pin<Box<dyn Future<Output = A::Storage>>>,
     event_handlers: Vec<Pin<Box<dyn Future<Output = ()>>>>,
-    eventmapper: HashMap<String, TypeId>,
+    listener_url: String,
 }
 
 impl<A: Application> std::default::Default for ApplicationBuilder<A> {
     fn default() -> Self {
         Self {
+            listener_url: String::new(),
             event_handlers: Vec::new(),
             app: std::marker::PhantomData,
             storage: Box::pin(async { A::Storage::default() }),
-            eventmapper: HashMap::new(),
-            // event_resolver: None,
         }
     }
 }
@@ -53,6 +54,12 @@ impl<A> ApplicationBuilder<A>
 where
     A: Application,
 {
+    pub fn listener_url(mut self, url: String) -> Self {
+        self.listener_url = url;
+
+        self
+    }
+
     /// Adds an EventHandler to the application
     pub fn event_handler<E: EventHandler + 'static>(mut self, handler: E) -> Self {
         self.event_handlers
@@ -103,6 +110,10 @@ where
             .await
             .unwrap();
 
+        let subscriber_manager_addr = SubscriberManager::<A>::new(self.listener_url).start();
+
+        ::actix::SystemRegistry::set(subscriber_manager_addr);
+
         use futures::future::join_all;
 
         join_all(self.event_handlers).await;
@@ -115,17 +126,15 @@ where
         };
 
         let addr = router.start();
-        let subscriber_manager_addr =
-            SubscriberManager::<A>::new(event_store_addr.clone(), self.eventmapper).start();
-
         let event_store = crate::event_store::EventStore::<A> {
             addr: event_store_addr,
         }
         .start();
 
+        SubscriberManager::<A>::from_registry().do_send(StartListening);
+
         ::actix::SystemRegistry::set(event_store);
         ::actix::SystemRegistry::set(addr);
-        ::actix::SystemRegistry::set(subscriber_manager_addr);
         ::actix::SystemRegistry::set(
             InternalApplication::<A> {
                 _phantom: PhantomData,

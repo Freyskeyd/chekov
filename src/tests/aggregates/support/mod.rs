@@ -18,8 +18,8 @@ pub(crate) struct ExampleAggregate {
 }
 
 impl CommandExecutor<AppendItem> for ExampleAggregate {
-    fn execute(cmd: AppendItem, _: &Self) -> Result<Vec<ItemAppended>, CommandExecutorError> {
-        Ok(vec![ItemAppended(cmd.0)])
+    fn execute(cmd: AppendItem, _: &Self) -> ExecutionResult<ItemAppended> {
+        ExecutionResult::Ok(vec![ItemAppended(cmd.0)])
     }
 }
 

@@ -17,11 +17,10 @@ pub use handler::EventHandlerInstance;
 
 /// Define an Event which can be produced and consumed
 // pub trait Event: event_store::prelude::Event {
-pub trait Event: Send {
+pub trait Event: Send + Clone {
     fn into_envelope<'de>(event: RecordedEvent) -> Result<crate::message::EventEnvelope<Self>, ()>
     where
         Self: serde::Deserialize<'de> + serde::de::Deserialize<'de>,
-        Self: 'static + Clone,
     {
         let r = Self::deserialize(event.data).map_err(|_| ())?;
 

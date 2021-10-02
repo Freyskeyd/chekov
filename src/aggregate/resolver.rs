@@ -5,7 +5,7 @@ pub trait EventResolverItem<A: Aggregate> {
     fn get_names(&self) -> &[&'static str];
 }
 
-pub type EventApplierFn<A> = fn(&mut A, RecordedEvent) -> Result<(), ApplyError>;
+pub type EventApplierFn<A> = fn(&mut A, RecordedEvent) -> std::result::Result<(), ApplyError>;
 
 pub struct EventResolverRegistry<A: Aggregate> {
     pub names: BTreeMap<&'static str, TypeId>,

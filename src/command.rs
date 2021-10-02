@@ -16,7 +16,7 @@ pub use handler::NoHandler;
 pub use metadata::CommandMetadatas;
 
 /// Define a Command which can be dispatch
-pub trait Command: std::fmt::Debug + Send + 'static {
+pub trait Command: Send + 'static {
     /// The Event that can be generated for this command
     type Event: Event + event_store::Event;
 
@@ -56,10 +56,12 @@ pub trait Handler<C: Command + ?Sized, A: CommandExecutor<C>> {
         &mut self,
         command: C,
         state: StaticState<A>,
-    ) -> BoxFuture<'static, Result<Vec<C::Event>, CommandExecutorError>>;
+    ) -> BoxFuture<'static, ExecutionResult<C::Event>>;
 }
 
 /// Receives a command and an immutable State and optionally returns events
 pub trait CommandExecutor<T: Command + ?Sized>: Aggregate {
-    fn execute(cmd: T, state: &Self) -> Result<Vec<T::Event>, CommandExecutorError>;
+    fn execute(cmd: T, state: &Self) -> ExecutionResult<T::Event>;
 }
+
+pub type ExecutionResult<E> = std::result::Result<Vec<E>, CommandExecutorError>;
