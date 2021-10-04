@@ -36,13 +36,13 @@ pub struct ApplicationBuilder<A: Application> {
     app: std::marker::PhantomData<A>,
     storage: Pin<Box<dyn Future<Output = A::Storage>>>,
     event_handlers: Vec<Pin<Box<dyn Future<Output = ()>>>>,
-    listener_url: String,
+    listener_url: Option<String>,
 }
 
 impl<A: Application> std::default::Default for ApplicationBuilder<A> {
     fn default() -> Self {
         Self {
-            listener_url: String::new(),
+            listener_url: None,
             event_handlers: Vec::new(),
             app: std::marker::PhantomData,
             storage: Box::pin(async { A::Storage::default() }),
@@ -55,7 +55,7 @@ where
     A: Application,
 {
     pub fn listener_url(mut self, url: String) -> Self {
-        self.listener_url = url;
+        self.listener_url = Some(url);
 
         self
     }

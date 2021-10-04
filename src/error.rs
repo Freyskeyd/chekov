@@ -1,7 +1,7 @@
 use event_store::prelude::EventStoreError;
 
 /// Error returns by a CommandExecutor
-#[derive(serde::Serialize, Debug)]
+#[derive(serde::Serialize, PartialEq, Debug)]
 pub enum CommandExecutorError {
     Any,
 }

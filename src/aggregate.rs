@@ -155,3 +155,6 @@ pub trait Aggregate: Send + Clone + Default + std::marker::Unpin + 'static {
 
 // Type that represent a `StaticState`. The `State` will not be used if modified.
 pub type StaticState<A> = A;
+
+#[cfg(test)]
+mod tests;

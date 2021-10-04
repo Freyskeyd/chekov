@@ -13,7 +13,7 @@ use tracing::{trace, Instrument};
 
 /// Deal with Application subscriptions
 pub struct SubscriberManager<A: Application> {
-    listener_url: String,
+    listener_url: Option<String>,
     listener: Option<Addr<Listener<A>>>,
     subscribers: BTreeMap<String, Vec<Recipient<ResolveAndApplyMany>>>,
 }
@@ -25,7 +25,7 @@ impl<A: Application> std::default::Default for SubscriberManager<A> {
 }
 
 impl<A: Application> SubscriberManager<A> {
-    pub(crate) fn new(listener_url: String) -> Self {
+    pub(crate) fn new(listener_url: Option<String>) -> Self {
         Self {
             listener_url,
             listener: None,
@@ -64,17 +64,23 @@ impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
         let listener_url = self.listener_url.clone();
         ctx.wait(
             async {
-                trace!("Start listener with {}", listener_url);
-                Listener::setup(listener_url).await.unwrap()
+                if let Some(listener_url) = listener_url {
+                    trace!("Start listener with {}", listener_url);
+
+                    Some(Listener::setup(listener_url).await.unwrap())
+                } else {
+                    None
+                }
             }
             .instrument(tracing::Span::current())
             .into_actor(self)
             .map(|res, actor, _| {
-                actor.listener = Some(res);
+                actor.listener = res;
             }),
         );
     }
 }
+
 impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
     type Result = ();
     fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) {

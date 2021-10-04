@@ -8,7 +8,7 @@ use crate::{Aggregate, Application};
 use actix::prelude::*;
 use actix::{Addr, Handler as ActixHandler};
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent};
-use tracing::trace;
+use tracing::{event, trace};
 use uuid::Uuid;
 
 use super::resolver::EventResolverRegistry;
@@ -98,6 +98,59 @@ impl<A: Aggregate> AggregateInstance<A> {
         addr.send(cmd).await?
     }
 
+    async fn execute<C: Command, APP: Application>(
+        state: A,
+        command: Dispatch<C, APP>,
+    ) -> Result<(Vec<C::Event>, A), CommandExecutorError>
+    where
+        A: CommandExecutor<C>,
+        A: EventApplier<C::Event>,
+        C::CommandHandler: Handler<C, A>,
+    {
+        if std::any::TypeId::of::<C::CommandHandler>() == std::any::TypeId::of::<NoHandler>() {
+            A::execute(command.command, &state).map(|events| (events, state))
+        } else {
+            crate::command::CommandHandlerInstance::<C::CommandHandler>::from_registry()
+                .send(DispatchWithState::from_dispatch(command, state))
+                .await?
+        }
+    }
+
+    async fn persist_events<E: Event + event_store::Event, APP: Application>(
+        events: Vec<E>,
+        mut state: A,
+        correlation_id: Uuid,
+        stream_id: String,
+        current_version: i64,
+    ) -> Result<CommandExecutionResult<E, A>, CommandExecutorError>
+    where
+        A: EventApplier<E>,
+    {
+        events
+            .iter()
+            .for_each(|event| Self::directly_apply(&mut state, event));
+        let ev: Vec<&_> = events.iter().collect();
+        match crate::event_store::EventStore::<APP>::with_appender(
+            event_store::prelude::Appender::with_correlation_id(correlation_id)
+                .events(&ev[..])?
+                .to(&stream_id)?
+                .expected_version(event_store::prelude::ExpectedVersion::AnyVersion),
+        )
+        // TODO deal with mailbox error
+        .await
+        {
+            Ok(Ok(_)) => {
+                let new_version = current_version + events.len() as i64;
+                Ok(CommandExecutionResult {
+                    events,
+                    new_version,
+                    state,
+                })
+            }
+            _ => Err(CommandExecutorError::Any),
+        }
+    }
+
     async fn execute_and_apply<C: Command, APP: Application>(
         state: A,
         command: Dispatch<C, APP>,
@@ -111,39 +164,16 @@ impl<A: Aggregate> AggregateInstance<A> {
         let correlation_id = command.metadatas.correlation_id;
         let stream_id = command.command.identifier();
 
-        let execution_result: Result<(Vec<_>, A), CommandExecutorError> =
-            if std::any::TypeId::of::<C::CommandHandler>() == std::any::TypeId::of::<NoHandler>() {
-                A::execute(command.command, &state).map(|events| (events, state))
-            } else {
-                crate::command::CommandHandlerInstance::<C::CommandHandler>::from_registry()
-                    .send(DispatchWithState::from_dispatch(command, state))
-                    .await?
-            };
-        match execution_result {
-            Ok((events, mut state)) => {
-                events
-                    .iter()
-                    .for_each(|event| Self::directly_apply(&mut state, event));
-                let ev: Vec<&_> = events.iter().collect();
-                match crate::event_store::EventStore::<APP>::with_appender(
-                    event_store::prelude::Appender::with_correlation_id(correlation_id)
-                        .events(&ev[..])?
-                        .to(&stream_id)?
-                        .expected_version(event_store::prelude::ExpectedVersion::AnyVersion),
+        match Self::execute(state, command).await {
+            Ok((events, state)) => {
+                Self::persist_events::<_, APP>(
+                    events,
+                    state,
+                    correlation_id,
+                    stream_id,
+                    current_version,
                 )
-                // TODO deal with mailbox error
                 .await
-                {
-                    Ok(Ok(_)) => {
-                        let new_version = current_version + events.len() as i64;
-                        Ok(CommandExecutionResult {
-                            events,
-                            new_version,
-                            state,
-                        })
-                    }
-                    _ => Err(CommandExecutorError::Any),
-                }
             }
             Err(_) => Err(CommandExecutorError::Any),
         }
@@ -229,5 +259,131 @@ impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::BTreeMap, convert::TryFrom, marker::PhantomData};
+
+    use event_store::InMemoryBackend;
+
+    use crate::{
+        aggregate::AggregateInstanceRegistry,
+        command::{CommandMetadatas, ExecutionResult},
+    };
+
+    use super::*;
+
+    crate::lazy_static! {
+        #[derive(Clone, Debug)]
+        static ref REGISTRY: EventResolverRegistry<MyAggregate> = {
+            EventResolverRegistry {
+                names: BTreeMap::new(),
+                appliers: BTreeMap::new(),
+            }
+        };
+    }
+
+    #[derive(Clone, Default)]
+    struct MyAggregate {}
+    impl Aggregate for MyAggregate {
+        fn get_event_resolver() -> &'static EventResolverRegistry<Self> {
+            &REGISTRY
+        }
+
+        fn identity() -> &'static str {
+            "my_aggregate"
+        }
+    }
+
+    impl EventApplier<MyEvent> for MyAggregate {
+        fn apply(&mut self, event: &MyEvent) -> Result<(), ApplyError> {
+            todo!()
+        }
+    }
+
+    impl CommandExecutor<MyCommand> for MyAggregate {
+        fn execute(cmd: MyCommand, state: &Self) -> crate::command::ExecutionResult<MyEvent> {
+            ExecutionResult::Ok(vec![MyEvent {}])
+        }
+    }
+
+    #[derive(Default)]
+    struct DefaultAPP {}
+
+    impl Application for DefaultAPP {
+        type Storage = InMemoryBackend;
+    }
+
+    struct MyCommand(pub(crate) Uuid);
+    #[derive(Debug, PartialEq, Clone, serde::Serialize, serde::Deserialize)]
+    struct MyEvent {}
+
+    impl Event for MyEvent {}
+    impl event_store::Event for MyEvent {
+        fn event_type(&self) -> &'static str {
+            "MyEvent"
+        }
+
+        fn all_event_types() -> Vec<&'static str> {
+            vec!["MyEvent"]
+        }
+    }
+
+    impl TryFrom<RecordedEvent> for MyEvent {
+        type Error = ();
+
+        fn try_from(value: RecordedEvent) -> Result<Self, Self::Error> {
+            todo!()
+        }
+    }
+
+    impl Command for MyCommand {
+        type Event = MyEvent;
+
+        type Executor = MyAggregate;
+
+        type ExecutorRegistry = AggregateInstanceRegistry<MyAggregate>;
+
+        type CommandHandler = NoHandler;
+
+        fn identifier(&self) -> String {
+            self.0.to_string()
+        }
+    }
+
+    #[test]
+    fn state_can_be_duplicated() {
+        let instance = AggregateInstance {
+            inner: MyAggregate {},
+            current_version: 0,
+            resolver: MyAggregate::get_event_resolver(),
+        };
+
+        let _: MyAggregate = instance.create_mutable_state();
+    }
+
+    #[actix::test]
+    async fn can_execute_command() {
+        let instance = AggregateInstance {
+            inner: MyAggregate {},
+            current_version: 0,
+            resolver: MyAggregate::get_event_resolver(),
+        };
+
+        assert_eq!(
+            Ok(vec![MyEvent {}]),
+            AggregateInstance::execute(
+                instance.create_mutable_state(),
+                Dispatch::<_, DefaultAPP> {
+                    storage: PhantomData,
+                    command: MyCommand(Uuid::new_v4()),
+                    metadatas: CommandMetadatas::default(),
+                },
+            )
+            .await
+            .map(|(v, _)| v)
+        );
     }
 }
