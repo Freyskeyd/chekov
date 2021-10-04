@@ -3,7 +3,6 @@ use crate::account::*;
 use crate::commands::*;
 use actix_web::post;
 use actix_web::web;
-use actix_web::web::Path;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use uuid::Uuid;
 

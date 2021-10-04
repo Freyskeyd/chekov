@@ -17,6 +17,7 @@ pub enum OrderStatus {
     Unknown,
     Created,
     Canceled,
+    #[allow(dead_code)]
     Paid,
     Validated,
 }
@@ -176,7 +177,7 @@ impl chekov::event::Handler<GiftCardAdded> for OrderProjector {
         let pool = self.pool.acquire();
         async move {
             let p = pool.await.unwrap();
-            let result = OrderRepository::add_gift_card(&event, p).await;
+            let _result = OrderRepository::add_gift_card(&event, p).await;
 
             Ok(())
         }

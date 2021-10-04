@@ -4,7 +4,6 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::commands::*;
-use crate::events::*;
 
 mod aggregate;
 mod projector;
@@ -18,7 +17,6 @@ pub use repository::*;
 pub enum AccountStatus {
     Initialized,
     Active,
-    Deleted,
 }
 
 #[derive(Debug, Clone, chekov::Aggregate, Serialize)]

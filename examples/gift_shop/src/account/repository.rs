@@ -1,7 +1,6 @@
 use super::{Account, AccountStatus};
 use sqlx::postgres::PgRow;
 use sqlx::{Acquire, Row};
-use uuid::Uuid;
 
 use crate::events::*;
 

@@ -8,13 +8,11 @@ use uuid::Uuid;
 
 use crate::commands::*;
 use crate::events::gift_card::GiftCardCreated;
-use crate::events::*;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum GiftCardState {
     Unknown,
     Created,
-    Expired,
 }
 
 #[derive(Default, Debug, Clone, chekov::Aggregate, Serialize)]

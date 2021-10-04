@@ -1,14 +1,11 @@
-use super::{listener, EventNotification, Listener};
+use super::{EventNotification, Listener};
 use crate::event::handler::Subscribe;
 use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
 use actix::{Actor, Handler, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use event_store::prelude::RecordedEvent;
-use event_store::EventStore;
-use std::any::TypeId;
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 use tracing::{trace, Instrument};
 
 /// Deal with Application subscriptions
@@ -52,8 +49,8 @@ impl<A: Application> Supervised for SubscriberManager<A> {}
 impl<A: Application> Actor for SubscriberManager<A> {
     type Context = Context<Self>;
 
-    #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
-    fn started(&mut self, ctx: &mut Self::Context) {}
+    #[tracing::instrument(name = "SubscriberManager", skip(self, _ctx), fields(app = %A::get_name()))]
+    fn started(&mut self, _ctx: &mut Self::Context) {}
 }
 
 impl<A: Application> Handler<StartListening> for SubscriberManager<A> {

@@ -8,8 +8,6 @@ use actix::Actor;
 use actix::SystemService;
 use event_store::prelude::Storage;
 use futures::Future;
-use std::any::TypeId;
-use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use tracing::trace;
