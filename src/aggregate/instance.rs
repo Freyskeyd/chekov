@@ -20,6 +20,16 @@ pub struct AggregateInstance<A: Aggregate> {
     pub(crate) resolver: &'static EventResolverRegistry<A>,
 }
 
+impl<A: Aggregate> Default for AggregateInstance<A> {
+    fn default() -> Self {
+        Self {
+            inner: A::default(),
+            current_version: 0,
+            resolver: A::get_event_resolver(),
+        }
+    }
+}
+
 impl<A: Aggregate> AggregateInstance<A> {
     pub(crate) async fn new<APP: Application>(
         identity: String,
@@ -29,18 +39,13 @@ impl<A: Aggregate> AggregateInstance<A> {
 
         trace!("Creating aggregate instance");
 
-        let inner = A::default();
-        let current_version = 0;
+        let mut instance = AggregateInstance::<A>::default();
 
-        let mut instance = AggregateInstance {
-            inner,
-            current_version,
-            resolver: A::get_event_resolver(),
-        };
-
-        for event in events.unwrap() {
-            if instance.apply_recorded_event(event).is_err() {
-                return Err(CommandExecutorError::Any);
+        if let Ok(events) = events {
+            for event in events {
+                if instance.apply_recorded_event(event).is_err() {
+                    return Err(CommandExecutorError::Any);
+                }
             }
         }
 
@@ -279,9 +284,12 @@ impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
 mod tests {
     use std::marker::PhantomData;
 
+    use event_store::{prelude::Appender, InMemoryBackend};
+
     use crate::{
         aggregate::tests::{DefaultAPP, InvalidCommand, MyAggregate, MyEvent, ValidCommand},
         command::CommandMetadatas,
+        event_store::EventStore,
     };
 
     use super::*;
@@ -364,5 +372,39 @@ mod tests {
             AggregateInstance::directly_apply(&mut instance.create_mutable_state(), &MyEvent {});
 
         assert!(matches!(result, Ok(_)));
+    }
+
+    #[actix::test]
+    async fn can_fetch_existing_state() {
+        let storage = InMemoryBackend::default();
+        let event_store = crate::event_store::EventStore::<DefaultAPP> {
+            addr: event_store::EventStore::builder()
+                .storage(storage)
+                .build()
+                .await
+                .unwrap()
+                .start(),
+        }
+        .start();
+
+        ::actix::SystemRegistry::set(event_store);
+
+        let identifier = Uuid::new_v4();
+        let _ = EventStore::<DefaultAPP>::with_appender(
+            Appender::default()
+                .event(&MyEvent {})
+                .unwrap()
+                .to(&identifier)
+                .unwrap(),
+        )
+        .await;
+
+        let result = AggregateInstance::<MyAggregate>::fetch_existing_state::<DefaultAPP>(
+            identifier.to_string(),
+            Uuid::new_v4(),
+        )
+        .await;
+
+        assert_eq!(result.expect("shouldn't fail").len(), 1);
     }
 }

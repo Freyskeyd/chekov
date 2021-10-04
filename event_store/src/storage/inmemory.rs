@@ -7,6 +7,7 @@ use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use chrono::Utc;
 use futures::Future;
+use futures::FutureExt;
 use std::collections::HashMap;
 use tracing::{debug, trace};
 use uuid::Uuid;
@@ -71,13 +72,19 @@ impl Storage for InMemoryBackend {
     #[tracing::instrument(name = "InMemoryBackend::ReadStream", skip(self))]
     fn read_stream(
         &self,
-        _: String,
+        stream_uuid: String,
         _: usize,
         _: usize,
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
     {
-        Box::pin(async { Ok(vec![]) })
+        let result = self
+            .events
+            .get(&stream_uuid)
+            .cloned()
+            .ok_or(StorageError::StreamDoesntExists);
+
+        async move { result }.boxed()
     }
 
     #[tracing::instrument(
