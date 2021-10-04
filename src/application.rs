@@ -47,3 +47,18 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
         std::any::type_name::<Self>()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::aggregate::tests::DefaultAPP;
+
+    #[test]
+    fn application_must_have_a_name() {
+        assert_eq!(
+            DefaultAPP::get_name(),
+            "chekov::aggregate::tests::DefaultAPP"
+        );
+    }
+}

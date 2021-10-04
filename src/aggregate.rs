@@ -157,4 +157,4 @@ pub trait Aggregate: Send + Clone + Default + std::marker::Unpin + 'static {
 pub type StaticState<A> = A;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

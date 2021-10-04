@@ -121,12 +121,12 @@ impl<A: Aggregate> AggregateInstance<A> {
         }
     }
 
-    pub(crate) fn apply_many<E: Event>(state: &mut A, events: &Vec<E>) -> Result<(), ApplyError>
+    pub(crate) fn apply_many<E: Event>(state: &mut A, events: &[E]) -> Result<(), ApplyError>
     where
         A: EventApplier<E>,
     {
         for event in events.iter() {
-            if let Err(_) = Self::directly_apply(state, &event) {
+            if Self::directly_apply(state, event).is_err() {
                 return Err(ApplyError::Any);
             }
         }

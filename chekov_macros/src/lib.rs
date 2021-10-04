@@ -215,10 +215,10 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
                     applier: |aggregate: &mut #apply_to, event: chekov::RecordedEvent| -> Result<(), ApplyError> {
                         use chekov::Event;
                         use futures::TryFutureExt;
+                        use serde::Deserialize;
 
-                        let e = #event::into_envelope(event).unwrap();
-
-                        aggregate.apply(&e.event)
+                        let r = #event::deserialize(event.data).map_err(|_| ApplyError::Any)?;
+                        aggregate.apply(&r)
                     }
                 }
             }
@@ -300,10 +300,10 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
                     use chekov::Event;
                     use chekov::event::Handler;
                     use futures::TryFutureExt;
+                    use serde::Deserialize;
 
-                    let e = #event::into_envelope(event).unwrap();
-
-                    handler.handle(&e.event)
+                    let r = #event::deserialize(event.data).map_err(|_| ()).unwrap();
+                    handler.handle(&r)
                 }
             }
         }
