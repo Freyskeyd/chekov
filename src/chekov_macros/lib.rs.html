@@ -537,10 +537,10 @@
                     <span class="ident">applier</span>: <span class="op">|</span><span class="ident">aggregate</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> #<span class="ident">apply_to</span>, <span class="ident">event</span>: <span class="ident">chekov::RecordedEvent</span><span class="op">|</span> <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span> {
                         <span class="kw">use</span> <span class="ident">chekov::Event</span>;
                         <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
+                        <span class="kw">use</span> <span class="ident">serde::Deserialize</span>;
 
-                        <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> #<span class="ident">event::into_envelope</span>(<span class="ident">event</span>).<span class="ident">unwrap</span>();
-
-                        <span class="ident">aggregate</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">event</span>)
+                        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> #<span class="ident">event::deserialize</span>(<span class="ident">event</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ApplyError::Any</span>)<span class="question-mark">?</span>;
+                        <span class="ident">aggregate</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>)
                     }
                 }
             }
@@ -622,10 +622,10 @@
                     <span class="kw">use</span> <span class="ident">chekov::Event</span>;
                     <span class="kw">use</span> <span class="ident">chekov::event::Handler</span>;
                     <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
+                    <span class="kw">use</span> <span class="ident">serde::Deserialize</span>;
 
-                    <span class="kw">let</span> <span class="ident">e</span> <span class="op">=</span> #<span class="ident">event::into_envelope</span>(<span class="ident">event</span>).<span class="ident">unwrap</span>();
-
-                    <span class="ident">handler</span>.<span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">event</span>)
+                    <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> #<span class="ident">event::deserialize</span>(<span class="ident">event</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ()).<span class="ident">unwrap</span>();
+                    <span class="ident">handler</span>.<span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>)
                 }
             }
         }

@@ -27,27 +27,9 @@
 <span id="27">27</span>
 <span id="28">28</span>
 <span id="29">29</span>
-<span id="30">30</span>
-<span id="31">31</span>
-<span id="32">32</span>
-<span id="33">33</span>
-<span id="34">34</span>
-<span id="35">35</span>
-<span id="36">36</span>
-<span id="37">37</span>
-<span id="38">38</span>
-<span id="39">39</span>
-<span id="40">40</span>
-<span id="41">41</span>
-<span id="42">42</span>
-<span id="43">43</span>
-<span id="44">44</span>
-<span id="45">45</span>
-<span id="46">46</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Struct and Trait correlated to Event</span>
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::error::ApplyError</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::EventMetadatas</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident">futures::future::BoxFuture</span>;
 <span class="kw">use</span> <span class="ident">std::any::TypeId</span>;
@@ -64,23 +46,7 @@
 
 <span class="doccomment">/// Define an Event which can be produced and consumed</span>
 <span class="comment">// pub trait Event: event_store::prelude::Event {</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> {
-    <span class="kw">fn</span> <span class="ident">into_envelope</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>(<span class="ident">event</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">crate</span><span class="ident">::message::EventEnvelope</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, ()<span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="self">Self</span>: <span class="ident">serde::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">serde::de::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
-    {
-        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::deserialize</span>(<span class="ident">event</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="kw">crate</span><span class="ident">::message::EventEnvelope</span> {
-            <span class="ident">event</span>: <span class="ident">r</span>,
-            <span class="ident">meta</span>: <span class="ident">EventMetadatas</span> {
-                <span class="ident">correlation_id</span>: <span class="ident">event</span>.<span class="ident">correlation_id</span>,
-                <span class="ident">causation_id</span>: <span class="ident">event</span>.<span class="ident">causation_id</span>,
-                <span class="ident">stream_name</span>: <span class="ident">event</span>.<span class="ident">stream_uuid</span>,
-            },
-        })
-    }
-}
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Event</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> {}
 
 <span class="doccomment">/// Define an event applier</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Event</span><span class="op">&gt;</span> {
