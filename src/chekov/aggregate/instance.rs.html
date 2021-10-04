@@ -366,27 +366,6 @@
 <span id="366">366</span>
 <span id="367">367</span>
 <span id="368">368</span>
-<span id="369">369</span>
-<span id="370">370</span>
-<span id="371">371</span>
-<span id="372">372</span>
-<span id="373">373</span>
-<span id="374">374</span>
-<span id="375">375</span>
-<span id="376">376</span>
-<span id="377">377</span>
-<span id="378">378</span>
-<span id="379">379</span>
-<span id="380">380</span>
-<span id="381">381</span>
-<span id="382">382</span>
-<span id="383">383</span>
-<span id="384">384</span>
-<span id="385">385</span>
-<span id="386">386</span>
-<span id="387">387</span>
-<span id="388">388</span>
-<span id="389">389</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::command</span>::{<span class="ident">Command</span>, <span class="ident">Handler</span>, <span class="ident">NoHandler</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::Event</span>;
@@ -398,7 +377,7 @@
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Handler</span> <span class="kw">as</span> <span class="ident">ActixHandler</span>};
 <span class="kw">use</span> <span class="ident">event_store::prelude</span>::{<span class="ident">EventStoreError</span>, <span class="ident">ReadVersion</span>, <span class="ident">RecordedEvent</span>};
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">event</span>, <span class="ident">trace</span>};
+<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">use</span> <span class="kw">super</span><span class="ident">::resolver::EventResolverRegistry</span>;
@@ -461,12 +440,12 @@
         .<span class="kw">await</span><span class="question-mark">?</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">directly_apply</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">A</span>, <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>)
+    <span class="kw">fn</span> <span class="ident">directly_apply</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">A</span>, <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">T</span>: <span class="ident">Event</span>,
         <span class="ident">A</span>: <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
     {
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">state</span>.<span class="ident">apply</span>(<span class="ident">event</span>);
+        <span class="ident">state</span>.<span class="ident">apply</span>(<span class="ident">event</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">apply_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span> {
@@ -506,6 +485,19 @@
         }
     }
 
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">apply_many</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Event</span><span class="op">&gt;</span>(<span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">A</span>, <span class="ident">events</span>: <span class="kw-2">&amp;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="ident">A</span>: <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
+    {
+        <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">events</span>.<span class="ident">iter</span>() {
+            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span> <span class="self">Self</span><span class="ident">::directly_apply</span>(<span class="ident">state</span>, <span class="kw-2">&amp;</span><span class="ident">event</span>) {
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ApplyError::Any</span>);
+            }
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">persist_events</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">Event</span> <span class="op">+</span> <span class="ident">event_store::Event</span>, <span class="ident">APP</span>: <span class="ident">Application</span><span class="op">&gt;</span>(
         <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
         <span class="kw-2">mut</span> <span class="ident">state</span>: <span class="ident">A</span>,
@@ -516,15 +508,15 @@
     <span class="kw">where</span>
         <span class="ident">A</span>: <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
     {
-        <span class="ident">events</span>
-            .<span class="ident">iter</span>()
-            .<span class="ident">for_each</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="self">Self</span><span class="ident">::directly_apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">state</span>, <span class="ident">event</span>));
+        <span class="self">Self</span><span class="ident">::apply_many</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">state</span>, <span class="kw-2">&amp;</span><span class="ident">events</span>)<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">ev</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">events</span>.<span class="ident">iter</span>().<span class="ident">collect</span>();
         <span class="kw">match</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>::<span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span><span class="ident">::with_appender</span>(
             <span class="ident">event_store::prelude::Appender::with_correlation_id</span>(<span class="ident">correlation_id</span>)
                 .<span class="ident">events</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>[..])<span class="question-mark">?</span>
                 .<span class="ident">to</span>(<span class="kw-2">&amp;</span><span class="ident">stream_id</span>)<span class="question-mark">?</span>
-                .<span class="ident">expected_version</span>(<span class="ident">event_store::prelude::ExpectedVersion::AnyVersion</span>),
+                .<span class="ident">expected_version</span>(<span class="ident">event_store::prelude::ExpectedVersion::Version</span>(
+                    <span class="ident">current_version</span>,
+                )),
         )
         <span class="comment">// TODO deal with mailbox error</span>
         .<span class="kw">await</span>
@@ -654,95 +646,14 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::BTreeMap</span>, <span class="ident">convert::TryFrom</span>, <span class="ident">marker::PhantomData</span>};
-
-    <span class="kw">use</span> <span class="ident">event_store::InMemoryBackend</span>;
+    <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
     <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">aggregate::AggregateInstanceRegistry</span>,
-        <span class="ident">command</span>::{<span class="ident">CommandMetadatas</span>, <span class="ident">ExecutionResult</span>},
+        <span class="ident">aggregate::tests</span>::{<span class="ident">DefaultAPP</span>, <span class="ident">InvalidCommand</span>, <span class="ident">MyAggregate</span>, <span class="ident">MyEvent</span>, <span class="ident">ValidCommand</span>},
+        <span class="ident">command::CommandMetadatas</span>,
     };
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-
-    <span class="kw">crate</span><span class="macro">::lazy_static!</span> {
-        <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-        <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">REGISTRY</span>: <span class="ident">EventResolverRegistry</span><span class="op">&lt;</span><span class="ident">MyAggregate</span><span class="op">&gt;</span> <span class="op">=</span> {
-            <span class="ident">EventResolverRegistry</span> {
-                <span class="ident">names</span>: <span class="ident">BTreeMap::new</span>(),
-                <span class="ident">appliers</span>: <span class="ident">BTreeMap::new</span>(),
-            }
-        };
-    }
-
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">MyAggregate</span> {}
-    <span class="kw">impl</span> <span class="ident">Aggregate</span> <span class="kw">for</span> <span class="ident">MyAggregate</span> {
-        <span class="kw">fn</span> <span class="ident">get_event_resolver</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">EventResolverRegistry</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-            <span class="kw-2">&amp;</span><span class="ident">REGISTRY</span>
-        }
-
-        <span class="kw">fn</span> <span class="ident">identity</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-            <span class="string">&quot;my_aggregate&quot;</span>
-        }
-    }
-
-    <span class="kw">impl</span> <span class="ident">EventApplier</span><span class="op">&lt;</span><span class="ident">MyEvent</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MyAggregate</span> {
-        <span class="kw">fn</span> <span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">MyEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ApplyError</span><span class="op">&gt;</span> {
-            <span class="macro">todo!</span>()
-        }
-    }
-
-    <span class="kw">impl</span> <span class="ident">CommandExecutor</span><span class="op">&lt;</span><span class="ident">MyCommand</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MyAggregate</span> {
-        <span class="kw">fn</span> <span class="ident">execute</span>(<span class="ident">cmd</span>: <span class="ident">MyCommand</span>, <span class="ident">state</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::command::ExecutionResult</span><span class="op">&lt;</span><span class="ident">MyEvent</span><span class="op">&gt;</span> {
-            <span class="ident">ExecutionResult::Ok</span>(<span class="macro">vec!</span>[<span class="ident">MyEvent</span> {}])
-        }
-    }
-
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">DefaultAPP</span> {}
-
-    <span class="kw">impl</span> <span class="ident">Application</span> <span class="kw">for</span> <span class="ident">DefaultAPP</span> {
-        <span class="kw">type</span> <span class="ident">Storage</span> <span class="op">=</span> <span class="ident">InMemoryBackend</span>;
-    }
-
-    <span class="kw">struct</span> <span class="ident">MyCommand</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">Uuid</span>);
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>, <span class="ident">Clone</span>, <span class="ident">serde::Serialize</span>, <span class="ident">serde::Deserialize</span>)]</span>
-    <span class="kw">struct</span> <span class="ident">MyEvent</span> {}
-
-    <span class="kw">impl</span> <span class="ident">Event</span> <span class="kw">for</span> <span class="ident">MyEvent</span> {}
-    <span class="kw">impl</span> <span class="ident">event_store::Event</span> <span class="kw">for</span> <span class="ident">MyEvent</span> {
-        <span class="kw">fn</span> <span class="ident">event_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
-            <span class="string">&quot;MyEvent&quot;</span>
-        }
-
-        <span class="kw">fn</span> <span class="ident">all_event_types</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span><span class="op">&gt;</span> {
-            <span class="macro">vec!</span>[<span class="string">&quot;MyEvent&quot;</span>]
-        }
-    }
-
-    <span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">MyEvent</span> {
-        <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
-
-        <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="ident">RecordedEvent</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="self">Self</span><span class="ident">::Error</span><span class="op">&gt;</span> {
-            <span class="macro">todo!</span>()
-        }
-    }
-
-    <span class="kw">impl</span> <span class="ident">Command</span> <span class="kw">for</span> <span class="ident">MyCommand</span> {
-        <span class="kw">type</span> <span class="ident">Event</span> <span class="op">=</span> <span class="ident">MyEvent</span>;
-
-        <span class="kw">type</span> <span class="ident">Executor</span> <span class="op">=</span> <span class="ident">MyAggregate</span>;
-
-        <span class="kw">type</span> <span class="ident">ExecutorRegistry</span> <span class="op">=</span> <span class="ident">AggregateInstanceRegistry</span><span class="op">&lt;</span><span class="ident">MyAggregate</span><span class="op">&gt;</span>;
-
-        <span class="kw">type</span> <span class="ident">CommandHandler</span> <span class="op">=</span> <span class="ident">NoHandler</span>;
-
-        <span class="kw">fn</span> <span class="ident">identifier</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-            <span class="self">self</span>.<span class="number">0</span>.<span class="ident">to_string</span>()
-        }
-    }
-
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">state_can_be_duplicated</span>() {
         <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
@@ -768,13 +679,60 @@
                 <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
                 <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
                     <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
-                    <span class="ident">command</span>: <span class="ident">MyCommand</span>(<span class="ident">Uuid::new_v4</span>()),
+                    <span class="ident">command</span>: <span class="ident">ValidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
                     <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
                 },
             )
             .<span class="kw">await</span>
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">v</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="ident">v</span>)
         );
+    }
+
+    <span class="attribute">#[<span class="ident">actix::test</span>]</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_recover_from_fail_execution</span>() {
+        <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
+            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">current_version</span>: <span class="number">1</span>,
+            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+        };
+
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance::execute</span>(
+            <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
+            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+                <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
+                <span class="ident">command</span>: <span class="ident">InvalidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
+                <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
+            },
+        )
+        .<span class="kw">await</span>;
+
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">result</span>, <span class="prelude-val">Err</span>(<span class="kw">_</span>)));
+
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance::execute</span>(
+            <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
+            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+                <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
+                <span class="ident">command</span>: <span class="ident">ValidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
+                <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
+            },
+        )
+        .<span class="kw">await</span>;
+
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">result</span>, <span class="prelude-val">Ok</span>(<span class="kw">_</span>)));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">can_apply_event</span>() {
+        <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
+            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">current_version</span>: <span class="number">1</span>,
+            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+        };
+
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span>
+            <span class="ident">AggregateInstance::directly_apply</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(), <span class="kw-2">&amp;</span><span class="ident">MyEvent</span> {});
+
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="ident">result</span>, <span class="prelude-val">Ok</span>(<span class="kw">_</span>)));
     }
 }
 </pre></div>
