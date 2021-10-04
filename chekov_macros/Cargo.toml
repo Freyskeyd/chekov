@@ -16,7 +16,7 @@ categories = []
 proc-macro = true
 
 [dependencies]
-darling = "0"
-quote = "1"
-syn = { version = "1", features = ["full"]}
-proc-macro2 = "1"
+darling = "0.13.0"
+quote = "1.0.9"
+syn = { version = "1.0.78", features = ["full"] }
+proc-macro2 = "1.0.29"
