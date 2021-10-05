@@ -375,6 +375,7 @@
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::EventStoreError</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ExpectedVersion</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Storage</span>;
+<span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
@@ -643,7 +644,6 @@
     }
 }
 
-<span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Vec&lt;Uuid&gt;, EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AppendToStreamRequest</span> {
