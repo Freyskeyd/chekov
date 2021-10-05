@@ -1,1 +1,1 @@
-mod aggregates;
+pub(crate) mod aggregates;

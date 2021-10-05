@@ -61,3 +61,20 @@ impl<A: Application> Router<A> {
             .await?
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::aggregates::support::{InvalidCommand, MyApplication};
+    use uuid::Uuid;
+
+    #[actix::test]
+    async fn can_route_a_command() {
+        // TODO: Improve this tests with a particular APP
+        let _ = Router::<MyApplication>::dispatch(
+            InvalidCommand(Uuid::new_v4()),
+            CommandMetadatas::default(),
+        )
+        .await;
+    }
+}

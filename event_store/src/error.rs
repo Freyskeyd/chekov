@@ -47,4 +47,11 @@ mod test {
 
         let _: EventStoreError = err.into();
     }
+
+    #[test]
+    fn an_event_store_error_can_be_dispayed() {
+        let err = EventStoreError::Any;
+
+        assert_eq!("EventStore Error!", err.to_string());
+    }
 }

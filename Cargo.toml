@@ -43,3 +43,6 @@ typetag = "0.1.7"
 
 [dev-dependencies]
 demonstrate = "0.4.5"
+pretty_assertions = "1.0.0"
+
+

@@ -8,6 +8,7 @@ use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
 use crate::Storage;
+use actix::prelude::*;
 use std::str::FromStr;
 use tracing::trace;
 use uuid::Uuid;
@@ -276,7 +277,6 @@ impl Appender {
     }
 }
 
-use actix::prelude::*;
 #[derive(Debug, Message)]
 #[rtype(result = "Result<Vec<Uuid>, EventStoreError>")]
 pub struct AppendToStreamRequest {

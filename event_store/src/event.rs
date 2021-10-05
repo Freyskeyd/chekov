@@ -7,11 +7,6 @@ pub trait Event: Serialize + Send + std::convert::TryFrom<RecordedEvent> {
     /// This str must be as precise as possible.
     fn event_type(&self) -> &'static str;
     fn all_event_types() -> Vec<&'static str>;
-
-    #[must_use]
-    fn event_type_from_str() -> &'static str {
-        std::any::type_name::<Self>()
-    }
 }
 
 mod recorded;

@@ -19,3 +19,18 @@ impl<A: Aggregate> EventResolverRegistry<A> {
         self.appliers.get(type_id)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::tests::aggregates::support::ExampleAggregate;
+
+    use super::*;
+
+    #[test]
+    fn appliers_can_be_fetched() {
+        let resolver = ExampleAggregate::get_event_resolver();
+        let result = resolver.get_applier("MyEvent");
+
+        assert!(result.is_some());
+    }
+}

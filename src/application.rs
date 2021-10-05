@@ -52,13 +52,13 @@ pub trait Application: Unpin + 'static + Send + std::default::Default {
 mod tests {
     use super::*;
 
-    use crate::aggregate::tests::DefaultAPP;
+    use crate::tests::aggregates::support::MyApplication;
 
     #[test]
     fn application_must_have_a_name() {
         assert_eq!(
-            DefaultAPP::get_name(),
-            "chekov::aggregate::tests::DefaultAPP"
+            MyApplication::get_name(),
+            "chekov::tests::aggregates::support::MyApplication"
         );
     }
 }

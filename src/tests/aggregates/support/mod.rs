@@ -2,6 +2,7 @@ use crate as chekov;
 use crate::prelude::*;
 use event_store::prelude::InMemoryBackend;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Default)]
 pub(crate) struct MyApplication {}
@@ -17,18 +18,70 @@ pub(crate) struct ExampleAggregate {
     last_index: usize,
 }
 
+impl CommandExecutor<ValidCommand> for ExampleAggregate {
+    fn execute(_cmd: ValidCommand, _: &Self) -> ExecutionResult<MyEvent> {
+        ExecutionResult::Ok(vec![MyEvent {}])
+    }
+}
+
+impl CommandExecutor<InvalidCommand> for ExampleAggregate {
+    fn execute(_cmd: InvalidCommand, _: &Self) -> ExecutionResult<MyEvent> {
+        ExecutionResult::Err(CommandExecutorError::Any)
+    }
+}
+
 impl CommandExecutor<AppendItem> for ExampleAggregate {
     fn execute(cmd: AppendItem, _: &Self) -> ExecutionResult<ItemAppended> {
         ExecutionResult::Ok(vec![ItemAppended(cmd.0)])
     }
 }
 
+#[crate::applier]
 impl EventApplier<ItemAppended> for ExampleAggregate {
     fn apply(&mut self, event: &ItemAppended) -> Result<(), ApplyError> {
         self.items.push(event.0);
 
         self.last_index = self.items.len() - 1;
         Ok(())
+    }
+}
+
+#[crate::applier]
+impl EventApplier<MyEvent> for ExampleAggregate {
+    fn apply(&mut self, _event: &MyEvent) -> Result<(), ApplyError> {
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct ValidCommand(pub(crate) Uuid);
+impl Command for ValidCommand {
+    type Event = MyEvent;
+
+    type Executor = ExampleAggregate;
+
+    type ExecutorRegistry = AggregateInstanceRegistry<ExampleAggregate>;
+
+    type CommandHandler = NoHandler;
+
+    fn identifier(&self) -> String {
+        "example_aggregate".to_string()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct InvalidCommand(pub(crate) Uuid);
+impl Command for InvalidCommand {
+    type Event = MyEvent;
+
+    type Executor = ExampleAggregate;
+
+    type ExecutorRegistry = AggregateInstanceRegistry<ExampleAggregate>;
+
+    type CommandHandler = NoHandler;
+
+    fn identifier(&self) -> String {
+        "example_aggregate".to_string()
     }
 }
 
@@ -51,6 +104,10 @@ impl Command for AppendItem {
 
 #[derive(Clone, Debug, crate::Event, Deserialize, Serialize)]
 pub(crate) struct ItemAppended(i64);
+
+#[derive(Clone, PartialEq, Debug, crate::Event, Deserialize, Serialize)]
+#[event(event_type = "MyEvent")]
+pub(crate) struct MyEvent {}
 
 #[macro_export]
 macro_rules! assert_aggregate_version {

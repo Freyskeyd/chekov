@@ -287,36 +287,38 @@ mod tests {
     use event_store::{prelude::Appender, InMemoryBackend};
 
     use crate::{
-        aggregate::tests::{DefaultAPP, InvalidCommand, MyAggregate, MyEvent, ValidCommand},
         command::CommandMetadatas,
         event_store::EventStore,
+        tests::aggregates::support::{
+            ExampleAggregate, InvalidCommand, MyApplication, MyEvent, ValidCommand,
+        },
     };
 
     use super::*;
     #[test]
     fn state_can_be_duplicated() {
         let instance = AggregateInstance {
-            inner: MyAggregate {},
+            inner: ExampleAggregate::default(),
             current_version: 0,
-            resolver: MyAggregate::get_event_resolver(),
+            resolver: ExampleAggregate::get_event_resolver(),
         };
 
-        let _: MyAggregate = instance.create_mutable_state();
+        let _: ExampleAggregate = instance.create_mutable_state();
     }
 
     #[actix::test]
     async fn can_execute_command() {
         let instance = AggregateInstance {
-            inner: MyAggregate {},
+            inner: ExampleAggregate::default(),
             current_version: 0,
-            resolver: MyAggregate::get_event_resolver(),
+            resolver: ExampleAggregate::get_event_resolver(),
         };
 
         assert_eq!(
             Ok(vec![MyEvent {}]),
             AggregateInstance::execute(
                 instance.create_mutable_state(),
-                Dispatch::<_, DefaultAPP> {
+                Dispatch::<_, MyApplication> {
                     storage: PhantomData,
                     command: ValidCommand(Uuid::new_v4()),
                     metadatas: CommandMetadatas::default(),
@@ -330,14 +332,14 @@ mod tests {
     #[actix::test]
     async fn can_recover_from_fail_execution() {
         let instance = AggregateInstance {
-            inner: MyAggregate {},
+            inner: ExampleAggregate::default(),
             current_version: 1,
-            resolver: MyAggregate::get_event_resolver(),
+            resolver: ExampleAggregate::get_event_resolver(),
         };
 
         let result = AggregateInstance::execute(
             instance.create_mutable_state(),
-            Dispatch::<_, DefaultAPP> {
+            Dispatch::<_, MyApplication> {
                 storage: PhantomData,
                 command: InvalidCommand(Uuid::new_v4()),
                 metadatas: CommandMetadatas::default(),
@@ -349,7 +351,7 @@ mod tests {
 
         let result = AggregateInstance::execute(
             instance.create_mutable_state(),
-            Dispatch::<_, DefaultAPP> {
+            Dispatch::<_, MyApplication> {
                 storage: PhantomData,
                 command: ValidCommand(Uuid::new_v4()),
                 metadatas: CommandMetadatas::default(),
@@ -363,9 +365,9 @@ mod tests {
     #[test]
     fn can_apply_event() {
         let instance = AggregateInstance {
-            inner: MyAggregate {},
+            inner: ExampleAggregate::default(),
             current_version: 1,
-            resolver: MyAggregate::get_event_resolver(),
+            resolver: ExampleAggregate::get_event_resolver(),
         };
 
         let result =
@@ -377,7 +379,7 @@ mod tests {
     #[actix::test]
     async fn can_fetch_existing_state() {
         let storage = InMemoryBackend::default();
-        let event_store = crate::event_store::EventStore::<DefaultAPP> {
+        let event_store = crate::event_store::EventStore::<MyApplication> {
             addr: event_store::EventStore::builder()
                 .storage(storage)
                 .build()
@@ -390,7 +392,7 @@ mod tests {
         ::actix::SystemRegistry::set(event_store);
 
         let identifier = Uuid::new_v4();
-        let _ = EventStore::<DefaultAPP>::with_appender(
+        let _ = EventStore::<MyApplication>::with_appender(
             Appender::default()
                 .event(&MyEvent {})
                 .unwrap()
@@ -399,7 +401,7 @@ mod tests {
         )
         .await;
 
-        let result = AggregateInstance::<MyAggregate>::fetch_existing_state::<DefaultAPP>(
+        let result = AggregateInstance::<ExampleAggregate>::fetch_existing_state::<MyApplication>(
             identifier.to_string(),
             Uuid::new_v4(),
         )
