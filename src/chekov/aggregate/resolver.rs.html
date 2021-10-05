@@ -19,6 +19,21 @@
 <span id="19">19</span>
 <span id="20">20</span>
 <span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">any::TypeId</span>, <span class="ident">collections::BTreeMap</span>};
@@ -39,6 +54,21 @@
         <span class="kw">let</span> <span class="ident">type_id</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">names</span>.<span class="ident">get</span>(<span class="ident">event_name</span>)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.<span class="ident">appliers</span>.<span class="ident">get</span>(<span class="ident">type_id</span>)
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">test</span> {
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::tests::aggregates::support::ExampleAggregate</span>;
+
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">appliers_can_be_fetched</span>() {
+        <span class="kw">let</span> <span class="ident">resolver</span> <span class="op">=</span> <span class="ident">ExampleAggregate::get_event_resolver</span>();
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">resolver</span>.<span class="ident">get_applier</span>(<span class="string">&quot;MyEvent&quot;</span>);
+
+        <span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">is_some</span>());
     }
 }
 </pre></div>

@@ -117,13 +117,13 @@
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::aggregate::tests::DefaultAPP</span>;
+    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::tests::aggregates::support::MyApplication</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">application_must_have_a_name</span>() {
         <span class="macro">assert_eq!</span>(
-            <span class="ident">DefaultAPP::get_name</span>(),
-            <span class="string">&quot;chekov::aggregate::tests::DefaultAPP&quot;</span>
+            <span class="ident">MyApplication::get_name</span>(),
+            <span class="string">&quot;chekov::tests::aggregates::support::MyApplication&quot;</span>
         );
     }
 }

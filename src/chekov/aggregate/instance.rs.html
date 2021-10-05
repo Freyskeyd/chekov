@@ -408,6 +408,8 @@
 <span id="408">408</span>
 <span id="409">409</span>
 <span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::command</span>::{<span class="ident">Command</span>, <span class="ident">Handler</span>, <span class="ident">NoHandler</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::Event</span>;
@@ -698,36 +700,38 @@
     <span class="kw">use</span> <span class="ident">event_store</span>::{<span class="ident">prelude::Appender</span>, <span class="ident">InMemoryBackend</span>};
 
     <span class="kw">use</span> <span class="kw">crate</span>::{
-        <span class="ident">aggregate::tests</span>::{<span class="ident">DefaultAPP</span>, <span class="ident">InvalidCommand</span>, <span class="ident">MyAggregate</span>, <span class="ident">MyEvent</span>, <span class="ident">ValidCommand</span>},
         <span class="ident">command::CommandMetadatas</span>,
         <span class="ident">event_store::EventStore</span>,
+        <span class="ident">tests::aggregates::support</span>::{
+            <span class="ident">ExampleAggregate</span>, <span class="ident">InvalidCommand</span>, <span class="ident">MyApplication</span>, <span class="ident">MyEvent</span>, <span class="ident">ValidCommand</span>,
+        },
     };
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">state_can_be_duplicated</span>() {
         <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
-            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">inner</span>: <span class="ident">ExampleAggregate::default</span>(),
             <span class="ident">current_version</span>: <span class="number">0</span>,
-            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+            <span class="ident">resolver</span>: <span class="ident">ExampleAggregate::get_event_resolver</span>(),
         };
 
-        <span class="kw">let</span> <span class="kw">_</span>: <span class="ident">MyAggregate</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>();
+        <span class="kw">let</span> <span class="kw">_</span>: <span class="ident">ExampleAggregate</span> <span class="op">=</span> <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>();
     }
 
     <span class="attribute">#[<span class="ident">actix::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_execute_command</span>() {
         <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
-            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">inner</span>: <span class="ident">ExampleAggregate::default</span>(),
             <span class="ident">current_version</span>: <span class="number">0</span>,
-            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+            <span class="ident">resolver</span>: <span class="ident">ExampleAggregate::get_event_resolver</span>(),
         };
 
         <span class="macro">assert_eq!</span>(
             <span class="prelude-val">Ok</span>(<span class="macro">vec!</span>[<span class="ident">MyEvent</span> {}]),
             <span class="ident">AggregateInstance::execute</span>(
                 <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
-                <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+                <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">MyApplication</span><span class="op">&gt;</span> {
                     <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
                     <span class="ident">command</span>: <span class="ident">ValidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
                     <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
@@ -741,14 +745,14 @@
     <span class="attribute">#[<span class="ident">actix::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_recover_from_fail_execution</span>() {
         <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
-            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">inner</span>: <span class="ident">ExampleAggregate::default</span>(),
             <span class="ident">current_version</span>: <span class="number">1</span>,
-            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+            <span class="ident">resolver</span>: <span class="ident">ExampleAggregate::get_event_resolver</span>(),
         };
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance::execute</span>(
             <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
-            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">MyApplication</span><span class="op">&gt;</span> {
                 <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
                 <span class="ident">command</span>: <span class="ident">InvalidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
                 <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
@@ -760,7 +764,7 @@
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance::execute</span>(
             <span class="ident">instance</span>.<span class="ident">create_mutable_state</span>(),
-            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+            <span class="ident">Dispatch</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">MyApplication</span><span class="op">&gt;</span> {
                 <span class="ident">storage</span>: <span class="ident">PhantomData</span>,
                 <span class="ident">command</span>: <span class="ident">ValidCommand</span>(<span class="ident">Uuid::new_v4</span>()),
                 <span class="ident">metadatas</span>: <span class="ident">CommandMetadatas::default</span>(),
@@ -774,9 +778,9 @@
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">can_apply_event</span>() {
         <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span> {
-            <span class="ident">inner</span>: <span class="ident">MyAggregate</span> {},
+            <span class="ident">inner</span>: <span class="ident">ExampleAggregate::default</span>(),
             <span class="ident">current_version</span>: <span class="number">1</span>,
-            <span class="ident">resolver</span>: <span class="ident">MyAggregate::get_event_resolver</span>(),
+            <span class="ident">resolver</span>: <span class="ident">ExampleAggregate::get_event_resolver</span>(),
         };
 
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span>
@@ -788,7 +792,7 @@
     <span class="attribute">#[<span class="ident">actix::test</span>]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">can_fetch_existing_state</span>() {
         <span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">InMemoryBackend::default</span>();
-        <span class="kw">let</span> <span class="ident">event_store</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>::<span class="op">&lt;</span><span class="ident">DefaultAPP</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">event_store</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>::<span class="op">&lt;</span><span class="ident">MyApplication</span><span class="op">&gt;</span> {
             <span class="ident">addr</span>: <span class="ident">event_store::EventStore::builder</span>()
                 .<span class="ident">storage</span>(<span class="ident">storage</span>)
                 .<span class="ident">build</span>()
@@ -801,7 +805,7 @@
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>);
 
         <span class="kw">let</span> <span class="ident">identifier</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>();
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">EventStore</span>::<span class="op">&lt;</span><span class="ident">DefaultAPP</span><span class="op">&gt;</span><span class="ident">::with_appender</span>(
+        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">EventStore</span>::<span class="op">&lt;</span><span class="ident">MyApplication</span><span class="op">&gt;</span><span class="ident">::with_appender</span>(
             <span class="ident">Appender::default</span>()
                 .<span class="ident">event</span>(<span class="kw-2">&amp;</span><span class="ident">MyEvent</span> {})
                 .<span class="ident">unwrap</span>()
@@ -810,7 +814,7 @@
         )
         .<span class="kw">await</span>;
 
-        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance</span>::<span class="op">&lt;</span><span class="ident">MyAggregate</span><span class="op">&gt;</span><span class="ident">::fetch_existing_state</span>::<span class="op">&lt;</span><span class="ident">DefaultAPP</span><span class="op">&gt;</span>(
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">AggregateInstance</span>::<span class="op">&lt;</span><span class="ident">ExampleAggregate</span><span class="op">&gt;</span><span class="ident">::fetch_existing_state</span>::<span class="op">&lt;</span><span class="ident">MyApplication</span><span class="op">&gt;</span>(
             <span class="ident">identifier</span>.<span class="ident">to_string</span>(),
             <span class="ident">Uuid::new_v4</span>(),
         )
