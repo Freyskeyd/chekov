@@ -34,7 +34,7 @@
 
 ### Choosing an EventStore backend
 
-Chekov works only with `Postgres` backend for now. The choice is easy to make!
+Chekov works only with `Postgres` backend for now (and `InMemory` for test purpose). The choice is easy to make!
 
 But some more backends need to be implemented, [see the related issue](#14).
 
