@@ -560,7 +560,7 @@
             <span class="string">&quot;Attempting to execute&quot;</span>);
         <span class="comment">// Fetch stream informations</span>
         <span class="kw">if</span> <span class="op">!</span><span class="ident">Stream::validates_stream_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stream</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>);
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::InvalidStreamId</span>);
         }
 
         <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">event_store</span>
@@ -584,7 +584,7 @@
         <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">expected_version_result</span> {
             <span class="ident">ExpectedVersionResult::NeedCreation</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">trace!</span>(
-            <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
+                    <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
                     <span class="string">&quot;Stream {} does not exists&quot;</span>, <span class="self">self</span>.<span class="ident">stream</span>);
 
                 <span class="ident">event_store</span>
@@ -596,13 +596,13 @@
             }
             <span class="ident">ExpectedVersionResult::Ok</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">trace!</span>(
-            <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
+                    <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
                     <span class="string">&quot;Fetched stream {} informations&quot;</span>, <span class="self">self</span>.<span class="ident">stream</span>,);
                 <span class="ident">stream</span>.<span class="ident">unwrap</span>()
             }
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">trace!</span>(
-            <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
+                    <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
                     <span class="string">&quot;Stream {} does not exists&quot;</span>, <span class="self">self</span>.<span class="ident">stream</span>);
 
                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>);
