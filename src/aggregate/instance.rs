@@ -60,11 +60,11 @@ impl<A: Aggregate> AggregateInstance<A> {
         Ok(addr)
     }
 
-    fn create_mutable_state(&self) -> A {
+    pub(crate) fn create_mutable_state(&self) -> A {
         self.inner.clone()
     }
 
-    async fn fetch_existing_state<APP: Application>(
+    pub(crate) async fn fetch_existing_state<APP: Application>(
         stream_id: String,
         correlation_id: Uuid,
     ) -> Result<Vec<RecordedEvent>, EventStoreError> {
@@ -78,7 +78,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         .await?
     }
 
-    fn directly_apply<T>(state: &mut A, event: &T) -> Result<(), ApplyError>
+    pub(crate) fn directly_apply<T>(state: &mut A, event: &T) -> Result<(), ApplyError>
     where
         T: Event,
         A: EventApplier<T>,
@@ -105,7 +105,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         addr.send(cmd).await?
     }
 
-    async fn execute<C: Command, APP: Application>(
+    pub(crate) async fn execute<C: Command, APP: Application>(
         state: A,
         command: Dispatch<C, APP>,
     ) -> Result<(Vec<C::Event>, A), CommandExecutorError>
@@ -167,10 +167,7 @@ impl<A: Aggregate> AggregateInstance<A> {
                     state,
                 })
             }
-            e => {
-                trace!("{:?}", e);
-                Err(CommandExecutorError::Any)
-            }
+            _ => Err(CommandExecutorError::Any),
         }
     }
 
@@ -282,177 +279,5 @@ impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::marker::PhantomData;
-
-    use event_store::{prelude::Appender, InMemoryBackend};
-
-    use crate::{
-        command::CommandMetadatas,
-        event_store::EventStore,
-        tests::aggregates::support::{
-            ExampleAggregate, InvalidCommand, InvalidEvent, MyApplication, MyEvent, ValidCommand,
-        },
-    };
-
-    use super::*;
-    #[test]
-    fn state_can_be_duplicated() {
-        let instance = AggregateInstance {
-            inner: ExampleAggregate::default(),
-            current_version: 0,
-            resolver: ExampleAggregate::get_event_resolver(),
-        };
-
-        let _: ExampleAggregate = instance.create_mutable_state();
-    }
-
-    #[actix::test]
-    async fn can_execute_command() {
-        let instance = AggregateInstance {
-            inner: ExampleAggregate::default(),
-            current_version: 0,
-            resolver: ExampleAggregate::get_event_resolver(),
-        };
-
-        assert_eq!(
-            Ok(vec![MyEvent {}]),
-            AggregateInstance::execute(
-                instance.create_mutable_state(),
-                Dispatch::<_, MyApplication> {
-                    storage: PhantomData,
-                    command: ValidCommand(Uuid::new_v4()),
-                    metadatas: CommandMetadatas::default(),
-                },
-            )
-            .await
-            .map(|(v, _)| v)
-        );
-    }
-
-    #[actix::test]
-    async fn can_recover_from_fail_execution() {
-        let instance = AggregateInstance {
-            inner: ExampleAggregate::default(),
-            current_version: 1,
-            resolver: ExampleAggregate::get_event_resolver(),
-        };
-
-        let result = AggregateInstance::execute(
-            instance.create_mutable_state(),
-            Dispatch::<_, MyApplication> {
-                storage: PhantomData,
-                command: InvalidCommand(Uuid::new_v4()),
-                metadatas: CommandMetadatas::default(),
-            },
-        )
-        .await;
-
-        assert!(matches!(result, Err(_)));
-
-        let result = AggregateInstance::execute(
-            instance.create_mutable_state(),
-            Dispatch::<_, MyApplication> {
-                storage: PhantomData,
-                command: ValidCommand(Uuid::new_v4()),
-                metadatas: CommandMetadatas::default(),
-            },
-        )
-        .await;
-
-        assert!(matches!(result, Ok(_)));
-    }
-
-    #[test]
-    fn can_apply_event() {
-        let instance = AggregateInstance {
-            inner: ExampleAggregate::default(),
-            current_version: 1,
-            resolver: ExampleAggregate::get_event_resolver(),
-        };
-
-        let result =
-            AggregateInstance::directly_apply(&mut instance.create_mutable_state(), &MyEvent {});
-
-        assert!(matches!(result, Ok(_)));
-    }
-
-    #[actix::test]
-    async fn can_fetch_existing_state() {
-        let storage = InMemoryBackend::default();
-        let event_store = crate::event_store::EventStore::<MyApplication> {
-            addr: event_store::EventStore::builder()
-                .storage(storage)
-                .build()
-                .await
-                .unwrap()
-                .start(),
-        }
-        .start();
-
-        ::actix::SystemRegistry::set(event_store);
-
-        let identifier = Uuid::new_v4();
-        let _ = EventStore::<MyApplication>::with_appender(
-            Appender::default()
-                .event(&MyEvent {})
-                .unwrap()
-                .to(&identifier)
-                .unwrap(),
-        )
-        .await;
-
-        let result = AggregateInstance::<ExampleAggregate>::fetch_existing_state::<MyApplication>(
-            identifier.to_string(),
-            Uuid::new_v4(),
-        )
-        .await;
-
-        assert_eq!(result.expect("shouldn't fail").len(), 1);
-    }
-
-    #[actix::test]
-    async fn recover_from_failing_events() {
-        let storage = InMemoryBackend::default();
-        let event_store = crate::event_store::EventStore::<MyApplication> {
-            addr: event_store::EventStore::builder()
-                .storage(storage)
-                .build()
-                .await
-                .unwrap()
-                .start(),
-        }
-        .start();
-
-        ::actix::SystemRegistry::set(event_store);
-
-        let identifier = Uuid::new_v4();
-        let _ = EventStore::<MyApplication>::with_appender(
-            Appender::default()
-                .event(&InvalidEvent {})
-                .unwrap()
-                .to(&identifier)
-                .unwrap(),
-        )
-        .await;
-
-        let result = AggregateInstance::<ExampleAggregate>::fetch_existing_state::<MyApplication>(
-            identifier.to_string(),
-            Uuid::new_v4(),
-        )
-        .await;
-
-        assert_eq!(result.expect("shouldn't fail").len(), 1);
-
-        assert!(AggregateInstance::<ExampleAggregate>::new::<MyApplication>(
-            identifier.to_string(),
-            Uuid::new_v4(),
-        )
-        .await
-        .is_err());
     }
 }
