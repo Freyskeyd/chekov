@@ -6,6 +6,7 @@ use std::fmt;
 pub enum EventStoreError {
     Any,
     NoStorage,
+    InvalidStreamId,
     Storage(StorageError),
 }
 

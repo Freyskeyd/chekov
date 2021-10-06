@@ -46,6 +46,8 @@ impl<A: Aggregate> AggregateInstance<A> {
                 if instance.apply_recorded_event(event).is_err() {
                     return Err(CommandExecutorError::Any);
                 }
+
+                instance.current_version += 1;
             }
         }
 
@@ -86,7 +88,7 @@ impl<A: Aggregate> AggregateInstance<A> {
 
     fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError> {
         if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
-            let _ = (resolver)(&mut self.inner, event);
+            return (resolver)(&mut self.inner, event);
         }
 
         Ok(())
@@ -165,7 +167,10 @@ impl<A: Aggregate> AggregateInstance<A> {
                     state,
                 })
             }
-            _ => Err(CommandExecutorError::Any),
+            e => {
+                trace!("{:?}", e);
+                Err(CommandExecutorError::Any)
+            }
         }
     }
 
@@ -290,7 +295,7 @@ mod tests {
         command::CommandMetadatas,
         event_store::EventStore,
         tests::aggregates::support::{
-            ExampleAggregate, InvalidCommand, MyApplication, MyEvent, ValidCommand,
+            ExampleAggregate, InvalidCommand, InvalidEvent, MyApplication, MyEvent, ValidCommand,
         },
     };
 
@@ -408,5 +413,46 @@ mod tests {
         .await;
 
         assert_eq!(result.expect("shouldn't fail").len(), 1);
+    }
+
+    #[actix::test]
+    async fn recover_from_failing_events() {
+        let storage = InMemoryBackend::default();
+        let event_store = crate::event_store::EventStore::<MyApplication> {
+            addr: event_store::EventStore::builder()
+                .storage(storage)
+                .build()
+                .await
+                .unwrap()
+                .start(),
+        }
+        .start();
+
+        ::actix::SystemRegistry::set(event_store);
+
+        let identifier = Uuid::new_v4();
+        let _ = EventStore::<MyApplication>::with_appender(
+            Appender::default()
+                .event(&InvalidEvent {})
+                .unwrap()
+                .to(&identifier)
+                .unwrap(),
+        )
+        .await;
+
+        let result = AggregateInstance::<ExampleAggregate>::fetch_existing_state::<MyApplication>(
+            identifier.to_string(),
+            Uuid::new_v4(),
+        )
+        .await;
+
+        assert_eq!(result.expect("shouldn't fail").len(), 1);
+
+        assert!(AggregateInstance::<ExampleAggregate>::new::<MyApplication>(
+            identifier.to_string(),
+            Uuid::new_v4(),
+        )
+        .await
+        .is_err());
     }
 }

@@ -193,7 +193,7 @@ impl Appender {
             "Attempting to execute");
         // Fetch stream informations
         if !Stream::validates_stream_id(&self.stream) {
-            return Err(EventStoreError::Any);
+            return Err(EventStoreError::InvalidStreamId);
         }
 
         let stream = event_store
@@ -217,7 +217,7 @@ impl Appender {
         let stream = match expected_version_result {
             ExpectedVersionResult::NeedCreation => {
                 trace!(
-            parent: &self.span,
+                    parent: &self.span,
                     "Stream {} does not exists", self.stream);
 
                 event_store
@@ -229,13 +229,13 @@ impl Appender {
             }
             ExpectedVersionResult::Ok => {
                 trace!(
-            parent: &self.span,
+                    parent: &self.span,
                     "Fetched stream {} informations", self.stream,);
                 stream.unwrap()
             }
             _ => {
                 trace!(
-            parent: &self.span,
+                    parent: &self.span,
                     "Stream {} does not exists", self.stream);
 
                 return Err(EventStoreError::Any);

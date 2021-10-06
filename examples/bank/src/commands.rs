@@ -57,10 +57,8 @@ impl chekov::command::Handler<OpenAccount, Account> for AccountValidator {
     ) -> BoxFuture<'static, Result<Vec<AccountOpened>, CommandExecutorError>> {
         async move {
             if state.status != AccountStatus::Initialized {
-                println!("Can't execute becoze state status is {:?}", state.status);
                 Err(CommandExecutorError::Any)
             } else {
-                println!("Executing !");
                 Account::execute(command, &state)
             }
         }

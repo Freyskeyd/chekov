@@ -45,6 +45,7 @@ pub async fn read_stream(
     .fetch_all(conn)
     .await
 }
+
 pub async fn stream_info(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_uuid: &str,

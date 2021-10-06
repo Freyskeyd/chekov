@@ -214,10 +214,10 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
                     type_id: std::any::TypeId::of::<#event>(),
                     applier: |aggregate: &mut #apply_to, event: chekov::RecordedEvent| -> Result<(), ApplyError> {
                         use chekov::Event;
+                        use std::convert::TryFrom;
                         use futures::TryFutureExt;
-                        use serde::Deserialize;
 
-                        let r = #event::deserialize(event.data).map_err(|_| ApplyError::Any)?;
+                        let r = #event::try_from(event).map_err(|_| ApplyError::Any)?;
                         aggregate.apply(&r)
                     }
                 }
@@ -300,9 +300,13 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
                     use chekov::Event;
                     use chekov::event::Handler;
                     use futures::TryFutureExt;
-                    use serde::Deserialize;
+                    use std::convert::TryFrom;
 
-                    let r = #event::deserialize(event.data).map_err(|_| ()).unwrap();
+                    let r = match #event::try_from(event) {
+                        Ok(result) => result,
+                        Err(_) => return async {Err(())}.boxed()
+                    };
+
                     handler.handle(&r)
                 }
             }

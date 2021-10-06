@@ -178,17 +178,19 @@ mod test {
 
     #[actix::test]
     async fn asking_for_stream_info() {
-        let (connection, stream) = init_with_stream("stream_name").await;
+        let identifier = Uuid::new_v4();
+        let (connection, mut stream) = init_with_stream(&identifier.to_string()).await;
 
         let result = connection
             .send(StreamInfo {
                 correlation_id: Uuid::new_v4(),
-                stream_uuid: "stream_name".into(),
+                stream_uuid: identifier.to_string(),
             })
             .await
             .unwrap();
 
         assert!(result.is_ok());
+        stream.stream_id = 1;
         assert_eq!(result.unwrap().into_owned(), stream);
     }
 

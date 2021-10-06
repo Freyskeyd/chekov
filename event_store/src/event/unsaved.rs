@@ -1,5 +1,6 @@
 use super::Event;
 use chrono::{DateTime, Utc};
+use serde_json::json;
 use uuid::Uuid;
 /// An `UnsavedEvent` is created from a type that implement Event
 ///
@@ -15,9 +16,9 @@ pub struct UnsavedEvent {
     /// Human readable event type
     pub(crate) event_type: String,
     /// Payload of this event
-    pub(crate) data: String,
+    pub(crate) data: serde_json::Value,
     /// Metadata defined for this event
-    pub(crate) metadata: String,
+    pub(crate) metadata: serde_json::Value,
     pub(crate) event_uuid: Uuid,
     pub(crate) stream_uuid: String,
     pub(crate) stream_version: i64,
@@ -43,8 +44,8 @@ impl UnsavedEvent {
             causation_id: None,
             correlation_id: None,
             event_type: event.event_type().to_owned(),
-            data: serde_json::to_string(&event)?,
-            metadata: String::from("{}"),
+            data: serde_json::to_value(&event)?,
+            metadata: json!({}),
             event_uuid: Uuid::new_v4(),
             stream_uuid: String::new(),
             stream_version: 0,
@@ -96,8 +97,8 @@ mod test {
                 assert!(unsaved.correlation_id.is_none());
                 assert_eq!(unsaved.event_type, "MyEvent");
                 assert_eq!(unsaved.event_type, event.event_type());
-                assert_eq!(unsaved.data, "\"Hello\"");
-                assert_eq!(unsaved.metadata, "{}");
+                assert_eq!(unsaved.data, serde_json::Value::String("Hello".into()));
+                assert_eq!(unsaved.metadata, json!({}));
                 unsaved
             }
             Err(_) => panic!("Couldnt convert into UnsavedEvent"),
@@ -108,7 +109,7 @@ mod test {
             correlation_id: None,
             event_type: "MyEvent".into(),
             data: "\"Hello\"".into(),
-            metadata: String::new(),
+            metadata: json!({}),
             event_uuid: Uuid::new_v4(),
             stream_uuid: String::new(),
             stream_version: 0,

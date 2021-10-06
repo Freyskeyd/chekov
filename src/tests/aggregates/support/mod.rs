@@ -25,7 +25,7 @@ impl CommandExecutor<ValidCommand> for ExampleAggregate {
 }
 
 impl CommandExecutor<InvalidCommand> for ExampleAggregate {
-    fn execute(_cmd: InvalidCommand, _: &Self) -> ExecutionResult<MyEvent> {
+    fn execute(_cmd: InvalidCommand, _: &Self) -> ExecutionResult<InvalidEvent> {
         ExecutionResult::Err(CommandExecutorError::Any)
     }
 }
@@ -43,6 +43,13 @@ impl EventApplier<ItemAppended> for ExampleAggregate {
 
         self.last_index = self.items.len() - 1;
         Ok(())
+    }
+}
+
+#[crate::applier]
+impl EventApplier<InvalidEvent> for ExampleAggregate {
+    fn apply(&mut self, _event: &InvalidEvent) -> Result<(), ApplyError> {
+        Err(ApplyError::Any)
     }
 }
 
@@ -65,14 +72,14 @@ impl Command for ValidCommand {
     type CommandHandler = NoHandler;
 
     fn identifier(&self) -> String {
-        "example_aggregate".to_string()
+        self.0.to_string()
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct InvalidCommand(pub(crate) Uuid);
 impl Command for InvalidCommand {
-    type Event = MyEvent;
+    type Event = InvalidEvent;
 
     type Executor = ExampleAggregate;
 
@@ -81,12 +88,12 @@ impl Command for InvalidCommand {
     type CommandHandler = NoHandler;
 
     fn identifier(&self) -> String {
-        "example_aggregate".to_string()
+        self.0.to_string()
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct AppendItem(pub(crate) i64);
+pub(crate) struct AppendItem(pub(crate) i64, pub(crate) Uuid);
 
 impl Command for AppendItem {
     type Event = ItemAppended;
@@ -98,16 +105,20 @@ impl Command for AppendItem {
     type CommandHandler = NoHandler;
 
     fn identifier(&self) -> String {
-        "example_aggregate".to_string()
+        self.1.to_string()
     }
 }
 
 #[derive(Clone, Debug, crate::Event, Deserialize, Serialize)]
-pub(crate) struct ItemAppended(i64);
+pub(crate) struct ItemAppended(pub(crate) i64);
 
 #[derive(Clone, PartialEq, Debug, crate::Event, Deserialize, Serialize)]
 #[event(event_type = "MyEvent")]
 pub(crate) struct MyEvent {}
+
+#[derive(Clone, PartialEq, Debug, crate::Event, Deserialize, Serialize)]
+#[event(event_type = "InvalidEvent")]
+pub(crate) struct InvalidEvent {}
 
 #[macro_export]
 macro_rules! assert_aggregate_version {

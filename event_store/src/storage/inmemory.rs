@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct InMemoryBackend {
+    stream_counter: usize,
     streams: HashMap<String, Stream>,
     events: HashMap<String, Vec<RecordedEvent>>,
 }
@@ -32,7 +33,7 @@ impl Storage for InMemoryBackend {
     #[tracing::instrument(name = "InMemoryBackend::CreateStream", skip(self, stream))]
     fn create_stream(
         &mut self,
-        stream: Stream,
+        mut stream: Stream,
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>> {
         trace!("Attempting to create stream {}", stream.stream_uuid());
@@ -42,6 +43,9 @@ impl Storage for InMemoryBackend {
         if self.streams.contains_key(&stream_uuid) {
             return Box::pin(async move { Err(StorageError::StreamAlreadyExists) });
         }
+
+        self.stream_counter += 1;
+        stream.stream_id = self.stream_counter as i64;
 
         self.streams.insert(stream_uuid.clone(), stream);
         self.events.insert(stream_uuid.clone(), Vec::new());
@@ -124,8 +128,15 @@ impl Storage for InMemoryBackend {
                 })
                 .collect();
 
+            if let Some(s) = self.streams.get_mut(stream_uuid) {
+                s.stream_version += re.len() as i64;
+            } else {
+                return Box::pin(async move { Err(StorageError::StreamDoesntExists) });
+            }
+
             let events = re.clone();
             e.append(&mut re);
+
             debug!(
                 "Successfully append {} event(s) to {}",
                 events.len(),
