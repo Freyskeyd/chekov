@@ -33,6 +33,7 @@ where
 pub struct ApplicationBuilder<A: Application> {
     app: std::marker::PhantomData<A>,
     storage: Pin<Box<dyn Future<Output = A::Storage>>>,
+    event_bus: Pin<Box<dyn Future<Output = A::EventBus>>>,
     event_handlers: Vec<Pin<Box<dyn Future<Output = ()>>>>,
     listener_url: Option<String>,
 }
@@ -44,6 +45,7 @@ impl<A: Application> std::default::Default for ApplicationBuilder<A> {
             event_handlers: Vec::new(),
             app: std::marker::PhantomData,
             storage: Box::pin(async { A::Storage::default() }),
+            event_bus: Box::pin(async { A::EventBus::default() }),
         }
     }
 }
@@ -87,6 +89,18 @@ where
         self
     }
 
+    /// Adds a preconfigured EventBus.
+    /// The event bus isn't start, only when the application is launched.
+    pub fn event_bus<F: Future<Output = Result<A::EventBus, E>> + 'static, E: std::fmt::Debug>(
+        mut self,
+        event_bus: F,
+    ) -> Self {
+        self.event_bus =
+            Box::pin(async move { event_bus.await.expect("Unable to connect the event bus") });
+
+        self
+    }
+
     /// Launch the application
     ///
     /// Meaning that:
@@ -102,8 +116,11 @@ where
         );
 
         let storage: A::Storage = self.storage.await;
+        let event_bus: A::EventBus = self.event_bus.await;
+
         let event_store: event_store::EventStore<A::Storage> = event_store::EventStore::builder()
             .storage(storage)
+            .event_bus(event_bus)
             .build()
             .await
             .unwrap();

@@ -26,6 +26,7 @@
 //! // eventbus's event with the `DefaultEventResolver`.
 //! impl chekov::Application for DefaultApp {
 //!     type Storage = chekov::prelude::PostgresBackend;
+//!     type EventBus = chekov::prelude::PostgresEventBus;
 //! }
 //! ```
 //!

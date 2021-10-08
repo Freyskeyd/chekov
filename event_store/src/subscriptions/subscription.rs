@@ -1,20 +1,23 @@
-use super::SubscriptionOptions;
+use std::sync::{Arc, Mutex};
+
 use super::{
     fsm::SubscriptionFSM,
     supervisor::{Down, GoingDown, Started, SubscriptionsSupervisor},
 };
-use crate::prelude::RecordedEvents;
+use super::{SubscriptionNotification, SubscriptionOptions};
 use crate::Storage;
 use actix::prelude::*;
 use tracing::debug;
 
 #[derive(Debug, Message)]
 #[rtype("()")]
-struct Connect(pub Recipient<RecordedEvents>, SubscriptionOptions);
+struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
+
+#[derive(Debug)]
 pub struct Subscription<S: Storage> {
     stream_uuid: String,
     subscription_name: String,
-    subscription: SubscriptionFSM,
+    subscription: Arc<Mutex<SubscriptionFSM>>,
     retry_interval: usize,
     supervisor: Addr<SubscriptionsSupervisor<S>>,
 }
@@ -37,21 +40,28 @@ impl<S: Storage> Actor for Subscription<S> {
     }
 }
 
-impl<S: Storage> Handler<Connect> for Subscription<S> {
-    type Result = ();
+impl<S: Storage> Subscription<S> {}
 
-    fn handle(&mut self, msg: Connect, ctx: &mut Self::Context) -> Self::Result {
+impl<S: Storage> Handler<Connect> for Subscription<S> {
+    type Result = ResponseActFuture<Self, ()>;
+
+    fn handle(&mut self, msg: Connect, _ctx: &mut Self::Context) -> Self::Result {
         debug!(
             "{} attempting to connect subscriber {:?}",
-            self.subscription_name, msg
+            self.subscription_name, msg.1.stream_uuid
         );
 
+        let state = self.subscription.lock().unwrap();
         // Ensure not already subscribe
-        if self.subscription.has_subscriber(&msg.0) {
-            return;
+        if state.has_subscriber() {
+            return Box::pin(async {}.into_actor(self));
         }
 
+        let recipient = msg.0.clone();
+        let fsm = self.subscription.clone();
         let fut = async move {
+            fsm.lock().unwrap().connect_subscriber(&recipient).await;
+
             // subscription.connect_subscriber(&msg.0);
             // subscription.subscribe();
             // subscription
@@ -61,7 +71,7 @@ impl<S: Storage> Handler<Connect> for Subscription<S> {
             // actor.subscription = res;
         });
 
-        ctx.wait(fut);
+        Box::pin(fut)
     }
 }
 
@@ -75,7 +85,7 @@ impl<S: Storage> Subscription<S> {
         let subscription = Self {
             stream_uuid: options.stream_uuid.clone(),
             subscription_name: options.subscription_name.clone(),
-            subscription: SubscriptionFSM::default(),
+            subscription: Arc::new(Mutex::new(SubscriptionFSM::default())),
             retry_interval: 1_000,
             supervisor,
         };
@@ -85,7 +95,7 @@ impl<S: Storage> Subscription<S> {
 
     pub async fn connect(
         addr: &Addr<Self>,
-        recipient: &Recipient<RecordedEvents>,
+        recipient: &Recipient<SubscriptionNotification>,
         options: &SubscriptionOptions,
     ) -> Result<(), ()> {
         let _ = addr.send(Connect(recipient.clone(), options.clone())).await;
@@ -98,11 +108,19 @@ impl<S: Storage> Subscription<S> {
 mod test {
 
     use super::*;
-    use crate::prelude::InMemoryBackend;
+    use crate::{event::RecordedEvents, prelude::InMemoryBackend};
 
     struct Dummy {}
     impl Actor for Dummy {
         type Context = Context<Self>;
+    }
+
+    impl Handler<SubscriptionNotification> for Dummy {
+        type Result = Result<(), ()>;
+
+        fn handle(&mut self, _: SubscriptionNotification, _: &mut Self::Context) -> Self::Result {
+            Ok(())
+        }
     }
 
     impl Handler<RecordedEvents> for Dummy {

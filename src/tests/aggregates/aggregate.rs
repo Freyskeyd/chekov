@@ -169,6 +169,7 @@ async fn can_execute_a_command() {
     );
 }
 
+#[allow(dead_code)]
 async fn start_context(identity: Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
     start_application().await;
     start_aggregate(identity).await
@@ -177,6 +178,7 @@ async fn start_context(identity: Uuid) -> Addr<AggregateInstance<ExampleAggregat
 async fn start_application() {
     MyApplication::with_default()
         .storage(event_store::prelude::InMemoryBackend::initiate())
+        .event_bus(event_store::prelude::InMemoryEventBus::initiate())
         .launch()
         .await;
 }

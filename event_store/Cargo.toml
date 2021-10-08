@@ -22,6 +22,7 @@ chrono = { version = "0.4.19", features = ["serde"] }
 
 tracing = "0.1.28"
 tracing-futures = "0.2.5"
+async-stream = "0.3"
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"

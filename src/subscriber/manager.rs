@@ -2,7 +2,7 @@ use super::{EventNotification, Listener};
 use crate::event::handler::Subscribe;
 use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
-use actix::{Actor, Handler, Supervised, SystemService};
+use actix::{Actor, Handler, ResponseActFuture, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use event_store::prelude::RecordedEvent;
 use std::collections::BTreeMap;
@@ -79,9 +79,28 @@ impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
 }
 
 impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
-    type Result = ();
-    fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) {
+    type Result = ResponseActFuture<Self, ()>;
+
+    fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
+        let stream_uuid = subscription.0.to_string();
+        let subscription_name = format!("subscription-{}", subscription.0.clone());
+        let recipient = subscription.2.clone();
+
         self.add_sub(&subscription.0, subscription.1);
+
+        Box::pin(
+            async {
+                let _ = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
+                    recipient,
+                    event_store::prelude::SubscriptionOptions {
+                        stream_uuid,
+                        subscription_name,
+                    },
+                )
+                .await;
+            }
+            .into_actor(self),
+        )
     }
 }
 

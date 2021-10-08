@@ -45,6 +45,7 @@
 //! #
 //! # impl chekov::Application for DefaultApp {
 //! #     type Storage = PostgresBackend;
+//! #     type EventBus = PostgresEventBus;
 //! # }
 //! #
 //! # #[derive(Clone, Message, Debug, chekov::Event, Deserialize, Serialize)]
@@ -102,7 +103,7 @@ use crate::message::ResolveAndApplyMany;
 use crate::{event::handler::Subscribe, prelude::ApplyError, Application};
 use actix::AsyncContext;
 use actix::SystemService;
-use event_store::prelude::RecordedEvent;
+use event_store::prelude::{RecordedEvent, SubscriptionNotification};
 
 #[doc(hidden)]
 pub mod resolver;
@@ -149,7 +150,8 @@ pub trait Aggregate: Send + Clone + Default + std::marker::Unpin + 'static {
     ) {
         let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
         let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
-        broker.do_send(Subscribe(stream.into(), recipient));
+        let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
+        broker.do_send(Subscribe(stream.into(), recipient, recipient_sub));
     }
 }
 

@@ -1,12 +1,17 @@
 use crate::event::RecordedEvent;
 use crate::event::UnsavedEvent;
+use crate::event_bus::EventBusMessage;
 use crate::stream::Stream;
 use futures::Future;
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 /// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`
 pub trait Storage: std::fmt::Debug + Default + Send + std::marker::Unpin + 'static {
     fn storage_name() -> &'static str;
+
+    #[doc(hidden)]
+    fn direct_channel(&mut self, _notifier: mpsc::UnboundedSender<EventBusMessage>) {}
     /// Create a new stream with an identifier
     ///
     /// # Errors

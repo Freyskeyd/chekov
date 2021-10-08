@@ -8,6 +8,7 @@ use event_store::prelude::Stream;
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresBackend;
+pub use event_store::prelude::PostgresEventBus;
 
 pub(crate) struct EventStore<A: Application> {
     pub(crate) addr: Addr<event_store::EventStore<A::Storage>>,

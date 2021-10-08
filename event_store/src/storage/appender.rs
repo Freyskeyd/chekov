@@ -47,6 +47,7 @@ use uuid::Uuid;
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let es = EventStore::builder()
 /// #   .storage(InMemoryBackend::default())
+/// #   .event_bus(InMemoryEventBus::default())
 /// #   .build()
 /// #   .await
 /// #   .unwrap()
@@ -289,7 +290,7 @@ pub struct AppendToStreamRequest {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::storage::inmemory::InMemoryBackend;
+    use crate::{prelude::PostgresEventBus, storage::inmemory::InMemoryBackend};
     use uuid::Uuid;
 
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -335,6 +336,13 @@ mod test {
     async fn that_an_appender_can_be_executed() -> Result<(), EventStoreError> {
         let es = EventStore::builder()
             .storage(InMemoryBackend::default())
+            .event_bus(
+                PostgresEventBus::initiate(
+                    "postgresql://postgres:postgres@localhost/event_store_gift_shop".into(),
+                )
+                .await
+                .unwrap(),
+            )
             .build()
             .await
             .unwrap();

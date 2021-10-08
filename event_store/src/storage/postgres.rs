@@ -1,5 +1,4 @@
-use crate::event::RecordedEvent;
-use crate::event::UnsavedEvent;
+use crate::event::{RecordedEvent, UnsavedEvent};
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use futures::Future;

@@ -1,11 +1,12 @@
+use crate::event_bus::OpenNotificationChannel;
 use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
 use actix::WrapFuture;
 use actix::{Actor, Context, Handler};
 use std::borrow::Cow;
 use std::str::FromStr;
+use tracing::trace;
 use tracing::Instrument;
-use tracing::{debug, trace};
 use uuid::Uuid;
 
 mod messaging;
@@ -27,7 +28,15 @@ impl<S: Storage> Actor for Connection<S> {
 
     #[tracing::instrument(name = "Connection", skip(self, _ctx), fields(backend = %S::storage_name()))]
     fn started(&mut self, _ctx: &mut Self::Context) {
-        debug!("Starting with {} storage", S::storage_name());
+        trace!("Starting with {} storage", S::storage_name());
+    }
+}
+
+impl<S: Storage> Handler<OpenNotificationChannel> for Connection<S> {
+    type Result = ();
+
+    fn handle(&mut self, msg: OpenNotificationChannel, _ctx: &mut Self::Context) -> Self::Result {
+        self.storage.direct_channel(msg.sender);
     }
 }
 

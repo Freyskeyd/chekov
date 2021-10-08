@@ -26,6 +26,7 @@ struct DefaultApp {}
 
 impl Application for DefaultApp {
     type Storage = PostgresBackend;
+    type EventBus = PostgresEventBus;
 }
 
 #[actix::main]

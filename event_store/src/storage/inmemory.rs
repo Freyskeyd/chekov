@@ -2,13 +2,16 @@
 #![allow(unused_braces)]
 
 use crate::event::RecordedEvent;
+use crate::event::RecordedEvents;
 use crate::event::UnsavedEvent;
+use crate::event_bus::EventBusMessage;
 use crate::storage::{Storage, StorageError};
 use crate::stream::Stream;
 use chrono::Utc;
 use futures::Future;
 use futures::FutureExt;
 use std::collections::HashMap;
+use tokio::sync::mpsc;
 use tracing::{debug, trace};
 use uuid::Uuid;
 
@@ -17,6 +20,7 @@ pub struct InMemoryBackend {
     stream_counter: usize,
     streams: HashMap<String, Stream>,
     events: HashMap<String, Vec<RecordedEvent>>,
+    notifier: Option<mpsc::UnboundedSender<EventBusMessage>>,
 }
 
 impl InMemoryBackend {
@@ -28,6 +32,10 @@ impl InMemoryBackend {
 impl Storage for InMemoryBackend {
     fn storage_name() -> &'static str {
         "InMemory"
+    }
+
+    fn direct_channel(&mut self, notifier: mpsc::UnboundedSender<EventBusMessage>) {
+        self.notifier = Some(notifier);
     }
 
     #[tracing::instrument(name = "InMemoryBackend::CreateStream", skip(self, stream))]
@@ -143,7 +151,15 @@ impl Storage for InMemoryBackend {
                 stream_uuid
             );
 
-            Box::pin(async move { Ok(events.iter().map(|e| e.event_uuid).collect()) })
+            let notifier = self.notifier.clone();
+
+            Box::pin(async move {
+                let ids = events.iter().map(|e| e.event_uuid).collect();
+                if let Some(n) = notifier {
+                    let _ = n.send(EventBusMessage::Events(RecordedEvents { events }));
+                }
+                Ok(ids)
+            })
         } else {
             Box::pin(async move { Err(StorageError::StreamDoesntExists) })
         }

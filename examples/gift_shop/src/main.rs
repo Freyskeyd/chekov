@@ -27,6 +27,7 @@ struct DefaultApp {}
 
 impl Application for DefaultApp {
     type Storage = PostgresBackend;
+    type EventBus = PostgresEventBus;
 }
 
 #[actix::main]
@@ -51,6 +52,9 @@ async fn main() -> std::io::Result<()> {
         })
         .storage(PostgresBackend::with_url(
             "postgresql://postgres:postgres@localhost/event_store_gift_shop",
+        ))
+        .event_bus(PostgresEventBus::initiate(
+            "postgresql://postgres:postgres@localhost/event_store_gift_shop".into(),
         ))
         .launch()
         .await;

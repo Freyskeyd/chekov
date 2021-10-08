@@ -5,10 +5,10 @@ use super::SubscriptionOptions;
 use crate::Storage;
 use actix::prelude::*;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SubscriptionsSupervisor<S: Storage> {
     _storage: PhantomData<S>,
-    subsctions: Vec<Addr<Subscription<S>>>,
+    subscriptions: Vec<Addr<Subscription<S>>>,
 }
 
 impl<S: Storage> Actor for SubscriptionsSupervisor<S> {
@@ -42,7 +42,7 @@ impl<S: Storage> Handler<CreateSubscription<S>> for SubscriptionsSupervisor<S> {
     fn handle(&mut self, msg: CreateSubscription<S>, ctx: &mut Self::Context) -> Self::Result {
         let addr = Subscription::start_with_options(&msg.0, ctx.address());
 
-        self.subsctions.push(addr.clone());
+        self.subscriptions.push(addr.clone());
 
         MessageResult(addr)
     }

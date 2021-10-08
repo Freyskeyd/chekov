@@ -1,6 +1,7 @@
-use crate::prelude::RecordedEvents;
+use crate::event::RecordedEvent;
 use crate::Storage;
 use actix::Addr;
+use actix::Message;
 use actix::Recipient;
 use std::marker::PhantomData;
 
@@ -10,8 +11,11 @@ mod subscriber;
 mod subscription;
 mod supervisor;
 
-use subscription::Subscription;
-use supervisor::SubscriptionsSupervisor;
+#[cfg(test)]
+mod test;
+
+pub use self::subscription::Subscription;
+pub use supervisor::SubscriptionsSupervisor;
 
 ///
 /// Subscribe to a stream start a subscription in the superviseur
@@ -27,13 +31,20 @@ pub struct Subscriptions<S: Storage> {
 
 #[derive(Default, Debug, Clone)]
 pub struct SubscriptionOptions {
-    stream_uuid: String,
-    subscription_name: String,
+    pub stream_uuid: String,
+    pub subscription_name: String,
+}
+
+#[derive(Debug, Message)]
+#[rtype(result = "Result<(), ()>")]
+pub enum SubscriptionNotification {
+    Events(Vec<RecordedEvent>),
+    Subscribed,
 }
 
 impl<S: Storage> Subscriptions<S> {
     pub async fn subscribe_to_stream(
-        subscriber: Recipient<RecordedEvents>,
+        subscriber: Recipient<SubscriptionNotification>,
         options: SubscriptionOptions,
     ) -> Result<Addr<Subscription<S>>, ()> {
         match SubscriptionsSupervisor::<S>::start_subscription(&options).await {

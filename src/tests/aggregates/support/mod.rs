@@ -1,6 +1,6 @@
 use crate as chekov;
 use crate::prelude::*;
-use event_store::prelude::InMemoryBackend;
+use event_store::{prelude::InMemoryBackend, prelude::InMemoryEventBus};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,6 +9,7 @@ pub(crate) struct MyApplication {}
 
 impl Application for MyApplication {
     type Storage = InMemoryBackend;
+    type EventBus = InMemoryEventBus;
 }
 
 #[derive(Clone, Aggregate, Default, Debug)]
