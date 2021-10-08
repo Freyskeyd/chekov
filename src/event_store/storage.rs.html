@@ -72,16 +72,26 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::UnsavedEvent</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::EventBusMessage</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
+<span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="doccomment">/// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Storage</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="kw">fn</span> <span class="ident">storage_name</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">direct_channel</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_notifier</span>: <span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span><span class="op">&gt;</span>) {}
     <span class="doccomment">/// Create a new stream with an identifier</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Errors</span>

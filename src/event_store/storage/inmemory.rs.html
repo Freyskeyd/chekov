@@ -179,18 +179,37 @@
 <span id="179">179</span>
 <span id="180">180</span>
 <span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
 </pre><pre class="rust">
 <span class="comment">// TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_braces</span>)]</span>
 
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::RecordedEvent</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::RecordedEvents</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event::UnsavedEvent</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::EventBusMessage</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::storage</span>::{<span class="ident">Storage</span>, <span class="ident">StorageError</span>};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">futures::FutureExt</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
+<span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
@@ -199,6 +218,7 @@
     <span class="ident">stream_counter</span>: <span class="ident">usize</span>,
     <span class="ident">streams</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Stream</span><span class="op">&gt;</span>,
     <span class="ident">events</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">notifier</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">InMemoryBackend</span> {
@@ -210,6 +230,10 @@
 <span class="kw">impl</span> <span class="ident">Storage</span> <span class="kw">for</span> <span class="ident">InMemoryBackend</span> {
     <span class="kw">fn</span> <span class="ident">storage_name</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
         <span class="string">&quot;InMemory&quot;</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">direct_channel</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">notifier</span>: <span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span><span class="op">&gt;</span>) {
+        <span class="self">self</span>.<span class="ident">notifier</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">notifier</span>);
     }
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;InMemoryBackend::CreateStream&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">stream</span>))]</span>
@@ -325,7 +349,15 @@
                 <span class="ident">stream_uuid</span>
             );
 
-            <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(<span class="ident">events</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">event_uuid</span>).<span class="ident">collect</span>()) })
+            <span class="kw">let</span> <span class="ident">notifier</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">notifier</span>.<span class="ident">clone</span>();
+
+            <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> {
+                <span class="kw">let</span> <span class="ident">ids</span> <span class="op">=</span> <span class="ident">events</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">event_uuid</span>).<span class="ident">collect</span>();
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">n</span>) <span class="op">=</span> <span class="ident">notifier</span> {
+                    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">n</span>.<span class="ident">send</span>(<span class="ident">EventBusMessage::Events</span>(<span class="ident">RecordedEvents</span> { <span class="ident">events</span> }));
+                }
+                <span class="prelude-val">Ok</span>(<span class="ident">ids</span>)
+            })
         } <span class="kw">else</span> {
             <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Err</span>(<span class="ident">StorageError::StreamDoesntExists</span>) })
         }

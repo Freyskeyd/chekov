@@ -253,15 +253,25 @@
 <span id="253">253</span>
 <span id="254">254</span>
 <span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
 </pre><pre class="rust">
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::OpenNotificationChannel</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::RecordedEvent</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">storage::Storage</span>, <span class="ident">stream::Stream</span>, <span class="ident">EventStoreError</span>};
 <span class="kw">use</span> <span class="ident">actix::WrapFuture</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>};
 <span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">tracing::Instrument</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">mod</span> <span class="ident">messaging</span>;
@@ -283,7 +293,15 @@
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;Connection&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">_ctx</span>), <span class="ident">fields</span>(<span class="ident">backend</span> <span class="op">=</span> <span class="op">%</span><span class="ident">S::storage_name</span>()))]</span>
     <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {
-        <span class="macro">debug!</span>(<span class="string">&quot;Starting with {} storage&quot;</span>, <span class="ident">S::storage_name</span>());
+        <span class="macro">trace!</span>(<span class="string">&quot;Starting with {} storage&quot;</span>, <span class="ident">S::storage_name</span>());
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">OpenNotificationChannel</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> ();
+
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">OpenNotificationChannel</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
+        <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">direct_channel</span>(<span class="ident">msg</span>.<span class="ident">sender</span>);
     }
 }
 

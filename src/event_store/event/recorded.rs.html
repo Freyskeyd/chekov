@@ -103,7 +103,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RecordedEvents</span> {
-    <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RecordedEventError</span> {

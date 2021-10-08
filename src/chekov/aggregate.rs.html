@@ -155,6 +155,8 @@
 <span id="155">155</span>
 <span id="156">156</span>
 <span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
 </pre><pre class="rust">
 <span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
@@ -203,6 +205,7 @@
 <span class="doccomment">//! #</span>
 <span class="doccomment">//! # impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">//! #     type Storage = PostgresBackend;</span>
+<span class="doccomment">//! #     type EventBus = PostgresEventBus;</span>
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! #</span>
 <span class="doccomment">//! # #[derive(Clone, Message, Debug, chekov::Event, Deserialize, Serialize)]</span>
@@ -260,7 +263,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::Subscribe</span>, <span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
 <span class="kw">use</span> <span class="ident">actix::AsyncContext</span>;
 <span class="kw">use</span> <span class="ident">actix::SystemService</span>;
-<span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
+<span class="kw">use</span> <span class="ident">event_store::prelude</span>::{<span class="ident">RecordedEvent</span>, <span class="ident">SubscriptionNotification</span>};
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">resolver</span>;
@@ -307,7 +310,8 @@
     ) {
         <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
         <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>();
-        <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">stream</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>));
+        <span class="kw">let</span> <span class="ident">recipient_sub</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>();
+        <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">stream</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>, <span class="ident">recipient_sub</span>));
     }
 }
 

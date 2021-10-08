@@ -91,10 +91,10 @@
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Storage</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SubscriptionsSupervisor</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {
     <span class="ident">_storage</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
-    <span class="ident">subsctions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Subscription</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">subscriptions</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Subscription</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">Actor</span> <span class="kw">for</span> <span class="ident">SubscriptionsSupervisor</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
@@ -128,7 +128,7 @@
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">CreateSubscription</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">Subscription::start_with_options</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="number">0</span>, <span class="ident">ctx</span>.<span class="ident">address</span>());
 
-        <span class="self">self</span>.<span class="ident">subsctions</span>.<span class="ident">push</span>(<span class="ident">addr</span>.<span class="ident">clone</span>());
+        <span class="self">self</span>.<span class="ident">subscriptions</span>.<span class="ident">push</span>(<span class="ident">addr</span>.<span class="ident">clone</span>());
 
         <span class="ident">MessageResult</span>(<span class="ident">addr</span>)
     }

@@ -106,6 +106,7 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
+<span id="109">109</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::application::Application</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message</span>::{<span class="ident">ExecuteAppender</span>, <span class="ident">ExecuteReader</span>, <span class="ident">ExecuteStreamInfo</span>};
@@ -117,6 +118,7 @@
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresBackend</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresEventBus</span>;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">addr</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">event_store::EventStore</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span>,

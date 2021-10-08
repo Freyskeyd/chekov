@@ -114,12 +114,55 @@
 <span id="114">114</span>
 <span id="115">115</span>
 <span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::message::ResolveAndApplyMany</span>;
-<span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">tracing::trace</span>;
-
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Application</span>;
+<span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">event_store::prelude::SubscriptionNotification</span>;
+<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventHandlerBuilder</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">handler</span>: <span class="ident">E</span>,
@@ -160,24 +203,29 @@
         <span class="ident">event</span>: <span class="ident">event_store::prelude::RecordedEvent</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">listen</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
-        <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>();
-        <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="string">&quot;$all&quot;</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>));
+    <span class="kw">fn</span> <span class="ident">listen</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
+        <span class="comment">// let broker = crate::subscriber::SubscriberManager::&lt;A&gt;::from_registry();</span>
+        <span class="comment">// let recipient = ctx.address().recipient::&lt;ResolveAndApplyMany&gt;();</span>
+        <span class="comment">// let recipient_event = ctx.address().recipient::&lt;SubscriptionNotification&gt;();</span>
+        <span class="comment">// broker.do_send(Subscribe(&quot;$all&quot;.into(), recipient, recipient_event));</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">started</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>)
+    <span class="kw">fn</span> <span class="ident">started</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>)
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">EventHandler</span>,
     {
-        <span class="self">self</span>.<span class="ident">listen</span>(<span class="ident">ctx</span>);
+        <span class="comment">// self.listen(ctx);</span>
     }
 }
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;()&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Subscribe</span>(<span class="kw">pub</span> <span class="ident">String</span>, <span class="kw">pub</span> <span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Subscribe</span>(
+    <span class="kw">pub</span> <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>,
+);
 
 <span class="doccomment">/// Deals with the lifetime of a particular EventHandler</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> {
@@ -205,28 +253,66 @@
     <span class="kw">type</span> <span class="ident">Context</span> <span class="op">=</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) {
+        <span class="kw">let</span> <span class="ident">fut</span> <span class="op">=</span> <span class="ident">event_store::prelude::Subscriptions</span>::<span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="ident">::subscribe_to_stream</span>(
+            <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>(),
+            <span class="ident">event_store::prelude::SubscriptionOptions</span> {
+                <span class="ident">stream_uuid</span>: <span class="self">self</span>.<span class="ident">_name</span>.<span class="ident">to_owned</span>(),
+                <span class="ident">subscription_name</span>: <span class="self">self</span>.<span class="ident">_name</span>.<span class="ident">to_owned</span>(),
+            },
+        );
+
+        <span class="ident">ctx</span>.<span class="ident">wait</span>(<span class="ident">fut</span>.<span class="ident">into_actor</span>(<span class="self">self</span>).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> ()));
+
         <span class="ident">EventHandler::started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">handler</span>, <span class="ident">ctx</span>);
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> <span class="ident">::actix::Handler</span><span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>
+<span class="comment">// impl&lt;A: Application, E: EventHandler&gt; ::actix::Handler&lt;ResolveAndApplyMany&gt;</span>
+<span class="comment">//     for EventHandlerInstance&lt;A, E&gt;</span>
+<span class="comment">// {</span>
+<span class="comment">//     type Result = ResponseActFuture&lt;Self, Result&lt;(), ()&gt;&gt;;</span>
+
+<span class="comment">//     #[tracing::instrument(name = &quot;EventHandlerInstance&quot;, skip(self, msg, _ctx))]</span>
+<span class="comment">//     fn handle(&amp;mut self, msg: ResolveAndApplyMany, _ctx: &amp;mut Self::Context) -&gt; Self::Result {</span>
+<span class="comment">//         let mut handler = self.handler.clone();</span>
+<span class="comment">//         let events = msg.0;</span>
+
+<span class="comment">//         let fut = async move {</span>
+<span class="comment">//             for event in events {</span>
+<span class="comment">//                 EventHandler::handle_recorded_event(&amp;mut handler, event).await?;</span>
+<span class="comment">//             }</span>
+<span class="comment">//             Ok(())</span>
+<span class="comment">//         }</span>
+<span class="comment">//         .into_actor(self)</span>
+<span class="comment">//         .map(|_res: Result&lt;(), ()&gt;, _actor, _ctx| Ok(()));</span>
+
+<span class="comment">//         Box::pin(fut)</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span>
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span>, <span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> <span class="ident">::actix::Handler</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>
     <span class="kw">for</span> <span class="ident">EventHandlerInstance</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="ident">E</span><span class="op">&gt;</span>
 {
     <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventHandlerInstance&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">msg</span>, <span class="ident">_ctx</span>))]</span>
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">ResolveAndApplyMany</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handler</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">handler</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">msg</span>.<span class="number">0</span>;
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">SubscriptionNotification</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
+        <span class="kw">let</span> <span class="ident">fut</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">msg</span> {
+            <span class="ident">SubscriptionNotification::Events</span>(<span class="ident">events</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handler</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">handler</span>.<span class="ident">clone</span>();
+                <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">events</span>;
 
-        <span class="kw">let</span> <span class="ident">fut</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {
-            <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">events</span> {
-                <span class="ident">EventHandler::handle_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">handler</span>, <span class="ident">event</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+                <span class="kw">async</span> <span class="kw">move</span> {
+                    <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">events</span> {
+                        <span class="ident">EventHandler::handle_recorded_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">handler</span>, <span class="ident">event</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+                    }
+                    <span class="prelude-val">Ok</span>(())
+                }
+                .<span class="ident">into_actor</span>(<span class="self">self</span>)
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">_res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span>, <span class="ident">_actor</span>, <span class="ident">_ctx</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()))
             }
-            <span class="prelude-val">Ok</span>(())
-        }
-        .<span class="ident">into_actor</span>(<span class="self">self</span>)
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">_res</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span>, <span class="ident">_actor</span>, <span class="ident">_ctx</span><span class="op">|</span> <span class="prelude-val">Ok</span>(()));
+            <span class="ident">SubscriptionNotification::Subscribed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">todo!</span>(),
+        };
 
         <span class="ident">Box::pin</span>(<span class="ident">fut</span>)
     }

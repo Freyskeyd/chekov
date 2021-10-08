@@ -9,17 +9,51 @@
 <span id="9"> 9</span>
 <span id="10">10</span>
 <span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::prelude::RecordedEvents</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
+
+<span class="kw">use</span> <span class="kw">super</span><span class="ident">::SubscriptionNotification</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Subscriber</span> {
-    <span class="kw">pub</span> <span class="ident">recipient</span>: <span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">RecordedEvents</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">recipient</span>: <span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Actor</span> <span class="kw">for</span> <span class="ident">Subscriber</span> {
     <span class="kw">type</span> <span class="ident">Context</span> <span class="op">=</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
+}
+
+<span class="kw">impl</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Subscriber</span> {
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="op">&lt;</span><span class="ident">SubscriptionNotification</span> <span class="kw">as</span> <span class="ident">Message</span><span class="op">&gt;</span><span class="ident">::Result</span><span class="op">&gt;</span>;
+
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">SubscriptionNotification</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Result</span> {
+        <span class="ident">Box::pin</span>(
+            <span class="self">self</span>.<span class="ident">recipient</span>
+                .<span class="ident">send</span>(<span class="ident">msg</span>)
+                .<span class="ident">into_actor</span>(<span class="self">self</span>)
+                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">res</span>, <span class="kw">_</span>, <span class="kw">_</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">res</span> {
+                    <span class="prelude-val">Ok</span>(<span class="ident">r</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">r</span>,
+                    <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(()),
+                }),
+        )
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="event_store" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
