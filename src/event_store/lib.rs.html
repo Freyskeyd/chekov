@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `event_store&#x2F;src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../event_store/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `event_store&#x2F;src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../event_store/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -214,9 +214,7 @@
 <span id="214">214</span>
 <span id="215">215</span>
 <span id="216">216</span>
-<span id="217">217</span>
-</pre><pre class="rust">
-<span class="attribute">#![<span class="ident">warn</span>(
+</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
     <span class="ident">clippy::pedantic</span>,
     <span class="ident">clippy::nursery</span>,
@@ -252,7 +250,7 @@
 <span class="doccomment">//! #[actix::main]</span>
 <span class="doccomment">//! async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//!     let addr: actix::Addr&lt;EventStore&lt;_&gt;&gt; = EventStore::builder()</span>
-<span class="doccomment">//!         .storage(InMemoryBackend::default())</span>
+<span class="doccomment">//!         .storage(InMemoryStorage::default())</span>
 <span class="doccomment">//!         .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!         .build()</span>
 <span class="doccomment">//!         .await?</span>
@@ -329,7 +327,7 @@
 <span class="doccomment">//! #[actix::main]</span>
 <span class="doccomment">//! async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//! let event_store = EventStore::builder()</span>
-<span class="doccomment">//!     .storage(InMemoryBackend::default())</span>
+<span class="doccomment">//!     .storage(InMemoryStorage::default())</span>
 <span class="doccomment">//!     .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!     .build()</span>
 <span class="doccomment">//!     .await?</span>
@@ -360,7 +358,7 @@
 <span class="doccomment">//! #[actix::main]</span>
 <span class="doccomment">//! async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//!     let mut event_store = EventStore::builder()</span>
-<span class="doccomment">//!         .storage(InMemoryBackend::default())</span>
+<span class="doccomment">//!         .storage(InMemoryStorage::default())</span>
 <span class="doccomment">//!         .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!         .build()</span>
 <span class="doccomment">//!         .await</span>
@@ -382,7 +380,6 @@
 <span class="kw">mod</span> <span class="ident">connection</span>;
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">event</span>;
-<span class="kw">mod</span> <span class="ident">event_bus</span>;
 <span class="kw">mod</span> <span class="ident">event_store</span>;
 <span class="kw">mod</span> <span class="ident">expected_version</span>;
 <span class="kw">mod</span> <span class="ident">read_version</span>;
@@ -390,14 +387,14 @@
 <span class="kw">mod</span> <span class="ident">stream</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_store::EventStore</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event_store::EventStore</span>;
 <span class="kw">use</span> <span class="ident">error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event::Event</span>;
 <span class="kw">use</span> <span class="ident">event</span>::{<span class="ident">ParseEventError</span>, <span class="ident">RecordedEvent</span>};
 <span class="kw">use</span> <span class="ident">expected_version::ExpectedVersion</span>;
 <span class="kw">use</span> <span class="ident">read_version::ReadVersion</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::inmemory::InMemoryBackend</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::postgres::PostgresBackend</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::InMemoryStorage</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>};
 
 <span class="doccomment">/// Create an `Appender` to append events</span>
@@ -413,27 +410,27 @@
 }
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">prelude</span> {
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::connection::StreamInfo</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::error::EventStoreError</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::EventBus</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::InMemoryEventBus</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::event_bus::PostgresEventBus</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::expected_version::ExpectedVersion</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::read_version::ReadVersion</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::storage</span>::{
-        <span class="ident">appender::Appender</span>, <span class="ident">inmemory::InMemoryBackend</span>, <span class="ident">postgres::PostgresBackend</span>, <span class="ident">reader::Reader</span>,
-        <span class="ident">Storage</span>, <span class="ident">StorageError</span>,
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::StreamInfo</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::expected_version::ExpectedVersion</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read_version::ReadVersion</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBus</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::InMemoryEventBus</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::PostgresEventBus</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage</span>::{
+        <span class="ident">appender::Appender</span>, <span class="ident">postgres::PostgresBackend</span>, <span class="ident">reader::Reader</span>, <span class="ident">InMemoryStorage</span>,
+        <span class="ident">PostgresStorage</span>, <span class="ident">Storage</span>, <span class="ident">StorageError</span>,
     };
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::stream::Stream</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::subscriptions::Subscription</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::subscriptions::SubscriptionNotification</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::subscriptions::SubscriptionOptions</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::subscriptions::Subscriptions</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::subscriptions::SubscriptionsSupervisor</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::EventStore</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stream::Stream</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscription</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionNotification</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionOptions</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionsSupervisor</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="event_store" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
 </body></html>
