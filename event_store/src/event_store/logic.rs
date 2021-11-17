@@ -4,7 +4,7 @@ use super::{EventStore, EventStoreBuilder};
 use crate::{
     connection::{Append, Connection, CreateStream, Read, StreamInfo},
     event::RecordedEvent,
-    prelude::{EventBus, EventStoreError},
+    prelude::EventStoreError,
     storage::{appender::AppendToStreamRequest, reader, Storage},
 };
 use actix::Addr;
@@ -19,11 +19,8 @@ impl<S: Storage> std::default::Default for EventStore<S> {
 
 impl<S: Storage> EventStore<S> {
     #[must_use]
-    pub fn builder<E: EventBus>() -> EventStoreBuilder<S, E> {
-        EventStoreBuilder {
-            storage: None,
-            event_bus: None,
-        }
+    pub fn builder() -> EventStoreBuilder<S> {
+        EventStoreBuilder { storage: None }
     }
 
     pub(crate) async fn read(

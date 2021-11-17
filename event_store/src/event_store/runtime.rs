@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use crate::{
     connection::{CreateStream, StreamInfo},
     event::RecordedEvent,
-    event_bus::EventBusMessage,
     prelude::EventStoreError,
+    storage::event_bus::EventBusMessage,
     storage::{appender, reader, Storage},
 };
 
@@ -23,11 +23,11 @@ impl<S: Storage> Actor for EventStore<S> {
 
 impl<S: Storage> StreamHandler<EventBusMessage> for EventStore<S> {
     fn handle(&mut self, item: EventBusMessage, _ctx: &mut Context<Self>) {
-        println!("EventBusMessage {:?}", item);
+        debug!("EventBusMessage {:?}", item);
     }
 
     fn finished(&mut self, _ctx: &mut Self::Context) {
-        println!("finished");
+        debug!("finished");
     }
 }
 

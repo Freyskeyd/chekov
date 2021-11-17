@@ -2,6 +2,7 @@ use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use actix::prelude::*;
 use event_store::prelude::SubscriptionNotification;
+use event_store::storage::Storage;
 use tracing::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {
@@ -93,7 +94,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let fut = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
+        let fut = event_store::prelude::Subscriptions::<<A::Storage as Storage>::EventBus>::subscribe_to_stream(
             ctx.address().recipient(),
             event_store::prelude::SubscriptionOptions {
                 stream_uuid: self._name.to_owned(),
@@ -101,34 +102,11 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
             },
         );
 
-        ctx.wait(fut.into_actor(self).map(|_, _, _| ()));
+        ctx.spawn(fut.into_actor(self).map(|_, _, _| ()));
 
         EventHandler::started(&mut self.handler, ctx);
     }
 }
-
-// impl<A: Application, E: EventHandler> ::actix::Handler<ResolveAndApplyMany>
-//     for EventHandlerInstance<A, E>
-// {
-//     type Result = ResponseActFuture<Self, Result<(), ()>>;
-
-//     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
-//     fn handle(&mut self, msg: ResolveAndApplyMany, _ctx: &mut Self::Context) -> Self::Result {
-//         let mut handler = self.handler.clone();
-//         let events = msg.0;
-
-//         let fut = async move {
-//             for event in events {
-//                 EventHandler::handle_recorded_event(&mut handler, event).await?;
-//             }
-//             Ok(())
-//         }
-//         .into_actor(self)
-//         .map(|_res: Result<(), ()>, _actor, _ctx| Ok(()));
-
-//         Box::pin(fut)
-//     }
-// }
 
 impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
     for EventHandlerInstance<A, E>
@@ -137,23 +115,27 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
 
     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
     fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
-        let fut = match msg {
+        match msg {
             SubscriptionNotification::Events(events) => {
                 let mut handler = self.handler.clone();
                 let events = events;
 
-                async move {
-                    for event in events {
-                        EventHandler::handle_recorded_event(&mut handler, event).await?;
+                Box::pin(
+                    async move {
+                        for event in events {
+                            EventHandler::handle_recorded_event(&mut handler, event).await?;
+                        }
+                        Ok(())
                     }
-                    Ok(())
-                }
-                .into_actor(self)
-                .map(|_res: Result<(), ()>, _actor, _ctx| Ok(()))
+                    .into_actor(self)
+                    .map(|_res: Result<(), ()>, _actor, _ctx| Ok(())),
+                )
             }
-            SubscriptionNotification::Subscribed => todo!(),
-        };
-
-        Box::pin(fut)
+            SubscriptionNotification::Subscribed => Box::pin(
+                async move { Ok(()) }
+                    .into_actor(self)
+                    .map(|_: Result<(), ()>, _, _| Ok(())),
+            ),
+        }
     }
 }

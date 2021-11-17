@@ -26,8 +26,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
 struct DefaultApp {}
 
 impl Application for DefaultApp {
-    type Storage = PostgresBackend;
-    type EventBus = PostgresEventBus;
+    type Storage = PostgresStorage;
 }
 
 #[actix::main]
@@ -50,11 +49,8 @@ async fn main() -> std::io::Result<()> {
         .event_handler(order::OrderProjector {
             pool: db_pool.clone(),
         })
-        .storage(PostgresBackend::with_url(
+        .storage(PostgresStorage::with_url(
             "postgresql://postgres:postgres@localhost/event_store_gift_shop",
-        ))
-        .event_bus(PostgresEventBus::initiate(
-            "postgresql://postgres:postgres@localhost/event_store_gift_shop".into(),
         ))
         .launch()
         .await;

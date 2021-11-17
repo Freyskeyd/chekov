@@ -1,8 +1,8 @@
 use super::{SubscriptionNotification, SubscriptionOptions, Subscriptions};
 use crate::{
     event::RecordedEvent,
-    prelude::{ExpectedVersion, PostgresEventBus},
-    Event, EventStore, InMemoryBackend,
+    prelude::{ExpectedVersion, InMemoryEventBus},
+    Event, EventStore, InMemoryStorage,
 };
 use actix::{Actor, Context, Handler, ResponseActFuture, WrapFuture};
 use std::{collections::VecDeque, convert::TryFrom, sync::Arc};
@@ -70,7 +70,7 @@ async fn should_receive_subscribed_message_once_subscribed() {
     }
     .start();
 
-    Subscriptions::<InMemoryBackend>::subscribe_to_stream(
+    Subscriptions::<InMemoryEventBus>::subscribe_to_stream(
         addr.recipient(),
         SubscriptionOptions::default(),
     )
@@ -84,14 +84,7 @@ async fn should_receive_subscribed_message_once_subscribed() {
 #[actix::test]
 async fn should_subscribe_to_single_stream_from_origin() {
     let es = EventStore::builder()
-        .storage(InMemoryBackend::default())
-        .event_bus(
-            PostgresEventBus::initiate(
-                "postgresql://postgres:postgres@localhost/event_store_gift_shop".into(),
-            )
-            .await
-            .unwrap(),
-        )
+        .storage(InMemoryStorage::default())
         .build()
         .await
         .unwrap();
@@ -107,7 +100,7 @@ async fn should_subscribe_to_single_stream_from_origin() {
     .start();
 
     let identity = Uuid::new_v4();
-    Subscriptions::<InMemoryBackend>::subscribe_to_stream(
+    Subscriptions::<InMemoryEventBus>::subscribe_to_stream(
         addr.recipient(),
         SubscriptionOptions {
             stream_uuid: identity.to_string(),
@@ -129,6 +122,6 @@ async fn should_subscribe_to_single_stream_from_origin() {
     let x = tracker.lock().await.pop_front();
     assert!(matches!(x, Some(SubscriptionNotification::Subscribed)));
 
-    //     let x = tracker.lock().await.pop_front();
-    //     assert!(matches!(x, Some(SubscriptionNotification::Events(_))))
+    let x = tracker.lock().await.pop_front();
+    assert!(matches!(x, Some(SubscriptionNotification::Events(_))))
 }

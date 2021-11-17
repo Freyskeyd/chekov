@@ -1,8 +1,6 @@
 use crate::connection::Connection;
 use crate::error::EventStoreError;
 pub use crate::event::Event;
-use crate::event_bus::EventBus;
-use crate::event_bus::EventBusConnection;
 use crate::storage::Storage;
 use actix::prelude::*;
 use tracing::{instrument, trace};
@@ -14,27 +12,18 @@ mod runtime;
 #[derive(Clone)]
 pub struct EventStore<S: Storage> {
     connection: Addr<Connection<S>>,
-    event_bus: Addr<EventBusConnection<S>>,
 }
 
 /// Builder use to simplify the `EventStore` creation
 #[derive(Debug)]
-pub struct EventStoreBuilder<S: Storage, E: EventBus> {
+pub struct EventStoreBuilder<S: Storage> {
     storage: Option<S>,
-    event_bus: Option<E>,
 }
 
-impl<S: Storage, E: EventBus> EventStoreBuilder<S, E> {
+impl<S: Storage> EventStoreBuilder<S> {
     /// Define which storage will be used by this building `EventStore`
     pub fn storage(mut self, storage: S) -> Self {
         self.storage = Some(storage);
-
-        self
-    }
-
-    /// Define which event bus will be used by this building `EventStore`
-    pub fn event_bus(mut self, event_bus: E) -> Self {
-        self.event_bus = Some(event_bus);
 
         self
     }
@@ -50,13 +39,10 @@ impl<S: Storage, E: EventBus> EventStoreBuilder<S, E> {
         if self.storage.is_none() {
             return Err(EventStoreError::NoStorage);
         }
+
         let connection = Connection::make(self.storage.unwrap()).start();
-        let event_bus = EventBusConnection::make(self.event_bus.unwrap(), connection.clone());
         trace!("Creating EventStore with {} storage", S::storage_name());
 
-        Ok(EventStore {
-            connection,
-            event_bus,
-        })
+        Ok(EventStore { connection })
     }
 }

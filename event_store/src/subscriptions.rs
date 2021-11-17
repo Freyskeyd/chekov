@@ -1,5 +1,6 @@
 use crate::event::RecordedEvent;
-use crate::Storage;
+use crate::event::RecordedEvents;
+use crate::prelude::EventBus;
 use actix::Addr;
 use actix::Message;
 use actix::Recipient;
@@ -23,9 +24,9 @@ pub use supervisor::SubscriptionsSupervisor;
 ///     The subscription actor create a new FSM
 ///   The subscription actor receive a Connect message
 ///     - the FSM connects the subscriber
-///     - the Fsm subscribe
+///     - the FSM subscribe
 ///
-pub struct Subscriptions<S: Storage> {
+pub struct Subscriptions<S: EventBus> {
     _phantom: PhantomData<S>,
 }
 
@@ -42,7 +43,7 @@ pub enum SubscriptionNotification {
     Subscribed,
 }
 
-impl<S: Storage> Subscriptions<S> {
+impl<S: EventBus> Subscriptions<S> {
     pub async fn subscribe_to_stream(
         subscriber: Recipient<SubscriptionNotification>,
         options: SubscriptionOptions,
@@ -51,9 +52,16 @@ impl<S: Storage> Subscriptions<S> {
             Ok(subscription) => {
                 let _ = Subscription::connect(&subscription, &subscriber, &options).await;
                 Ok(subscription)
-            }
+            },
 
-            Err(_) => Err(()),
+            Err(_) => {
+
+                Err(())
+            }
         }
+    }
+
+    pub fn notify_subscribers(events: RecordedEvents) {
+        SubscriptionsSupervisor::<S>::notify_subscribers(events);
     }
 }

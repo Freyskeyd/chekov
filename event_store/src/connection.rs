@@ -1,12 +1,16 @@
-use crate::event_bus::OpenNotificationChannel;
+use crate::event::RecordedEvents;
+use crate::storage::backend::Backend;
+use crate::storage::event_bus::{EventBusMessage, OpenNotificationChannel};
+use crate::subscriptions::Subscriptions;
 use crate::RecordedEvent;
 use crate::{storage::Storage, stream::Stream, EventStoreError};
-use actix::WrapFuture;
-use actix::{Actor, Context, Handler};
+use actix::ActorFutureExt;
+use actix::{Actor, AsyncContext, Context, Handler};
+use actix::{StreamHandler, WrapFuture};
 use std::borrow::Cow;
 use std::str::FromStr;
-use tracing::trace;
 use tracing::Instrument;
+use tracing::{trace};
 use uuid::Uuid;
 
 mod messaging;
@@ -26,12 +30,62 @@ impl<S: Storage> Connection<S> {
 impl<S: Storage> Actor for Connection<S> {
     type Context = Context<Self>;
 
-    #[tracing::instrument(name = "Connection", skip(self, _ctx), fields(backend = %S::storage_name()))]
-    fn started(&mut self, _ctx: &mut Self::Context) {
+    #[tracing::instrument(name = "Connection", skip(self, ctx), fields(backend = %S::storage_name()))]
+    fn started(&mut self, ctx: &mut Self::Context) {
         trace!("Starting with {} storage", S::storage_name());
+        let event_bus = self.storage.create_stream();
+        ctx.wait(event_bus.into_actor(self).map(|stream, _, ctx| {
+            ctx.add_stream(stream);
+        }));
     }
 }
 
+impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
+    fn handle(&mut self, item: Result<EventBusMessage, ()>, ctx: &mut Context<Self>) {
+        if let Ok(message) = item {
+            match message {
+                EventBusMessage::Events(events) => {
+                    Subscriptions::<S::EventBus>::notify_subscribers(events);
+                }
+                EventBusMessage::Notification(notification) => {
+                    trace!(
+                        "Fetching Related RecordedEvents for {}",
+                        notification.stream_uuid
+                    );
+
+                    let stream_uuid = notification.stream_uuid.clone();
+                    let correlation_id = Uuid::new_v4();
+                    let fut =
+                        self.storage
+                            .backend()
+                            .read_stream(
+                                stream_uuid,
+                                notification.first_stream_version as usize,
+                                (notification.last_stream_version
+                                    - notification.first_stream_version
+                                    + 1) as usize,
+                                correlation_id,
+                            )
+                            .in_current_span()
+                            .into_actor(self)
+                            .map(move |res, _actor, _ctx| match res {
+                                Ok(events) => Subscriptions::<S::EventBus>::notify_subscribers(
+                                    RecordedEvents { events },
+                                ),
+                                Err(_) => todo!(),
+                            });
+
+                    ctx.spawn(fut);
+                }
+                EventBusMessage::Unkown => {}
+            }
+        }
+    }
+
+    fn finished(&mut self, _ctx: &mut Self::Context) {
+        trace!("finished");
+    }
+}
 impl<S: Storage> Handler<OpenNotificationChannel> for Connection<S> {
     type Result = ();
 
@@ -49,9 +103,10 @@ impl<S: Storage> Handler<Read> for Connection<S> {
         let version = msg.version;
 
         trace!("Reading {} event(s)", msg.stream);
-        let fut = self
-            .storage
-            .read_stream(msg.stream, version, limit, msg.correlation_id);
+        let fut =
+            self.storage
+                .backend()
+                .read_stream(msg.stream, version, limit, msg.correlation_id);
 
         Box::pin(
             async move {
@@ -75,9 +130,10 @@ impl<S: Storage> Handler<Append> for Connection<S> {
     #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Appending {} event(s) to {}", msg.events.len(), msg.stream);
-        let fut = self
-            .storage
-            .append_to_stream(&msg.stream, &msg.events, msg.correlation_id);
+        let fut =
+            self.storage
+                .backend()
+                .append_to_stream(&msg.stream, &msg.events, msg.correlation_id);
 
         Box::pin(
             async move {
@@ -99,7 +155,10 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
         trace!("Creating {} stream", msg.stream_uuid);
 
         let stream = Stream::from_str(&msg.stream_uuid).unwrap();
-        let fut = self.storage.create_stream(stream, msg.correlation_id);
+        let fut = self
+            .storage
+            .backend()
+            .create_stream(stream, msg.correlation_id);
 
         Box::pin(
             async move {
@@ -121,6 +180,7 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
         trace!("Execute StreamInfo for {}", msg.stream_uuid);
         let fut = self
             .storage
+            .backend()
             .read_stream_info(msg.stream_uuid, msg.correlation_id);
 
         Box::pin(
@@ -140,20 +200,21 @@ mod test {
     use super::*;
 
     use crate::event::UnsavedEvent;
-    use crate::storage::inmemory::InMemoryBackend;
+    use crate::storage::InMemoryStorage;
     use crate::Event;
     use crate::ExpectedVersion;
     use serde::Deserialize;
     use serde::Serialize;
 
-    async fn init_with_stream(name: &str) -> (actix::Addr<Connection<InMemoryBackend>>, Stream) {
-        let mut storage = InMemoryBackend::default();
+    async fn init_with_stream(name: &str) -> (actix::Addr<Connection<InMemoryStorage>>, Stream) {
+        let mut storage = InMemoryStorage::default();
         let stream = Stream::from_str(name).unwrap();
         let _ = storage
+            .backend()
             .create_stream(stream.clone(), uuid::Uuid::new_v4())
             .await;
 
-        let conn: Connection<crate::storage::inmemory::InMemoryBackend> = Connection::make(storage);
+        let conn: Connection<crate::storage::InMemoryStorage> = Connection::make(storage);
 
         let addr = conn.start();
 
@@ -181,8 +242,8 @@ mod test {
 
     #[test]
     fn connection_can_be_created() {
-        let storage = InMemoryBackend::default();
-        let _conn: Connection<InMemoryBackend> = Connection::make(storage);
+        let storage = InMemoryStorage::default();
+        let _conn: Connection<InMemoryStorage> = Connection::make(storage);
     }
 
     #[actix::test]
@@ -205,9 +266,9 @@ mod test {
 
     #[actix::test]
     async fn creating_stream() {
-        let storage = InMemoryBackend::default();
+        let storage = InMemoryStorage::default();
 
-        let conn: Connection<InMemoryBackend> = Connection::make(storage);
+        let conn: Connection<InMemoryStorage> = Connection::make(storage);
 
         let connection = conn.start();
 

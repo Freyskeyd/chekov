@@ -12,13 +12,14 @@
 //!
 //! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.
 //!
-//! An `EventStore` needs a [`Storage`] that can be used to `append` and `reead` events from.
-//! [`Storage`] is using a `Backend` to talk to the underlying component.
+//! An `EventStore` needs a [`Storage`] that can be used to `append` and `read` events from.
+//! [`Storage`] is using a `Backend` to talk to the underlying component and an `EventBus` to
+//! notify and listen for events.
 //!
-//! Currently only two `Backend` are available:
+//! Currently only two `Storage` are available:
 //!
-//! - [`PostgresBackend`]
-//! - [`InMemoryBackend`]
+//! - [`PostgresStorage`]
+//! - [`InMemoryStorage`]
 //!
 //!
 //! ## Construct the `EventStore`
@@ -34,8 +35,7 @@
 //! #[actix::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>>{
 //!     let addr: actix::Addr<EventStore<_>> = EventStore::builder()
-//!         .storage(InMemoryBackend::default())
-//!         .event_bus(InMemoryEventBus::default())
+//!         .storage(InMemoryStorage::default())
 //!         .build()
 //!         .await?
 //!         .start();
@@ -111,8 +111,7 @@
 //! #[actix::main]
 //! async fn reading() -> Result<(), Box<dyn std::error::Error>>{
 //! let event_store = EventStore::builder()
-//!     .storage(InMemoryBackend::default())
-//!     .event_bus(InMemoryEventBus::default())
+//!     .storage(InMemoryStorage::default())
 //!     .build()
 //!     .await?
 //!     .start();
@@ -142,8 +141,7 @@
 //! #[actix::main]
 //! async fn reading() -> Result<(), Box<dyn std::error::Error>>{
 //!     let mut event_store = EventStore::builder()
-//!         .storage(InMemoryBackend::default())
-//!         .event_bus(InMemoryEventBus::default())
+//!         .storage(InMemoryStorage::default())
 //!         .build()
 //!         .await
 //!         .unwrap()
@@ -164,11 +162,10 @@
 mod connection;
 mod error;
 mod event;
-mod event_bus;
 mod event_store;
 mod expected_version;
 mod read_version;
-mod storage;
+pub mod storage;
 mod stream;
 mod subscriptions;
 
@@ -178,9 +175,16 @@ pub use event::Event;
 use event::{ParseEventError, RecordedEvent};
 use expected_version::ExpectedVersion;
 use read_version::ReadVersion;
-pub use storage::inmemory::InMemoryBackend;
-pub use storage::postgres::PostgresBackend;
 use storage::{appender::Appender, reader::Reader, Storage};
+
+#[cfg(feature = "inmemory")]
+pub use storage::backend::inmemory::InMemoryBackend;
+#[cfg(feature = "postgres")]
+pub use storage::backend::postgres::PostgresBackend;
+#[cfg(feature = "inmemory")]
+pub use storage::InMemoryStorage;
+#[cfg(feature = "postgres")]
+pub use storage::PostgresStorage;
 
 /// Create an `Appender` to append events
 #[must_use]
@@ -198,15 +202,23 @@ pub mod prelude {
     pub use crate::connection::StreamInfo;
     pub use crate::error::EventStoreError;
     pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
-    pub use crate::event_bus::EventBus;
-    pub use crate::event_bus::InMemoryEventBus;
-    pub use crate::event_bus::PostgresEventBus;
     pub use crate::expected_version::ExpectedVersion;
     pub use crate::read_version::ReadVersion;
-    pub use crate::storage::{
-        appender::Appender, inmemory::InMemoryBackend, postgres::PostgresBackend, reader::Reader,
-        Storage, StorageError,
-    };
+    #[cfg(feature = "inmemory_backend")]
+    pub use crate::storage::backend::inmemory::InMemoryBackend;
+    #[cfg(feature = "postgres_backend")]
+    pub use crate::storage::backend::postgres::PostgresBackend;
+    pub use crate::storage::backend::Backend;
+    pub use crate::storage::event_bus::EventBus;
+    #[cfg(feature = "inmemory_event_bus")]
+    pub use crate::storage::event_bus::InMemoryEventBus;
+    #[cfg(feature = "postgres_event_bus")]
+    pub use crate::storage::event_bus::PostgresEventBus;
+    #[cfg(feature = "inmemory")]
+    pub use crate::storage::InMemoryStorage;
+    #[cfg(feature = "postgres")]
+    pub use crate::storage::PostgresStorage;
+    pub use crate::storage::{appender::Appender, reader::Reader, Storage, StorageError};
     pub use crate::stream::Stream;
     pub use crate::subscriptions::Subscription;
     pub use crate::subscriptions::SubscriptionNotification;

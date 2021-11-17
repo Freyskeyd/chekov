@@ -8,13 +8,8 @@ use futures::{
 };
 use sqlx::postgres::PgListener;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-use tracing::{trace, Instrument, Span};
-use uuid::Uuid;
 
-use crate::{
-    connection::Connection, event::RecordedEvents, prelude::Storage,
-    storage::reader::ReadStreamRequest, EventStore,
-};
+use crate::{connection::Connection, event::RecordedEvents, prelude::Storage};
 
 pub type BoxedStream =
     Pin<Box<dyn Future<Output = Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>>>>>;
@@ -23,7 +18,7 @@ pub trait EventBus: std::fmt::Debug + Default + Send + std::marker::Unpin + 'sta
     fn bus_name() -> &'static str;
 
     fn prepare<S: Storage>(&mut self, storage: Addr<Connection<S>>) -> BoxFuture<'static, ()>;
-    fn create_stream(self) -> BoxedStream;
+    fn create_stream(&mut self) -> BoxedStream;
 }
 
 #[derive(Debug, Message)]
@@ -101,84 +96,86 @@ impl<'a> TryFrom<&'a str> for EventNotification {
     }
 }
 
-pub struct EventBusConnection<S: Storage> {
-    storage: Addr<Connection<S>>,
-}
+// pub struct EventBusConnection<S: Storage> {
+//     storage: Addr<Connection<S>>,
+// }
 
-impl<S: Storage> EventBusConnection<S> {
-    pub fn make<E: EventBus>(mut event_bus: E, storage: Addr<Connection<S>>) -> Addr<Self> {
-        Self::create(move |ctx| {
-            let instance = Self {
-                storage: storage.clone(),
-            };
-            async move {
-                event_bus.prepare(storage).await;
-                event_bus.create_stream().await
-            }
-            .into_actor(&instance)
-            .map(|res, _actor, ctx| {
-                ctx.add_stream(res);
-            })
-            .wait(ctx);
+// impl<S: Storage> EventBusConnection<S> {
+//     pub fn make<E: EventBus>(mut event_bus: E, storage: Addr<Connection<S>>) -> Addr<Self> {
+//         Self::create(move |ctx| {
+//             let instance = Self {
+//                 storage: storage.clone(),
+//             };
+//             async move {
+//                 event_bus.prepare(storage).await;
+//                 event_bus.create_stream().await
+//             }
+//             .into_actor(&instance)
+//             .map(|res, _actor, ctx| {
+//                 ctx.add_stream(res);
+//             })
+//             .wait(ctx);
 
-            instance
-        })
-    }
-}
+//             instance
+//         })
+//     }
+// }
 
-impl<S: Storage> Actor for EventBusConnection<S> {
-    type Context = Context<Self>;
+// impl<S: Storage> Actor for EventBusConnection<S> {
+//     type Context = Context<Self>;
 
-    #[tracing::instrument(name = "EventBusConnection", skip(self, _ctx))]
-    fn started(&mut self, _ctx: &mut Self::Context) {}
-}
+//     #[tracing::instrument(name = "EventBusConnection", skip(self, _ctx))]
+//     fn started(&mut self, _ctx: &mut Self::Context) {}
+// }
 
-impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for EventBusConnection<S> {
-    fn handle(&mut self, item: Result<EventBusMessage, ()>, ctx: &mut Context<Self>) {
-        if let Ok(message) = item {
-            match message {
-                EventBusMessage::Events(events) => {
-                    println!("events received {:?}", events);
-                }
-                EventBusMessage::Notification(notification) => {
-                    trace!(
-                        "Fetching Related RecordedEvents for {}",
-                        notification.stream_uuid
-                    );
-                    let storage = self.storage.clone();
-                    let _ = ctx.address();
-                    let stream_uuid = notification.stream_uuid.clone();
-                    let fut = async move {
-                        let correlation_id = Uuid::new_v4();
+// impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for EventBusConnection<S> {
+//     fn handle(&mut self, item: Result<EventBusMessage, ()>, ctx: &mut Context<Self>) {
+//         if let Ok(message) = item {
+//             match message {
+//                 EventBusMessage::Events(events) => {
+//                     Subscriptions::<S::EventBus>::notify_subscribers(events);
 
-                        let request = ReadStreamRequest{
-                            correlation_id,
-                            span: tracing::span!(parent: Span::current(), tracing::Level::TRACE, "ReadStreamRequest", correlation_id = ?correlation_id),
-                            stream: stream_uuid,
-                            version: notification.first_stream_version as usize,
-                            limit: (notification.last_stream_version
-                                    - notification.first_stream_version
-                                    + 1) as usize
-                        };
+//                     // self.storage.do_send()
+//                 }
+//                 EventBusMessage::Notification(notification) => {
+//                     trace!(
+//                         "Fetching Related RecordedEvents for {}",
+//                         notification.stream_uuid
+//                     );
+//                     let storage = self.storage.clone();
+//                     let _ = ctx.address();
+//                     let stream_uuid = notification.stream_uuid.clone();
+//                     let fut = async move {
+//                         let correlation_id = Uuid::new_v4();
 
-                        EventStore::<S>::read(storage, request).await
-                    }
-                    .in_current_span()
-                    .into_actor(self)
-                    .map(move |_res, _actor, _ctx| {
-                    });
+//                         let request = ReadStreamRequest{
+//                             correlation_id,
+//                             span: tracing::span!(parent: Span::current(), tracing::Level::TRACE, "ReadStreamRequest", correlation_id = ?correlation_id),
+//                             stream: stream_uuid,
+//                             version: notification.first_stream_version as usize,
+//                             limit: (notification.last_stream_version
+//                                     - notification.first_stream_version
+//                                     + 1) as usize
+//                         };
 
-                    ctx.spawn(fut);
-                }
-                EventBusMessage::Unkown => {}
-            }
-        }
-    }
+//                         EventStore::<S>::read(storage, request).await
+//                     }
+//                     .in_current_span()
+//                     .into_actor(self)
+//                     .map(move |_res, _actor, _ctx| {
+//                     });
 
-    fn finished(&mut self, _ctx: &mut Self::Context) {
-        println!("finished");
-    }
-}
+//                     ctx.spawn(fut);
+//                 }
+//                 EventBusMessage::Unkown => {}
+//             }
+//         }
+//     }
+
+//     fn finished(&mut self, _ctx: &mut Self::Context) {
+//         trace!("finished");
+//     }
+// }
 
 #[derive(Message)]
 #[rtype("()")]
@@ -188,15 +185,18 @@ pub struct OpenNotificationChannel {
 
 #[derive(Debug)]
 pub struct InMemoryEventBus {
-    receiver: UnboundedReceiver<EventBusMessage>,
-    sender: UnboundedSender<EventBusMessage>,
+    receiver: Option<UnboundedReceiver<EventBusMessage>>,
+    pub(crate) sender: UnboundedSender<EventBusMessage>,
 }
 
 impl Default for InMemoryEventBus {
     fn default() -> Self {
         let (sender, receiver) = mpsc::unbounded_channel::<EventBusMessage>();
 
-        Self { receiver, sender }
+        Self {
+            receiver: Some(receiver),
+            sender,
+        }
     }
 }
 
@@ -205,9 +205,9 @@ impl InMemoryEventBus {
         Ok(Self::default())
     }
 
-    async fn start_listening(self) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
-        let mut receiver = self.receiver;
-
+    async fn start_listening(
+        mut receiver: UnboundedReceiver<EventBusMessage>,
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
         Box::pin(try_stream! {
             while let Some(event) = receiver.recv().await {
                 yield event;
@@ -230,15 +230,16 @@ impl EventBus for InMemoryEventBus {
         .boxed()
     }
 
-    fn create_stream(self) -> BoxedStream {
-        let fut = Box::pin(async move { self.start_listening().await });
+    fn create_stream(&mut self) -> BoxedStream {
+        let receiver = self.receiver.take().unwrap();
 
-        fut
+        Self::start_listening(receiver).boxed()
     }
 }
+
 #[derive(Debug)]
 pub struct PostgresEventBus {
-    listener: PgListener,
+    listener: Option<PgListener>,
 }
 
 impl Default for PostgresEventBus {
@@ -251,17 +252,20 @@ impl PostgresEventBus {
     pub async fn initiate(url: String) -> Result<Self, ()> {
         let listener = sqlx::postgres::PgListener::connect(&url).await.unwrap();
 
-        Ok(Self { listener })
+        Ok(Self {
+            listener: Some(listener),
+        })
     }
 
-    async fn start_listening(mut self) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
-        self.listener.listen("events").await.unwrap();
+    async fn start_listening(
+        mut listener: PgListener,
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
+        listener.listen("events").await.unwrap();
 
-        self.listener
+        listener
             .into_stream()
             .map(|res| match res {
                 Ok(notification) => {
-                    println!("Notification: {:?}", notification);
                     if let Ok(event) = EventNotification::try_from(notification.payload()) {
                         return Ok(EventBusMessage::Notification(event));
                     }
@@ -283,9 +287,8 @@ impl EventBus for PostgresEventBus {
         future::ready(()).boxed()
     }
 
-    fn create_stream(self) -> BoxedStream {
-        let fut = Box::pin(async move { self.start_listening().await });
-
-        fut
+    fn create_stream(&mut self) -> BoxedStream {
+        let listener = self.listener.take().unwrap();
+        Self::start_listening(listener).boxed()
     }
 }

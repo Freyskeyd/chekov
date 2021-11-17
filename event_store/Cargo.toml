@@ -28,4 +28,13 @@ async-stream = "0.3"
 pretty_assertions = "1.0.0"
 
 [features]
+default = ["postgres", "inmemory"]
 verbose = []
+
+postgres = ["postgres_backend", "postgres_event_bus"]
+postgres_backend = []
+postgres_event_bus = []
+
+inmemory = ["inmemory_backend", "inmemory_event_bus"]
+inmemory_backend = []
+inmemory_event_bus = []

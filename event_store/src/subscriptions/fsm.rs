@@ -1,3 +1,5 @@
+use crate::event::RecordedEvents;
+
 use super::state::SubscriptionState;
 use super::subscriber::Subscriber;
 use super::SubscriptionNotification;
@@ -30,6 +32,14 @@ impl SubscriptionFSM {
     pub async fn notify_subscribers(&mut self) {
         if let Some(subscriber) = &self.data.subscriber {
             let _ = subscriber.send(SubscriptionNotification::Subscribed).await;
+        }
+    }
+
+    pub async fn notify_events(&mut self, events: RecordedEvents) {
+        if let Some(subscriber) = &self.data.subscriber {
+            let _ = subscriber
+                .send(SubscriptionNotification::Events(events.events))
+                .await;
         }
     }
 

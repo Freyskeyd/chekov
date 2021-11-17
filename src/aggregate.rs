@@ -44,8 +44,7 @@
 //! # struct DefaultApp {}
 //! #
 //! # impl chekov::Application for DefaultApp {
-//! #     type Storage = PostgresBackend;
-//! #     type EventBus = PostgresEventBus;
+//! #     type Storage = PostgresStorage;
 //! # }
 //! #
 //! # #[derive(Clone, Message, Debug, chekov::Event, Deserialize, Serialize)]

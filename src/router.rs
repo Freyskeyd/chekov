@@ -69,6 +69,7 @@ mod tests {
     use uuid::Uuid;
 
     #[actix::test]
+    #[ignore]
     async fn can_route_a_command() {
         // TODO: Improve this tests with a particular APP
         let _ = Router::<MyApplication>::dispatch(

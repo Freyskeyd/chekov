@@ -1,3 +1,4 @@
+#![allow(clippy::module_inception)]
 //! `Chekov` is a CQRS/ES Framework built on top of Actix actor framework.
 //!
 //! ## Getting started
@@ -22,11 +23,9 @@
 //! struct DefaultApp {}
 //!
 //! // Application trait is here to preconfigure your chekov runtime.
-//! // It tells that you want this `Application` to use a PostgresBackend and resolve the
-//! // eventbus's event with the `DefaultEventResolver`.
+//! // It tells that you want this `Application` to use a PostgresStorage.
 //! impl chekov::Application for DefaultApp {
-//!     type Storage = chekov::prelude::PostgresBackend;
-//!     type EventBus = chekov::prelude::PostgresEventBus;
+//!     type Storage = chekov::prelude::PostgresStorage;
 //! }
 //! ```
 //!

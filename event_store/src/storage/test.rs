@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
-use crate::storage::{inmemory::InMemoryBackend, Storage, StorageError};
+use crate::storage::backend::Backend;
+use crate::storage::{backend::inmemory::InMemoryBackend, StorageError};
 use crate::stream::Stream;
 
 use std::str::FromStr;

@@ -70,7 +70,7 @@ async fn should_can_fetch_existing_state() -> Result<(), Box<dyn std::error::Err
     let identifier = Uuid::new_v4();
     let _ = EventStore::<MyApplication>::with_appender(
         Appender::default()
-            .event(&MyEvent {})
+            .event(&MyEvent { id: identifier })
             .unwrap()
             .to(&identifier)
             .unwrap(),
@@ -95,8 +95,10 @@ fn can_apply_event() {
         resolver: ExampleAggregate::get_event_resolver(),
     };
 
-    let result =
-        AggregateInstance::directly_apply(&mut instance.create_mutable_state(), &MyEvent {});
+    let result = AggregateInstance::directly_apply(
+        &mut instance.create_mutable_state(),
+        &MyEvent { id: Uuid::new_v4() },
+    );
 
     assert!(matches!(result, Ok(_)));
 }
@@ -153,14 +155,15 @@ async fn can_execute_a_command() {
         current_version: 0,
         resolver: ExampleAggregate::get_event_resolver(),
     };
+    let id = Uuid::new_v4();
 
     assert_eq!(
-        Ok(vec![MyEvent {}]),
+        Ok(vec![MyEvent { id }]),
         AggregateInstance::execute(
             instance.create_mutable_state(),
             Dispatch::<_, MyApplication> {
                 storage: PhantomData,
-                command: ValidCommand(Uuid::new_v4()),
+                command: ValidCommand(id),
                 metadatas: CommandMetadatas::default(),
             },
         )
@@ -177,8 +180,7 @@ async fn start_context(identity: Uuid) -> Addr<AggregateInstance<ExampleAggregat
 
 async fn start_application() {
     MyApplication::with_default()
-        .storage(event_store::prelude::InMemoryBackend::initiate())
-        .event_bus(event_store::prelude::InMemoryEventBus::initiate())
+        .storage(event_store::storage::InMemoryStorage::initiate())
         .launch()
         .await;
 }
