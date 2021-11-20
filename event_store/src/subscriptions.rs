@@ -1,6 +1,8 @@
-use crate::prelude::RecordedEvents;
-use crate::Storage;
+use crate::event::RecordedEvent;
+use crate::event::RecordedEvents;
+use crate::prelude::EventBus;
 use actix::Addr;
+use actix::Message;
 use actix::Recipient;
 use std::marker::PhantomData;
 
@@ -10,8 +12,11 @@ mod subscriber;
 mod subscription;
 mod supervisor;
 
-use subscription::Subscription;
-use supervisor::SubscriptionsSupervisor;
+#[cfg(test)]
+mod test;
+
+pub use self::subscription::Subscription;
+pub use supervisor::SubscriptionsSupervisor;
 
 ///
 /// Subscribe to a stream start a subscription in the superviseur
@@ -19,30 +24,44 @@ use supervisor::SubscriptionsSupervisor;
 ///     The subscription actor create a new FSM
 ///   The subscription actor receive a Connect message
 ///     - the FSM connects the subscriber
-///     - the Fsm subscribe
+///     - the FSM subscribe
 ///
-pub struct Subscriptions<S: Storage> {
+pub struct Subscriptions<S: EventBus> {
     _phantom: PhantomData<S>,
 }
 
 #[derive(Default, Debug, Clone)]
 pub struct SubscriptionOptions {
-    stream_uuid: String,
-    subscription_name: String,
+    pub stream_uuid: String,
+    pub subscription_name: String,
 }
 
-impl<S: Storage> Subscriptions<S> {
+#[derive(Debug, Message)]
+#[rtype(result = "Result<(), ()>")]
+pub enum SubscriptionNotification {
+    Events(Vec<RecordedEvent>),
+    Subscribed,
+}
+
+impl<S: EventBus> Subscriptions<S> {
     pub async fn subscribe_to_stream(
-        subscriber: Recipient<RecordedEvents>,
+        subscriber: Recipient<SubscriptionNotification>,
         options: SubscriptionOptions,
     ) -> Result<Addr<Subscription<S>>, ()> {
         match SubscriptionsSupervisor::<S>::start_subscription(&options).await {
             Ok(subscription) => {
                 let _ = Subscription::connect(&subscription, &subscriber, &options).await;
                 Ok(subscription)
-            }
+            },
 
-            Err(_) => Err(()),
+            Err(_) => {
+
+                Err(())
+            }
         }
+    }
+
+    pub fn notify_subscribers(events: RecordedEvents) {
+        SubscriptionsSupervisor::<S>::notify_subscribers(events);
     }
 }

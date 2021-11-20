@@ -7,7 +7,7 @@ use crate::{message::Dispatch, prelude::EventApplier};
 use crate::{Aggregate, Application};
 use actix::prelude::*;
 use actix::{Addr, Handler as ActixHandler};
-use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent};
+use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
 use tracing::trace;
 use uuid::Uuid;
 
@@ -36,8 +36,6 @@ impl<A: Aggregate> AggregateInstance<A> {
         correlation_id: Uuid,
     ) -> Result<Addr<Self>, CommandExecutorError> {
         let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
-
-        trace!("Creating aggregate instance");
 
         let mut instance = AggregateInstance::<A>::default();
 
@@ -279,5 +277,22 @@ impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
         }
 
         Ok(())
+    }
+}
+
+impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<A> {
+    type Result = ResponseActFuture<Self, Result<(), ()>>;
+
+    fn handle(&mut self, msg: SubscriptionNotification, _: &mut Self::Context) -> Self::Result {
+        match msg {
+            SubscriptionNotification::Events(events) => {
+                for event in events {
+                    let _ = self.apply_recorded_event(event);
+                }
+            }
+            SubscriptionNotification::Subscribed => {}
+        }
+
+        Box::pin(async { Ok(()) }.into_actor(self))
     }
 }

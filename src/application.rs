@@ -24,8 +24,8 @@ pub(crate) use internal::InternalApplication;
 /// struct DefaultApp {}
 ///
 /// impl chekov::Application for DefaultApp {
-///     // Define that this application will use a PostgresBackend as event_store
-///     type Storage = event_store::prelude::PostgresBackend;
+///     // Define that this application will use a PostgresStorage as event_store
+///     type Storage = event_store::prelude::PostgresStorage;
 /// }
 /// ```
 pub trait Application: Unpin + 'static + Send + std::default::Default {

@@ -47,7 +47,7 @@ impl RecordedEvent {
 #[derive(Debug, Clone, Message)]
 #[rtype("()")]
 pub struct RecordedEvents {
-    events: Vec<RecordedEvent>,
+    pub(crate) events: Vec<RecordedEvent>,
 }
 
 pub enum RecordedEventError {

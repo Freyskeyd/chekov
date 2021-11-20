@@ -46,7 +46,7 @@ use uuid::Uuid;
 /// # #[actix::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// # let es = EventStore::builder()
-/// #   .storage(InMemoryBackend::default())
+/// #   .storage(InMemoryStorage::default())
 /// #   .build()
 /// #   .await
 /// #   .unwrap()
@@ -289,7 +289,7 @@ pub struct AppendToStreamRequest {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::storage::inmemory::InMemoryBackend;
+    use crate::storage::InMemoryStorage;
     use uuid::Uuid;
 
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -334,7 +334,7 @@ mod test {
     #[actix::test]
     async fn that_an_appender_can_be_executed() -> Result<(), EventStoreError> {
         let es = EventStore::builder()
-            .storage(InMemoryBackend::default())
+            .storage(InMemoryStorage::default())
             .build()
             .await
             .unwrap();

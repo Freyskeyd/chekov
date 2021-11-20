@@ -1,8 +1,9 @@
 use crate::message::ResolveAndApplyMany;
-use actix::prelude::*;
-use tracing::trace;
-
 use crate::Application;
+use actix::prelude::*;
+use event_store::prelude::SubscriptionNotification;
+use event_store::storage::Storage;
+use tracing::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {
     pub(crate) handler: E,
@@ -43,24 +44,29 @@ pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {
         event: event_store::prelude::RecordedEvent,
     ) -> Result<(), ()>;
 
-    fn listen<A: Application>(&self, ctx: &mut actix::Context<EventHandlerInstance<A, Self>>) {
-        let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
-        let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
-        broker.do_send(Subscribe("$all".into(), recipient));
+    fn listen<A: Application>(&self, _ctx: &mut actix::Context<EventHandlerInstance<A, Self>>) {
+        // let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
+        // let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+        // let recipient_event = ctx.address().recipient::<SubscriptionNotification>();
+        // broker.do_send(Subscribe("$all".into(), recipient, recipient_event));
     }
 
-    fn started<A: Application>(&mut self, ctx: &mut actix::Context<EventHandlerInstance<A, Self>>)
+    fn started<A: Application>(&mut self, _ctx: &mut actix::Context<EventHandlerInstance<A, Self>>)
     where
         Self: EventHandler,
     {
-        self.listen(ctx);
+        // self.listen(ctx);
     }
 }
 
 #[doc(hidden)]
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
-pub struct Subscribe(pub String, pub Recipient<ResolveAndApplyMany>);
+pub struct Subscribe(
+    pub String,
+    pub Recipient<ResolveAndApplyMany>,
+    pub Recipient<SubscriptionNotification>,
+);
 
 /// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {
@@ -88,29 +94,48 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
+        let fut = event_store::prelude::Subscriptions::<<A::Storage as Storage>::EventBus>::subscribe_to_stream(
+            ctx.address().recipient(),
+            event_store::prelude::SubscriptionOptions {
+                stream_uuid: self._name.to_owned(),
+                subscription_name: self._name.to_owned(),
+            },
+        );
+
+        ctx.spawn(fut.into_actor(self).map(|_, _, _| ()));
+
         EventHandler::started(&mut self.handler, ctx);
     }
 }
 
-impl<A: Application, E: EventHandler> ::actix::Handler<ResolveAndApplyMany>
+impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
     for EventHandlerInstance<A, E>
 {
     type Result = ResponseActFuture<Self, Result<(), ()>>;
 
     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
-    fn handle(&mut self, msg: ResolveAndApplyMany, _ctx: &mut Self::Context) -> Self::Result {
-        let mut handler = self.handler.clone();
-        let events = msg.0;
+    fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
+        match msg {
+            SubscriptionNotification::Events(events) => {
+                let mut handler = self.handler.clone();
+                let events = events;
 
-        let fut = async move {
-            for event in events {
-                EventHandler::handle_recorded_event(&mut handler, event).await?;
+                Box::pin(
+                    async move {
+                        for event in events {
+                            EventHandler::handle_recorded_event(&mut handler, event).await?;
+                        }
+                        Ok(())
+                    }
+                    .into_actor(self)
+                    .map(|_res: Result<(), ()>, _actor, _ctx| Ok(())),
+                )
             }
-            Ok(())
+            SubscriptionNotification::Subscribed => Box::pin(
+                async move { Ok(()) }
+                    .into_actor(self)
+                    .map(|_: Result<(), ()>, _, _| Ok(())),
+            ),
         }
-        .into_actor(self)
-        .map(|_res: Result<(), ()>, _actor, _ctx| Ok(()));
-
-        Box::pin(fut)
     }
 }

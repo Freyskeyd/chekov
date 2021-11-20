@@ -102,6 +102,7 @@ where
         );
 
         let storage: A::Storage = self.storage.await;
+
         let event_store: event_store::EventStore<A::Storage> = event_store::EventStore::builder()
             .storage(storage)
             .build()

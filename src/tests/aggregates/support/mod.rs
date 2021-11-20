@@ -1,6 +1,6 @@
 use crate as chekov;
 use crate::prelude::*;
-use event_store::prelude::InMemoryBackend;
+use event_store::{prelude::InMemoryEventBus, prelude::InMemoryStorage};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -8,7 +8,7 @@ use uuid::Uuid;
 pub(crate) struct MyApplication {}
 
 impl Application for MyApplication {
-    type Storage = InMemoryBackend;
+    type Storage = InMemoryStorage;
 }
 
 #[derive(Clone, Aggregate, Default, Debug)]
@@ -19,8 +19,8 @@ pub(crate) struct ExampleAggregate {
 }
 
 impl CommandExecutor<ValidCommand> for ExampleAggregate {
-    fn execute(_cmd: ValidCommand, _: &Self) -> ExecutionResult<MyEvent> {
-        ExecutionResult::Ok(vec![MyEvent {}])
+    fn execute(cmd: ValidCommand, _: &Self) -> ExecutionResult<MyEvent> {
+        ExecutionResult::Ok(vec![MyEvent { id: cmd.0 }])
     }
 }
 
@@ -114,11 +114,15 @@ pub(crate) struct ItemAppended(pub(crate) i64);
 
 #[derive(Clone, PartialEq, Debug, crate::Event, Deserialize, Serialize)]
 #[event(event_type = "MyEvent")]
-pub(crate) struct MyEvent {}
+pub(crate) struct MyEvent {
+    pub(crate) id: Uuid,
+}
 
 #[derive(Clone, PartialEq, Debug, crate::Event, Deserialize, Serialize)]
 #[event(event_type = "InvalidEvent")]
-pub(crate) struct InvalidEvent {}
+pub(crate) struct InvalidEvent {
+    pub(crate) id: Uuid,
+}
 
 #[macro_export]
 macro_rules! assert_aggregate_version {

@@ -37,7 +37,6 @@ pub struct Read {
     pub(crate) limit: usize,
 }
 
-#[derive(Copy, Clone)]
-enum Test {
-    Ok,
-}
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct StartPubSub {}
