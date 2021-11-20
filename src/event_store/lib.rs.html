@@ -214,6 +214,19 @@
 <span id="214">214</span>
 <span id="215">215</span>
 <span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
     <span class="ident">clippy::pedantic</span>,
@@ -228,13 +241,14 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! An `EventStore` needs a [`Storage`] that can be used to `append` and `reead` events from.</span>
-<span class="doccomment">//! [`Storage`] is using a `Backend` to talk to the underlying component.</span>
+<span class="doccomment">//! An `EventStore` needs a [`Storage`] that can be used to `append` and `read` events from.</span>
+<span class="doccomment">//! [`Storage`] is using a `Backend` to talk to the underlying component and an `EventBus` to</span>
+<span class="doccomment">//! notify and listen for events.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Currently only two `Backend` are available:</span>
+<span class="doccomment">//! Currently only two `Storage` are available:</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! - [`PostgresBackend`]</span>
-<span class="doccomment">//! - [`InMemoryBackend`]</span>
+<span class="doccomment">//! - [`PostgresStorage`]</span>
+<span class="doccomment">//! - [`InMemoryStorage`]</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Construct the `EventStore`</span>
@@ -251,7 +265,6 @@
 <span class="doccomment">//! async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//!     let addr: actix::Addr&lt;EventStore&lt;_&gt;&gt; = EventStore::builder()</span>
 <span class="doccomment">//!         .storage(InMemoryStorage::default())</span>
-<span class="doccomment">//!         .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!         .build()</span>
 <span class="doccomment">//!         .await?</span>
 <span class="doccomment">//!         .start();</span>
@@ -328,7 +341,6 @@
 <span class="doccomment">//! async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//! let event_store = EventStore::builder()</span>
 <span class="doccomment">//!     .storage(InMemoryStorage::default())</span>
-<span class="doccomment">//!     .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!     .build()</span>
 <span class="doccomment">//!     .await?</span>
 <span class="doccomment">//!     .start();</span>
@@ -359,7 +371,6 @@
 <span class="doccomment">//! async fn reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt;{</span>
 <span class="doccomment">//!     let mut event_store = EventStore::builder()</span>
 <span class="doccomment">//!         .storage(InMemoryStorage::default())</span>
-<span class="doccomment">//!         .event_bus(InMemoryEventBus::default())</span>
 <span class="doccomment">//!         .build()</span>
 <span class="doccomment">//!         .await</span>
 <span class="doccomment">//!         .unwrap()</span>
@@ -383,7 +394,7 @@
 <span class="kw">mod</span> <span class="ident">event_store</span>;
 <span class="kw">mod</span> <span class="ident">expected_version</span>;
 <span class="kw">mod</span> <span class="ident">read_version</span>;
-<span class="kw">mod</span> <span class="ident">storage</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span>;
 <span class="kw">mod</span> <span class="ident">stream</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
 
@@ -393,9 +404,16 @@
 <span class="kw">use</span> <span class="ident">event</span>::{<span class="ident">ParseEventError</span>, <span class="ident">RecordedEvent</span>};
 <span class="kw">use</span> <span class="ident">expected_version::ExpectedVersion</span>;
 <span class="kw">use</span> <span class="ident">read_version::ReadVersion</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::postgres::PostgresBackend</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::InMemoryStorage</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>};
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::backend::inmemory::InMemoryBackend</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::backend::postgres::PostgresBackend</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::InMemoryStorage</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::PostgresStorage</span>;
 
 <span class="doccomment">/// Create an `Appender` to append events</span>
 <span class="attribute">#[<span class="ident">must_use</span>]</span>
@@ -415,13 +433,21 @@
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::expected_version::ExpectedVersion</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read_version::ReadVersion</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_backend&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::inmemory::InMemoryBackend</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_backend&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::postgres::PostgresBackend</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::Backend</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBus</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_event_bus&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::InMemoryEventBus</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_event_bus&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::PostgresEventBus</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage</span>::{
-        <span class="ident">appender::Appender</span>, <span class="ident">postgres::PostgresBackend</span>, <span class="ident">reader::Reader</span>, <span class="ident">InMemoryStorage</span>,
-        <span class="ident">PostgresStorage</span>, <span class="ident">Storage</span>, <span class="ident">StorageError</span>,
-    };
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::InMemoryStorage</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::PostgresStorage</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>, <span class="ident">StorageError</span>};
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stream::Stream</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscription</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionNotification</span>;

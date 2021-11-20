@@ -116,8 +116,8 @@
 <span class="kw">use</span> <span class="ident">event_store::prelude::Stream</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresEventBus</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresStorage</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::storage::event_bus::PostgresEventBus</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::storage::PostgresStorage</span>;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">addr</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">event_store::EventStore</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span>,

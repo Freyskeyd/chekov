@@ -46,25 +46,9 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
-<span id="49">49</span>
-<span id="50">50</span>
-<span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::Connection</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::Event</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBus</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBusConnection</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">instrument</span>, <span class="ident">trace</span>};
@@ -76,27 +60,18 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {
     <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">event_bus</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">EventBusConnection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Builder use to simplify the `EventStore` creation</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span>, <span class="ident">E</span>: <span class="ident">EventBus</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {
     <span class="ident">storage</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
-    <span class="ident">event_bus</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span>, <span class="ident">E</span>: <span class="ident">EventBus</span><span class="op">&gt;</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">E</span><span class="op">&gt;</span> {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Define which storage will be used by this building `EventStore`</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">storage</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">storage</span>: <span class="ident">S</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">storage</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">storage</span>);
-
-        <span class="self">self</span>
-    }
-
-    <span class="doccomment">/// Define which event bus will be used by this building `EventStore`</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">event_bus</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event_bus</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">event_bus</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">event_bus</span>);
 
         <span class="self">self</span>
     }
@@ -112,14 +87,11 @@
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">is_none</span>() {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::NoStorage</span>);
         }
+
         <span class="kw">let</span> <span class="ident">connection</span> <span class="op">=</span> <span class="ident">Connection::make</span>(<span class="self">self</span>.<span class="ident">storage</span>.<span class="ident">unwrap</span>()).<span class="ident">start</span>();
-        <span class="kw">let</span> <span class="ident">event_bus</span> <span class="op">=</span> <span class="ident">EventBusConnection::make</span>(<span class="self">self</span>.<span class="ident">event_bus</span>.<span class="ident">unwrap</span>(), <span class="ident">connection</span>.<span class="ident">clone</span>());
         <span class="macro">trace!</span>(<span class="string">&quot;Creating EventStore with {} storage&quot;</span>, <span class="ident">S::storage_name</span>());
 
-        <span class="prelude-val">Ok</span>(<span class="ident">EventStore</span> {
-            <span class="ident">connection</span>,
-            <span class="ident">event_bus</span>,
-        })
+        <span class="prelude-val">Ok</span>(<span class="ident">EventStore</span> { <span class="ident">connection</span> })
     }
 }
 </code></pre></div>

@@ -194,6 +194,13 @@
 <span id="194">194</span>
 <span id="195">195</span>
 <span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><pre class="rust"><code><span class="comment">// TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_braces</span>)]</span>
 
@@ -222,8 +229,15 @@
 }
 
 <span class="kw">impl</span> <span class="ident">InMemoryBackend</span> {
-    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">initiate</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, ()<span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::default</span>())
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">initiate</span>(
+        <span class="ident">notifier</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, ()<span class="op">&gt;</span> {
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
+            <span class="ident">stream_counter</span>: <span class="number">0</span>,
+            <span class="ident">streams</span>: <span class="ident">HashMap::new</span>(),
+            <span class="ident">events</span>: <span class="ident">HashMap::new</span>(),
+            <span class="ident">notifier</span>,
+        })
     }
 }
 

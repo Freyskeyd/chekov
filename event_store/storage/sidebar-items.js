@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["StorageError",""]],"mod":[["appender",""],["backend",""],["event_bus",""],["reader",""]],"struct":[["InMemoryStorage",""],["PostgresStorage",""]],"trait":[["Storage","A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`"]]});

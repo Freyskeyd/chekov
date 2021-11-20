@@ -109,16 +109,13 @@
 <span id="109">109</span>
 <span id="110">110</span>
 <span id="111">111</span>
-<span id="112">112</span>
-<span id="113">113</span>
-<span id="114">114</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventStore</span>, <span class="ident">EventStoreBuilder</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">connection</span>::{<span class="ident">Append</span>, <span class="ident">Connection</span>, <span class="ident">CreateStream</span>, <span class="ident">Read</span>, <span class="ident">StreamInfo</span>},
     <span class="ident">event::RecordedEvent</span>,
-    <span class="ident">prelude</span>::{<span class="ident">EventBus</span>, <span class="ident">EventStoreError</span>},
+    <span class="ident">prelude::EventStoreError</span>,
     <span class="ident">storage</span>::{<span class="ident">appender::AppendToStreamRequest</span>, <span class="ident">reader</span>, <span class="ident">Storage</span>},
 };
 <span class="kw">use</span> <span class="ident">actix::Addr</span>;
@@ -133,11 +130,8 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">must_use</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">EventBus</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">E</span><span class="op">&gt;</span> {
-        <span class="ident">EventStoreBuilder</span> {
-            <span class="ident">storage</span>: <span class="prelude-val">None</span>,
-            <span class="ident">event_bus</span>: <span class="prelude-val">None</span>,
-        }
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">EventStoreBuilder</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+        <span class="ident">EventStoreBuilder</span> { <span class="ident">storage</span>: <span class="prelude-val">None</span> }
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">read</span>(

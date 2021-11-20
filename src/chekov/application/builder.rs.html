@@ -142,22 +142,6 @@
 <span id="142">142</span>
 <span id="143">143</span>
 <span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
-<span id="160">160</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::handler::EventHandlerBuilder</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::EventHandler</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::StartListening</span>;
@@ -193,7 +177,6 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ApplicationBuilder</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> {
     <span class="ident">app</span>: <span class="ident">std::marker::PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
     <span class="ident">storage</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">event_bus</span>: <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">A::EventBus</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">event_handlers</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> ()<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">listener_url</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
@@ -205,7 +188,6 @@
             <span class="ident">event_handlers</span>: <span class="ident">Vec::new</span>(),
             <span class="ident">app</span>: <span class="ident">std::marker::PhantomData</span>,
             <span class="ident">storage</span>: <span class="ident">Box::pin</span>(<span class="kw">async</span> { <span class="ident">A::Storage::default</span>() }),
-            <span class="ident">event_bus</span>: <span class="ident">Box::pin</span>(<span class="kw">async</span> { <span class="ident">A::EventBus::default</span>() }),
         }
     }
 }
@@ -249,18 +231,6 @@
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Adds a preconfigured EventBus.</span>
-    <span class="doccomment">/// The event bus isn&#39;t start, only when the application is launched.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">event_bus</span><span class="op">&lt;</span><span class="ident">F</span>: <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">A::EventBus</span>, <span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>, <span class="ident">E</span>: <span class="ident">std::fmt::Debug</span><span class="op">&gt;</span>(
-        <span class="kw-2">mut</span> <span class="self">self</span>,
-        <span class="ident">event_bus</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">event_bus</span> <span class="op">=</span>
-            <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="ident">event_bus</span>.<span class="kw">await</span>.<span class="ident">expect</span>(<span class="string">&quot;Unable to connect the event bus&quot;</span>) });
-
-        <span class="self">self</span>
-    }
-
     <span class="doccomment">/// Launch the application</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Meaning that:</span>
@@ -276,11 +246,9 @@
         );
 
         <span class="kw">let</span> <span class="ident">storage</span>: <span class="ident">A::Storage</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">storage</span>.<span class="kw">await</span>;
-        <span class="kw">let</span> <span class="ident">event_bus</span>: <span class="ident">A::EventBus</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">event_bus</span>.<span class="kw">await</span>;
 
         <span class="kw">let</span> <span class="ident">event_store</span>: <span class="ident">event_store::EventStore</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">event_store::EventStore::builder</span>()
             .<span class="ident">storage</span>(<span class="ident">storage</span>)
-            .<span class="ident">event_bus</span>(<span class="ident">event_bus</span>)
             .<span class="ident">build</span>()
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>();

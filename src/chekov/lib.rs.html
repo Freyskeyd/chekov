@@ -190,8 +190,8 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
-<span id="193">193</span>
-</pre><pre class="rust"><code><span class="doccomment">//! `Chekov` is a CQRS/ES Framework built on top of Actix actor framework.</span>
+</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy::module_inception</span>)]</span>
+<span class="doccomment">//! `Chekov` is a CQRS/ES Framework built on top of Actix actor framework.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Getting started</span>
 <span class="doccomment">//!</span>
@@ -215,11 +215,9 @@
 <span class="doccomment">//! struct DefaultApp {}</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Application trait is here to preconfigure your chekov runtime.</span>
-<span class="doccomment">//! // It tells that you want this `Application` to use a PostgresStorage and resolve the</span>
-<span class="doccomment">//! // eventbus&#39;s event with the `DefaultEventResolver`.</span>
+<span class="doccomment">//! // It tells that you want this `Application` to use a PostgresStorage.</span>
 <span class="doccomment">//! impl chekov::Application for DefaultApp {</span>
 <span class="doccomment">//!     type Storage = chekov::prelude::PostgresStorage;</span>
-<span class="doccomment">//!     type EventBus = chekov::prelude::PostgresEventBus;</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>

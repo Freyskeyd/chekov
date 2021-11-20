@@ -65,6 +65,7 @@
 <span id="65">65</span>
 <span id="66">66</span>
 <span id="67">67</span>
+<span id="68">68</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::StorageError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::UnsavedEvent</span>;
@@ -75,6 +76,7 @@
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">inmemory</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">postgres</span>;
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Backend</span> {
     <span class="kw">fn</span> <span class="ident">backend_name</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
