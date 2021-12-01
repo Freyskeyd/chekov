@@ -207,109 +207,24 @@
 <span id="207">207</span>
 <span id="208">208</span>
 <span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
-<span id="219">219</span>
-<span id="220">220</span>
-<span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
-<span id="227">227</span>
-<span id="228">228</span>
-<span id="229">229</span>
-<span id="230">230</span>
-<span id="231">231</span>
-<span id="232">232</span>
-<span id="233">233</span>
-<span id="234">234</span>
-<span id="235">235</span>
-<span id="236">236</span>
-<span id="237">237</span>
-<span id="238">238</span>
-<span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
-<span id="242">242</span>
-<span id="243">243</span>
-<span id="244">244</span>
-<span id="245">245</span>
-<span id="246">246</span>
-<span id="247">247</span>
-<span id="248">248</span>
-<span id="249">249</span>
-<span id="250">250</span>
-<span id="251">251</span>
-<span id="252">252</span>
-<span id="253">253</span>
-<span id="254">254</span>
-<span id="255">255</span>
-<span id="256">256</span>
-<span id="257">257</span>
-<span id="258">258</span>
-<span id="259">259</span>
-<span id="260">260</span>
-<span id="261">261</span>
-<span id="262">262</span>
-<span id="263">263</span>
-<span id="264">264</span>
-<span id="265">265</span>
-<span id="266">266</span>
-<span id="267">267</span>
-<span id="268">268</span>
-<span id="269">269</span>
-<span id="270">270</span>
-<span id="271">271</span>
-<span id="272">272</span>
-<span id="273">273</span>
-<span id="274">274</span>
-<span id="275">275</span>
-<span id="276">276</span>
-<span id="277">277</span>
-<span id="278">278</span>
-<span id="279">279</span>
-<span id="280">280</span>
-<span id="281">281</span>
-<span id="282">282</span>
-<span id="283">283</span>
-<span id="284">284</span>
-<span id="285">285</span>
-<span id="286">286</span>
-<span id="287">287</span>
-<span id="288">288</span>
-<span id="289">289</span>
-<span id="290">290</span>
-<span id="291">291</span>
-<span id="292">292</span>
-<span id="293">293</span>
-<span id="294">294</span>
-<span id="295">295</span>
-<span id="296">296</span>
-<span id="297">297</span>
-<span id="298">298</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::command</span>::{<span class="ident">Command</span>, <span class="ident">Handler</span>, <span class="ident">NoHandler</span>};
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="self">self</span>::internal::CommandExecutionResult</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::resolver::EventResolverRegistry</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::command</span>::{<span class="ident">Command</span>, <span class="ident">Handler</span>, <span class="ident">NoHandler</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::handler::Subscribe</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::Event</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message</span>::{<span class="ident">AggregateVersion</span>, <span class="ident">DispatchWithState</span>, <span class="ident">ResolveAndApply</span>, <span class="ident">ResolveAndApplyMany</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message</span>::{<span class="ident">DispatchWithState</span>, <span class="ident">ResolveAndApplyMany</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude::ApplyError</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">command::CommandExecutor</span>, <span class="ident">error::CommandExecutorError</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">message::Dispatch</span>, <span class="ident">prelude::EventApplier</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Aggregate</span>, <span class="ident">Application</span>};
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Handler</span> <span class="kw">as</span> <span class="ident">ActixHandler</span>};
+<span class="kw">use</span> <span class="ident">actix::Addr</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude</span>::{<span class="ident">EventStoreError</span>, <span class="ident">ReadVersion</span>, <span class="ident">RecordedEvent</span>, <span class="ident">SubscriptionNotification</span>};
-<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::resolver::EventResolverRegistry</span>;
+<span class="comment">// TODO rename this module to match the behaviours</span>
+<span class="kw">mod</span> <span class="ident">internal</span>;
+<span class="kw">mod</span> <span class="ident">runtime</span>;
 
 <span class="doccomment">/// Deals with the lifetime of a particular aggregate</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
@@ -333,6 +248,7 @@
         <span class="ident">identity</span>: <span class="ident">String</span>,
         <span class="ident">correlation_id</span>: <span class="ident">Uuid</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Addr</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>, <span class="ident">CommandExecutorError</span><span class="op">&gt;</span> {
+        <span class="comment">// Populate aggregate state</span>
         <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::fetch_existing_state</span>::<span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span>(<span class="ident">identity</span>.<span class="ident">to_owned</span>(), <span class="ident">correlation_id</span>).<span class="kw">await</span>;
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">AggregateInstance</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::default</span>();
@@ -347,8 +263,13 @@
             }
         }
 
+        <span class="comment">// subscribe to events</span>
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">AggregateInstance::create</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">ctx</span><span class="op">|</span> {
             <span class="ident">instance</span>.<span class="ident">inner</span>.<span class="ident">on_start</span>::<span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="ident">identity</span>, <span class="ident">ctx</span>);
+            <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
+            <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>();
+            <span class="kw">let</span> <span class="ident">recipient_sub</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>();
+            <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">identity</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>, <span class="ident">recipient_sub</span>));
 
             <span class="ident">instance</span>
         });
@@ -493,105 +414,6 @@
             }
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">CommandExecutorError::Any</span>),
         }
-    }
-}
-
-<span class="kw">struct</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
-    <span class="ident">new_version</span>: <span class="ident">i64</span>,
-    <span class="ident">state</span>: <span class="ident">A</span>,
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">ActixHandler</span><span class="op">&lt;</span><span class="ident">AggregateVersion</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">i64</span>;
-
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">AggregateVersion</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Result</span> {
-        <span class="self">self</span>.<span class="ident">current_version</span>
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">Actor</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Context</span> <span class="op">=</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) {
-        <span class="macro">trace!</span>(<span class="string">&quot;Aggregate {:?} started&quot;</span>, <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>());
-    }
-
-    <span class="kw">fn</span> <span class="ident">stopped</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) {
-        <span class="macro">trace!</span>(<span class="string">&quot;Aggregate {:?} stopped&quot;</span>, <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>());
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">Command</span>, <span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span> <span class="ident">ActixHandler</span><span class="op">&lt;</span><span class="ident">Dispatch</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">A</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">C::Executor</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">C::CommandHandler</span>: <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">C::Executor</span><span class="op">&gt;</span>,
-{
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">C::Event</span><span class="op">&gt;</span>, <span class="ident">CommandExecutorError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
-
-    <span class="attribute">#[<span class="ident">tracing::instrument</span>(
-        <span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;AggregateInstance&quot;</span>,
-        <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">_ctx</span>, <span class="ident">cmd</span>),
-        <span class="ident">fields</span>(<span class="ident">correlation_id</span> <span class="op">=</span> <span class="op">%</span><span class="ident">cmd</span>.<span class="ident">metadatas</span>.<span class="ident">correlation_id</span>, <span class="ident">aggregate_id</span> <span class="op">=</span> <span class="op">%</span><span class="ident">cmd</span>.<span class="ident">command</span>.<span class="ident">identifier</span>(), <span class="ident">aggregate_type</span> <span class="op">=</span> <span class="op">%</span><span class="ident">::std::any::type_name</span>::<span class="op">&lt;</span><span class="ident">C::Executor</span><span class="op">&gt;</span>())
-    )]</span>
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cmd</span>: <span class="ident">Dispatch</span><span class="op">&lt;</span><span class="ident">C</span>, <span class="ident">A</span><span class="op">&gt;</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Result</span> {
-        <span class="macro">trace!</span>(<span class="string">&quot;Executing command {}&quot;</span>, <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>(),);
-
-        <span class="kw">let</span> <span class="ident">mutable_state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">create_mutable_state</span>();
-        <span class="kw">let</span> <span class="ident">current_version</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">current_version</span>;
-
-        <span class="ident">Box::pin</span>(
-            <span class="kw">async</span> <span class="kw">move</span> { <span class="ident"><span class="self">Self</span>::execute_and_apply</span>(<span class="ident">mutable_state</span>, <span class="ident">cmd</span>, <span class="ident">current_version</span>).<span class="kw">await</span> }
-                .<span class="ident">into_actor</span>(<span class="self">self</span>)
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">result</span>, <span class="ident">actor</span>, <span class="kw">_</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">result</span> {
-                    <span class="prelude-val">Ok</span>(<span class="ident">CommandExecutionResult</span> {
-                        <span class="ident">events</span>,
-                        <span class="ident">new_version</span>,
-                        <span class="ident">state</span>,
-                    }) <span class="op">=</span><span class="op">&gt;</span> {
-                        <span class="ident">actor</span>.<span class="ident">current_version</span> <span class="op">=</span> <span class="ident">new_version</span>;
-                        <span class="ident">actor</span>.<span class="ident">inner</span> <span class="op">=</span> <span class="ident">state</span>;
-                        <span class="prelude-val">Ok</span>(<span class="ident">events</span>)
-                    }
-                    <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>),
-                }),
-        )
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">ActixHandler</span><span class="op">&lt;</span><span class="ident">ResolveAndApply</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">ResolveAndApply</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Result</span> {
-        <span class="self">self</span>.<span class="ident">apply_recorded_event</span>(<span class="ident">msg</span>.<span class="number">0</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">ActixHandler</span><span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">ResolveAndApplyMany</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Result</span> {
-        <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">msg</span>.<span class="number">0</span> {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">apply_recorded_event</span>(<span class="ident">event</span>);
-        }
-
-        <span class="prelude-val">Ok</span>(())
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> <span class="ident">ActixHandler</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span>;
-
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">SubscriptionNotification</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Result</span> {
-        <span class="kw">match</span> <span class="ident">msg</span> {
-            <span class="ident">SubscriptionNotification::Events</span>(<span class="ident">events</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">events</span> {
-                    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">apply_recorded_event</span>(<span class="ident">event</span>);
-                }
-            }
-            <span class="ident">SubscriptionNotification::Subscribed</span> <span class="op">=</span><span class="op">&gt;</span> {}
-        }
-
-        <span class="ident">Box::pin</span>(<span class="kw">async</span> { <span class="prelude-val">Ok</span>(()) }.<span class="ident">into_actor</span>(<span class="self">self</span>))
     }
 }
 </code></pre></div>

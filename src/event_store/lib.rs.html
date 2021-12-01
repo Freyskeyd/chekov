@@ -227,6 +227,17 @@
 <span id="227">227</span>
 <span id="228">228</span>
 <span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
     <span class="ident">clippy::pedantic</span>,
@@ -305,6 +316,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! impl TryFrom&lt;RecordedEvent&gt; for MyEvent {</span>
 <span class="doccomment">//!      type Error = ();</span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//!      fn try_from(e: RecordedEvent) -&gt; Result&lt;Self, ()&gt; {</span>
 <span class="doccomment">//!        serde_json::from_value(e.data).map_err(|_| ())</span>
 <span class="doccomment">//!      }</span>
@@ -345,12 +357,11 @@
 <span class="doccomment">//!     .await?</span>
 <span class="doccomment">//!     .start();</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! let stream_uuid = Uuid::new_v4().to_string();</span>
 <span class="doccomment">//! let my_event = MyEvent { account_id: Uuid::new_v4() };</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! event_store::append()</span>
 <span class="doccomment">//!   .event(&amp;my_event)?</span>
-<span class="doccomment">//!   .to(&amp;stream_uuid)?</span>
+<span class="doccomment">//!   .to(&amp;Uuid::new_v4())?</span>
 <span class="doccomment">//!   .execute(event_store)</span>
 <span class="doccomment">//!   .await;</span>
 <span class="doccomment">//!</span>
@@ -376,10 +387,8 @@
 <span class="doccomment">//!         .unwrap()</span>
 <span class="doccomment">//!         .start();</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//!     let stream_uuid = Uuid::new_v4().to_string();</span>
-<span class="doccomment">//!</span>
 <span class="doccomment">//!     event_store::read()</span>
-<span class="doccomment">//!         .stream(&amp;stream_uuid)?</span>
+<span class="doccomment">//!         .stream(&amp;Uuid::new_v4())?</span>
 <span class="doccomment">//!         .from(ReadVersion::Origin)</span>
 <span class="doccomment">//!         .limit(10)</span>
 <span class="doccomment">//!         .execute(event_store)</span>
@@ -406,13 +415,14 @@
 <span class="kw">use</span> <span class="ident">read_version::ReadVersion</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>};
 
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">inline</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::backend::inmemory::InMemoryBackend</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::backend::postgres::PostgresBackend</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)))]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::InMemoryStorage</span>;
+
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">inline</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)))]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">storage::PostgresStorage</span>;
 
 <span class="doccomment">/// Create an `Appender` to append events</span>
@@ -429,31 +439,43 @@
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">prelude</span> {
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::StreamInfo</span>;
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::expected_version::ExpectedVersion</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read_version::ReadVersion</span>;
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_backend&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::inmemory::InMemoryBackend</span>;
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_backend&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::postgres::PostgresBackend</span>;
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::Backend</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBus</span>;
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_backend&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::inmemory::InMemoryBackend</span>;
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_backend&quot;</span>)]</span>
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::postgres::PostgresBackend</span>;
+
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_event_bus&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::InMemoryEventBus</span>;
+
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_event_bus&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::PostgresEventBus</span>;
+
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::InMemoryStorage</span>;
+
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::PostgresStorage</span>;
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>, <span class="ident">StorageError</span>};
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stream::Stream</span>;
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscription</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionNotification</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionOptions</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::SubscriptionsSupervisor</span>;
+
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
 }
 </code></pre></div>

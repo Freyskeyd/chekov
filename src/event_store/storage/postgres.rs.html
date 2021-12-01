@@ -37,10 +37,8 @@
 <span id="37">37</span>
 <span id="38">38</span>
 <span id="39">39</span>
-<span id="40">40</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">event_bus::PostgresEventBus</span>, <span class="ident">Storage</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::EventBus</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::PostgresBackend</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">prelude::PostgresBackend</span>, <span class="ident">storage::EventBus</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PostgresStorage</span> {
