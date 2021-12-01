@@ -9,7 +9,7 @@ mod logic;
 mod runtime;
 
 /// An `EventStore` that hold a storage connection
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct EventStore<S: Storage> {
     connection: Addr<Connection<S>>,
 }
@@ -36,13 +36,14 @@ impl<S: Storage> EventStoreBuilder<S> {
     // #[instrument(level = "trace", name = "my_name", skip(self))]
     #[instrument(level = "trace", name = "EventStoreBuilder::build", skip(self))]
     pub async fn build(self) -> Result<EventStore<S>, EventStoreError> {
-        if self.storage.is_none() {
-            return Err(EventStoreError::NoStorage);
+        match self.storage {
+            Some(storage) => {
+                let connection = Connection::make(storage).start();
+                trace!("Creating EventStore with {} storage", S::storage_name());
+
+                Ok(EventStore { connection })
+            }
+            None => Err(EventStoreError::NoStorage),
         }
-
-        let connection = Connection::make(self.storage.unwrap()).start();
-        trace!("Creating EventStore with {} storage", S::storage_name());
-
-        Ok(EventStore { connection })
     }
 }

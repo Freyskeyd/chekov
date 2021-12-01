@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use super::Application;
 use super::Command;
 use super::CommandExecutorError;
@@ -80,3 +82,9 @@ pub(crate) struct AggregateVersion;
 #[derive(Message, Debug)]
 #[rtype("()")]
 pub(crate) struct StartListening;
+
+#[derive(Message)]
+#[rtype("Addr<event_store::EventStore<S>>")]
+pub(crate) struct GetAddr<S: Storage> {
+    pub(crate) _phantom: PhantomData<S>,
+}

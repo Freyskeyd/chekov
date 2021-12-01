@@ -1,7 +1,8 @@
+use crate::event_store::EventStore;
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use actix::prelude::*;
-use event_store::prelude::SubscriptionNotification;
+use event_store::prelude::{StartFrom, SubscriptionNotification};
 use event_store::storage::Storage;
 use tracing::trace;
 
@@ -94,13 +95,21 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let fut = event_store::prelude::Subscriptions::<<A::Storage as Storage>::EventBus>::subscribe_to_stream(
-            ctx.address().recipient(),
-            event_store::prelude::SubscriptionOptions {
-                stream_uuid: self._name.to_owned(),
-                subscription_name: self._name.to_owned(),
-            },
-        );
+        let opts = event_store::prelude::SubscriptionOptions {
+            stream_uuid: self._name.to_owned(),
+            subscription_name: self._name.to_owned(),
+            start_from: StartFrom::Origin,
+            transient: false,
+        };
+
+        let addr = ctx.address().recipient();
+        let fut = async move {
+            let storage = EventStore::<A>::get_addr().await.unwrap();
+            event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
+                addr, opts, storage,
+            )
+            .await;
+        };
 
         ctx.spawn(fut.into_actor(self).map(|_, _, _| ()));
 

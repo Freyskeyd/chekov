@@ -1,5 +1,7 @@
+use std::marker::PhantomData;
+
 use crate::application::Application;
-use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo};
+use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetAddr};
 pub use ::event_store::prelude::Event;
 pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
@@ -36,6 +38,25 @@ where
         Self::from_registry()
             .send(ExecuteStreamInfo(stream_uuid.to_string()))
             .await
+    }
+
+    pub async fn get_addr() -> Result<Addr<event_store::EventStore<A::Storage>>, MailboxError> {
+        Self::from_registry()
+            .send(GetAddr {
+                _phantom: PhantomData,
+            })
+            .await
+    }
+}
+
+impl<A> actix::Handler<GetAddr<A::Storage>> for EventStore<A>
+where
+    A: Application,
+{
+    type Result = Addr<event_store::EventStore<A::Storage>>;
+
+    fn handle(&mut self, _: GetAddr<A::Storage>, _: &mut Self::Context) -> Self::Result {
+        self.addr.clone()
     }
 }
 

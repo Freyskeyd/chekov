@@ -90,15 +90,18 @@ impl Backend for InMemoryBackend {
     fn read_stream(
         &self,
         stream_uuid: String,
-        _: usize,
-        _: usize,
+        version: usize,
+        limit: usize,
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
     {
+        let version = if version == 0 { version } else { version - 1 };
+
         let result = self
             .events
             .get(&stream_uuid)
             .cloned()
+            .map(|stream| stream.into_iter().skip(version).take(limit).collect())
             .ok_or(StorageError::StreamDoesntExists);
 
         async move { result }.boxed()
@@ -127,8 +130,9 @@ impl Backend for InMemoryBackend {
         if let Some(e) = self.events.get_mut(stream_uuid) {
             let mut re: Vec<RecordedEvent> = events
                 .iter()
-                .map(|event| RecordedEvent {
-                    event_number: 0,
+                .enumerate()
+                .map(|(i, event)| RecordedEvent {
+                    event_number: (e.len() + 1 + i) as i64,
                     event_uuid: Uuid::new_v4(),
                     stream_uuid: event.stream_uuid.clone(),
                     stream_version: Some(event.stream_version),

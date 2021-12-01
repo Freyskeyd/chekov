@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::prelude::EventBus;
+use crate::{prelude::EventBus, storage::Storage, EventStore};
 
 use super::{
-    fsm::SubscriptionFSM,
+    fsm::{InternalFSMState, SubscriptionFSM},
     supervisor::{Down, GoingDown, Notify, Started, SubscriptionsSupervisor},
 };
 use super::{SubscriptionNotification, SubscriptionOptions};
@@ -15,16 +15,20 @@ use tracing::debug;
 #[rtype("()")]
 struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
 
+#[derive(Debug, Message)]
+#[rtype("()")]
+struct CatchUp;
+
 #[derive(Debug)]
-pub struct Subscription<S: EventBus> {
+pub struct Subscription<S: Storage> {
     stream_uuid: String,
     subscription_name: String,
-    subscription: Arc<Mutex<SubscriptionFSM>>,
+    subscription: Arc<Mutex<SubscriptionFSM<S>>>,
     retry_interval: usize,
     supervisor: Addr<SubscriptionsSupervisor<S>>,
 }
 
-impl<S: EventBus> Actor for Subscription<S> {
+impl<S: Storage> Actor for Subscription<S> {
     type Context = Context<Self>;
 
     fn started(&mut self, _: &mut Self::Context) {
@@ -42,9 +46,7 @@ impl<S: EventBus> Actor for Subscription<S> {
     }
 }
 
-impl<S: EventBus> Subscription<S> {}
-
-impl<S: EventBus> Handler<Connect> for Subscription<S> {
+impl<S: Storage> Handler<Connect> for Subscription<S> {
     type Result = ResponseActFuture<Self, ()>;
 
     fn handle(&mut self, msg: Connect, _ctx: &mut Self::Context) -> Self::Result {
@@ -60,24 +62,52 @@ impl<S: EventBus> Handler<Connect> for Subscription<S> {
 
             // Ensure not already subscribe
             if !fsm.has_subscriber() {
-                let recipient = msg.0.clone();
+                let recipient = msg.0;
 
-                fsm.connect_subscriber(&recipient).await;
+                fsm.connect_subscriber(recipient).await;
+                fsm.subscribe().await;
+            } else {
             }
-            // subscription.connect_subscriber(&msg.0);
-            // subscription.subscribe();
-            // subscription
+
+            fsm.state
         }
         .into_actor(self)
-        .map(|_, _, _| {
-            // actor.subscription = res;
+        .map(|res, actor, ctx| {
+            actor.handle_state_update(res, ctx);
         });
 
         Box::pin(fut)
     }
 }
 
-impl<S: EventBus> Handler<Notify> for Subscription<S> {
+impl<S: Storage> Handler<CatchUp> for Subscription<S> {
+    type Result = ResponseActFuture<Self, ()>;
+
+    fn handle(&mut self, _: CatchUp, ctx: &mut Self::Context) -> Self::Result {
+        debug!(
+            "{} attempting to catch up {:?}",
+            self.subscription_name, self.stream_uuid
+        );
+
+        let fsm_arc = self.subscription.clone();
+
+        let fut = async move {
+            let mut fsm = fsm_arc.lock().await;
+
+            fsm.catch_up().await;
+
+            fsm.state
+        }
+        .into_actor(self)
+        .map(|res, actor, ctx| {
+            actor.handle_state_update(res, ctx);
+        });
+
+        Box::pin(fut)
+    }
+}
+
+impl<S: Storage> Handler<Notify> for Subscription<S> {
     type Result = ResponseActFuture<Self, ()>;
 
     fn handle(&mut self, msg: Notify, _ctx: &mut Self::Context) -> Self::Result {
@@ -89,30 +119,25 @@ impl<S: EventBus> Handler<Notify> for Subscription<S> {
         let fsm = self.subscription.clone();
         let fut = async move {
             fsm.lock().await.notify_events(msg.0).await;
-
-            // subscription.connect_subscriber(&msg.0);
-            // subscription.subscribe();
-            // subscription
         }
         .into_actor(self)
-        .map(|_, _, _| {
-            // actor.subscription = res;
-        });
+        .map(|_, _, _| {});
 
         Box::pin(fut)
     }
 }
-impl<S: EventBus> Supervised for Subscription<S> {}
+impl<S: Storage> Supervised for Subscription<S> {}
 
-impl<S: EventBus> Subscription<S> {
+impl<S: Storage> Subscription<S> {
     pub fn start_with_options(
         options: &SubscriptionOptions,
         supervisor: Addr<SubscriptionsSupervisor<S>>,
+        storage: Addr<EventStore<S>>,
     ) -> Addr<Self> {
         let subscription = Self {
             stream_uuid: options.stream_uuid.clone(),
             subscription_name: options.subscription_name.clone(),
-            subscription: Arc::new(Mutex::new(SubscriptionFSM::default())),
+            subscription: Arc::new(Mutex::new(SubscriptionFSM::with_options(&options, storage))),
             retry_interval: 1_000,
             supervisor,
         };
@@ -122,13 +147,36 @@ impl<S: EventBus> Subscription<S> {
 
     pub async fn connect(
         addr: &Addr<Self>,
-        recipient: &Recipient<SubscriptionNotification>,
+        recipient: Recipient<SubscriptionNotification>,
         options: &SubscriptionOptions,
     ) -> Result<(), ()> {
+        debug!(
+            "Send Connect command to subscription {}",
+            options.subscription_name
+        );
         // TODO handle result
-        let _ = addr.send(Connect(recipient.clone(), options.clone())).await;
+        let _ = addr.send(Connect(recipient, options.clone())).await;
 
         Ok(())
+    }
+
+    fn handle_state_update(&mut self, state: InternalFSMState, ctx: &mut Context<Self>) {
+        match state {
+            InternalFSMState::Initial | InternalFSMState::Disconnected => {
+                // subscribe to stream
+            }
+            InternalFSMState::RequestCatchUp => {
+                debug!("{} catching up", self.subscription_name);
+                ctx.notify(CatchUp);
+            }
+            InternalFSMState::Unsubscribed => {
+                debug!(
+                    "{} has no subscribers, shutting down",
+                    self.subscription_name
+                );
+            }
+            _ => {}
+        }
     }
 }
 
@@ -136,7 +184,9 @@ impl<S: EventBus> Subscription<S> {
 mod test {
 
     use super::*;
-    use crate::{event::RecordedEvents, prelude::InMemoryEventBus};
+    use crate::{
+        event::RecordedEvents, prelude::InMemoryEventBus, subscriptions::StartFrom, InMemoryStorage,
+    };
 
     struct Dummy {}
     impl Actor for Dummy {
@@ -159,18 +209,27 @@ mod test {
 
     #[actix::test]
     async fn can_subscribe() {
-        let sup = SubscriptionsSupervisor::<InMemoryEventBus>::from_registry();
+        let es = EventStore::builder()
+            .storage(InMemoryStorage::default())
+            .build()
+            .await
+            .unwrap()
+            .start();
+
+        let sup = SubscriptionsSupervisor::<InMemoryStorage>::from_registry();
         let dummy = Dummy {}.start();
 
         let options = SubscriptionOptions {
             stream_uuid: uuid::Uuid::new_v4().to_string(),
             subscription_name: "can_subscribe_test".into(),
+            start_from: StartFrom::Origin,
+            transient: false,
         };
 
-        let addr = Subscription::<InMemoryEventBus>::start_with_options(&options, sup.clone());
+        let addr = Subscription::start_with_options(&options, sup.clone(), es);
 
         let recip = dummy.recipient();
-        let _ = Subscription::connect(&addr, &recip, &options).await;
-        let _ = Subscription::connect(&addr, &recip, &options).await;
+        let _ = Subscription::connect(&addr, recip.clone(), &options).await;
+        let _ = Subscription::connect(&addr, recip, &options).await;
     }
 }

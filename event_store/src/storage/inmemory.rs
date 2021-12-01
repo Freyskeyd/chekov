@@ -1,11 +1,13 @@
 use tokio::sync::mpsc::{self};
 
+use crate::prelude::InMemoryBackend;
+
 use super::{
     event_bus::{EventBusMessage, InMemoryEventBus},
     EventBus, Storage,
 };
-use crate::InMemoryBackend;
 
+/// InMemory storage used for tests mostly
 #[derive(Default, Debug)]
 pub struct InMemoryStorage {
     backend: InMemoryBackend,

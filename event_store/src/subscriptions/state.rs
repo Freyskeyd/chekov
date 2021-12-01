@@ -1,27 +1,25 @@
-use super::subscriber::Subscriber;
+use std::collections::{HashMap, HashSet, VecDeque};
+
+use crate::{event::RecordedEvent, storage::Storage, EventStore};
+
+use super::{subscriber::Subscriber, StartFrom};
 use actix::prelude::*;
 
-#[derive(Default, Debug)]
-pub struct SubscriptionState {
-    // pub(crate) subscribers: HashMap<Recipient<SubscriptionNotification>, Addr<Subscriber>>,
-    pub(crate) subscriber: Option<Addr<Subscriber>>,
-    // :serializer,
-    // :schema,
+#[derive(Debug)]
+pub struct SubscriptionState<S: Storage> {
+    pub(crate) subscriber: Option<Subscriber>,
+    pub(crate) storage: Addr<EventStore<S>>,
     pub(crate) stream_uuid: String,
-    pub(crate) start_from: String,
+    pub(crate) start_from: StartFrom,
     pub(crate) subscription_name: String,
-    pub(crate) subscription_id: i64,
-    // :selector,
-    // :mapper,
-    pub(crate) max_size: usize,
-    pub(crate) partition_by: String,
-    pub(crate) lock_ref: String,
-    pub(crate) last_received: usize,
-    pub(crate) last_sent: usize,
-    pub(crate) last_ack: usize,
-    pub(crate) queue_size: usize,
-    pub(crate) buffer_size: usize,
-    // partitions: %{},
-    // processed_event_numbers: MapSet.new(),
+    pub(crate) last_received: i64,
+    pub(crate) last_sent: i64,
+    pub(crate) last_ack: i64,
+    pub(crate) queue: VecDeque<RecordedEvent>,
     pub(crate) transient: bool,
+    pub(crate) in_flight_event_numbers: Vec<i64>,
+}
+
+impl<S: Storage> SubscriptionState<S> {
+    pub(crate) fn reset_event_tracking(&mut self) {}
 }

@@ -45,9 +45,9 @@ impl Reader {
     /// # Errors
     ///
     /// Can fail if the stream doesn't have the expected format
-    pub fn stream<S: Into<String>>(mut self, stream: S) -> Result<Self, EventStoreError> {
+    pub fn stream<S: ToString>(mut self, stream: S) -> Result<Self, EventStoreError> {
         // TODO: validate stream name format
-        self.stream = stream.into();
+        self.stream = stream.to_string();
 
         trace!(
             parent: &self.span,

@@ -9,14 +9,15 @@ use actix::{Actor, AsyncContext, Context, Handler};
 use actix::{StreamHandler, WrapFuture};
 use std::borrow::Cow;
 use std::str::FromStr;
+use tracing::trace;
 use tracing::Instrument;
-use tracing::{trace};
 use uuid::Uuid;
 
 mod messaging;
 
 pub use messaging::{Append, CreateStream, Read, StreamInfo};
 
+#[derive(Debug)]
 pub struct Connection<S: Storage> {
     storage: S,
 }
@@ -45,7 +46,7 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(events) => {
-                    Subscriptions::<S::EventBus>::notify_subscribers(events);
+                    Subscriptions::<S>::notify_subscribers(events);
                 }
                 EventBusMessage::Notification(notification) => {
                     trace!(
@@ -55,25 +56,24 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
 
                     let stream_uuid = notification.stream_uuid.clone();
                     let correlation_id = Uuid::new_v4();
-                    let fut =
-                        self.storage
-                            .backend()
-                            .read_stream(
-                                stream_uuid,
-                                notification.first_stream_version as usize,
-                                (notification.last_stream_version
-                                    - notification.first_stream_version
-                                    + 1) as usize,
-                                correlation_id,
-                            )
-                            .in_current_span()
-                            .into_actor(self)
-                            .map(move |res, _actor, _ctx| match res {
-                                Ok(events) => Subscriptions::<S::EventBus>::notify_subscribers(
-                                    RecordedEvents { events },
-                                ),
-                                Err(_) => todo!(),
-                            });
+                    let fut = self
+                        .storage
+                        .backend()
+                        .read_stream(
+                            stream_uuid,
+                            notification.first_stream_version as usize,
+                            (notification.last_stream_version - notification.first_stream_version
+                                + 1) as usize,
+                            correlation_id,
+                        )
+                        .in_current_span()
+                        .into_actor(self)
+                        .map(move |res, _actor, _ctx| match res {
+                            Ok(events) => {
+                                Subscriptions::<S>::notify_subscribers(RecordedEvents { events })
+                            }
+                            Err(_) => todo!(),
+                        });
 
                     ctx.spawn(fut);
                 }

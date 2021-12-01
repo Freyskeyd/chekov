@@ -1,17 +1,21 @@
+use self::internal::CommandExecutionResult;
+use super::resolver::EventResolverRegistry;
 use crate::command::{Command, Handler, NoHandler};
+use crate::event::handler::Subscribe;
 use crate::event::Event;
-use crate::message::{AggregateVersion, DispatchWithState, ResolveAndApply, ResolveAndApplyMany};
+use crate::message::{DispatchWithState, ResolveAndApplyMany};
 use crate::prelude::ApplyError;
 use crate::{command::CommandExecutor, error::CommandExecutorError};
 use crate::{message::Dispatch, prelude::EventApplier};
 use crate::{Aggregate, Application};
 use actix::prelude::*;
-use actix::{Addr, Handler as ActixHandler};
+use actix::Addr;
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
-use tracing::trace;
 use uuid::Uuid;
 
-use super::resolver::EventResolverRegistry;
+// TODO rename this module to match the behaviours
+mod internal;
+mod runtime;
 
 /// Deals with the lifetime of a particular aggregate
 pub struct AggregateInstance<A: Aggregate> {
@@ -35,6 +39,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         identity: String,
         correlation_id: Uuid,
     ) -> Result<Addr<Self>, CommandExecutorError> {
+        // Populate aggregate state
         let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
 
         let mut instance = AggregateInstance::<A>::default();
@@ -49,8 +54,13 @@ impl<A: Aggregate> AggregateInstance<A> {
             }
         }
 
+        // subscribe to events
         let addr = AggregateInstance::create(move |ctx| {
             instance.inner.on_start::<APP>(&identity, ctx);
+            let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
+            let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+            let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
+            broker.do_send(Subscribe(identity.into(), recipient, recipient_sub));
 
             instance
         });
@@ -195,104 +205,5 @@ impl<A: Aggregate> AggregateInstance<A> {
             }
             Err(_) => Err(CommandExecutorError::Any),
         }
-    }
-}
-
-struct CommandExecutionResult<E, A> {
-    events: Vec<E>,
-    new_version: i64,
-    state: A,
-}
-
-impl<A: Aggregate> ActixHandler<AggregateVersion> for AggregateInstance<A> {
-    type Result = i64;
-
-    fn handle(&mut self, _: AggregateVersion, _: &mut Self::Context) -> Self::Result {
-        self.current_version
-    }
-}
-
-impl<A: Aggregate> Actor for AggregateInstance<A> {
-    type Context = Context<Self>;
-
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        trace!("Aggregate {:?} started", std::any::type_name::<Self>());
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        trace!("Aggregate {:?} stopped", std::any::type_name::<Self>());
-    }
-}
-
-impl<C: Command, A: Application> ActixHandler<Dispatch<C, A>> for AggregateInstance<C::Executor>
-where
-    C::CommandHandler: Handler<C, C::Executor>,
-{
-    type Result = ResponseActFuture<Self, Result<Vec<C::Event>, CommandExecutorError>>;
-
-    #[tracing::instrument(
-        name = "AggregateInstance",
-        skip(self, _ctx, cmd),
-        fields(correlation_id = %cmd.metadatas.correlation_id, aggregate_id = %cmd.command.identifier(), aggregate_type = %::std::any::type_name::<C::Executor>())
-    )]
-    fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
-        trace!("Executing command {}", std::any::type_name::<C>(),);
-
-        let mutable_state = self.create_mutable_state();
-        let current_version = self.current_version;
-
-        Box::pin(
-            async move { Self::execute_and_apply(mutable_state, cmd, current_version).await }
-                .into_actor(self)
-                .map(|result, actor, _| match result {
-                    Ok(CommandExecutionResult {
-                        events,
-                        new_version,
-                        state,
-                    }) => {
-                        actor.current_version = new_version;
-                        actor.inner = state;
-                        Ok(events)
-                    }
-                    Err(e) => Err(e),
-                }),
-        )
-    }
-}
-
-impl<A: Aggregate> ActixHandler<ResolveAndApply> for AggregateInstance<A> {
-    type Result = Result<(), ()>;
-
-    fn handle(&mut self, msg: ResolveAndApply, _: &mut Self::Context) -> Self::Result {
-        self.apply_recorded_event(msg.0).map_err(|_| ())
-    }
-}
-
-impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
-    type Result = Result<(), ()>;
-
-    fn handle(&mut self, msg: ResolveAndApplyMany, _: &mut Self::Context) -> Self::Result {
-        for event in msg.0 {
-            let _ = self.apply_recorded_event(event);
-        }
-
-        Ok(())
-    }
-}
-
-impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<A> {
-    type Result = ResponseActFuture<Self, Result<(), ()>>;
-
-    fn handle(&mut self, msg: SubscriptionNotification, _: &mut Self::Context) -> Self::Result {
-        match msg {
-            SubscriptionNotification::Events(events) => {
-                for event in events {
-                    let _ = self.apply_recorded_event(event);
-                }
-            }
-            SubscriptionNotification::Subscribed => {}
-        }
-
-        Box::pin(async { Ok(()) }.into_actor(self))
     }
 }

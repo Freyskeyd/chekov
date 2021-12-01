@@ -76,6 +76,7 @@
 //!
 //! impl TryFrom<RecordedEvent> for MyEvent {
 //!      type Error = ();
+//!
 //!      fn try_from(e: RecordedEvent) -> Result<Self, ()> {
 //!        serde_json::from_value(e.data).map_err(|_| ())
 //!      }
@@ -116,12 +117,11 @@
 //!     .await?
 //!     .start();
 //!
-//! let stream_uuid = Uuid::new_v4().to_string();
 //! let my_event = MyEvent { account_id: Uuid::new_v4() };
 //!
 //! event_store::append()
 //!   .event(&my_event)?
-//!   .to(&stream_uuid)?
+//!   .to(&Uuid::new_v4())?
 //!   .execute(event_store)
 //!   .await;
 //!
@@ -147,10 +147,8 @@
 //!         .unwrap()
 //!         .start();
 //!
-//!     let stream_uuid = Uuid::new_v4().to_string();
-//!
 //!     event_store::read()
-//!         .stream(&stream_uuid)?
+//!         .stream(&Uuid::new_v4())?
 //!         .from(ReadVersion::Origin)
 //!         .limit(10)
 //!         .execute(event_store)
@@ -163,27 +161,27 @@ mod connection;
 mod error;
 mod event;
 mod event_store;
-mod expected_version;
-mod read_version;
 pub mod storage;
 mod stream;
 mod subscriptions;
+mod versions;
 
 pub use crate::event_store::EventStore;
 use error::EventStoreError;
 pub use event::Event;
 use event::{ParseEventError, RecordedEvent};
-use expected_version::ExpectedVersion;
-use read_version::ReadVersion;
 use storage::{appender::Appender, reader::Reader, Storage};
+use versions::ExpectedVersion;
+use versions::ReadVersion;
 
+#[doc(inline)]
 #[cfg(feature = "inmemory")]
-pub use storage::backend::inmemory::InMemoryBackend;
-#[cfg(feature = "postgres")]
-pub use storage::backend::postgres::PostgresBackend;
-#[cfg(feature = "inmemory")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inmemory")))]
 pub use storage::InMemoryStorage;
+
+#[doc(inline)]
 #[cfg(feature = "postgres")]
+#[cfg_attr(docsrs, doc(cfg(feature = "postgres")))]
 pub use storage::PostgresStorage;
 
 /// Create an `Appender` to append events
@@ -200,30 +198,42 @@ pub fn read() -> Reader {
 
 pub mod prelude {
     pub use crate::connection::StreamInfo;
+
     pub use crate::error::EventStoreError;
     pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
-    pub use crate::expected_version::ExpectedVersion;
-    pub use crate::read_version::ReadVersion;
-    #[cfg(feature = "inmemory_backend")]
-    pub use crate::storage::backend::inmemory::InMemoryBackend;
-    #[cfg(feature = "postgres_backend")]
-    pub use crate::storage::backend::postgres::PostgresBackend;
+    pub use crate::versions::{ExpectedVersion, ReadVersion};
+
     pub use crate::storage::backend::Backend;
     pub use crate::storage::event_bus::EventBus;
+
+    #[cfg(feature = "inmemory_backend")]
+    pub use crate::storage::backend::inmemory::InMemoryBackend;
+
+    #[cfg(feature = "postgres_backend")]
+    pub use crate::storage::backend::postgres::PostgresBackend;
+
     #[cfg(feature = "inmemory_event_bus")]
     pub use crate::storage::event_bus::InMemoryEventBus;
+
     #[cfg(feature = "postgres_event_bus")]
     pub use crate::storage::event_bus::PostgresEventBus;
+
     #[cfg(feature = "inmemory")]
     pub use crate::storage::InMemoryStorage;
+
     #[cfg(feature = "postgres")]
     pub use crate::storage::PostgresStorage;
+
     pub use crate::storage::{appender::Appender, reader::Reader, Storage, StorageError};
+
     pub use crate::stream::Stream;
+
+    pub use crate::subscriptions::StartFrom;
     pub use crate::subscriptions::Subscription;
     pub use crate::subscriptions::SubscriptionNotification;
     pub use crate::subscriptions::SubscriptionOptions;
     pub use crate::subscriptions::Subscriptions;
     pub use crate::subscriptions::SubscriptionsSupervisor;
+
     pub use crate::EventStore;
 }

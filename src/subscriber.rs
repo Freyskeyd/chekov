@@ -36,6 +36,7 @@ impl FromStr for NonEmptyString {
         }
     }
 }
+
 impl From<NonEmptyString> for String {
     fn from(s: NonEmptyString) -> Self {
         s.0

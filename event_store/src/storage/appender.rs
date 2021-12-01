@@ -1,8 +1,8 @@
 use crate::event::ParseEventError;
 use crate::event::UnsavedEvent;
-use crate::expected_version::ExpectedVersionResult;
 use crate::storage::StorageError;
 use crate::stream::Stream;
+use crate::versions::ExpectedVersionResult;
 use crate::Event;
 use crate::EventStore;
 use crate::EventStoreError;

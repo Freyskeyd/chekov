@@ -1,6 +1,5 @@
 use super::{event_bus::PostgresEventBus, Storage};
-use crate::storage::EventBus;
-use crate::PostgresBackend;
+use crate::{prelude::PostgresBackend, storage::EventBus};
 
 #[derive(Debug, Default)]
 pub struct PostgresStorage {

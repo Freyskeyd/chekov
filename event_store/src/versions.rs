@@ -1,5 +1,11 @@
 use crate::stream::Stream;
 
+#[derive(Debug)]
+pub enum ReadVersion {
+    Origin,
+    Version(i64),
+}
+
 /// The `ExpectedVersion` used to define optimistic concurrency
 #[derive(Debug, PartialEq)]
 pub enum ExpectedVersion {
