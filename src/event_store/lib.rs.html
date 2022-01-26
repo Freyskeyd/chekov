@@ -238,8 +238,6 @@
 <span id="237">237</span>
 <span id="238">238</span>
 <span id="239">239</span>
-<span id="240">240</span>
-<span id="241">241</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
     <span class="ident">clippy::pedantic</span>,
@@ -403,19 +401,18 @@
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">event</span>;
 <span class="kw">mod</span> <span class="ident">event_store</span>;
-<span class="kw">mod</span> <span class="ident">expected_version</span>;
-<span class="kw">mod</span> <span class="ident">read_version</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span>;
 <span class="kw">mod</span> <span class="ident">stream</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
+<span class="kw">mod</span> <span class="ident">versions</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event_store::EventStore</span>;
 <span class="kw">use</span> <span class="ident">error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event::Event</span>;
 <span class="kw">use</span> <span class="ident">event</span>::{<span class="ident">ParseEventError</span>, <span class="ident">RecordedEvent</span>};
-<span class="kw">use</span> <span class="ident">expected_version::ExpectedVersion</span>;
-<span class="kw">use</span> <span class="ident">read_version::ReadVersion</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>, <span class="ident">Storage</span>};
+<span class="kw">use</span> <span class="ident">versions::ExpectedVersion</span>;
+<span class="kw">use</span> <span class="ident">versions::ReadVersion</span>;
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">inline</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
@@ -444,8 +441,7 @@
 
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::expected_version::ExpectedVersion</span>;
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::read_version::ReadVersion</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::versions</span>::{<span class="ident">ExpectedVersion</span>, <span class="ident">ReadVersion</span>};
 
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::Backend</span>;
     <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::EventBus</span>;
