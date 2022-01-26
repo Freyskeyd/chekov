@@ -5,9 +5,9 @@ use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
 use actix::{Actor, Handler, ResponseActFuture, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
+use event_store::core::storage::Storage;
 use event_store::prelude::RecordedEvent;
 use event_store::prelude::StartFrom;
-use event_store::storage::Storage;
 use std::collections::BTreeMap;
 use tracing::{trace, Instrument};
 

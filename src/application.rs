@@ -30,7 +30,7 @@ pub(crate) use internal::InternalApplication;
 /// ```
 pub trait Application: Unpin + 'static + Send + std::default::Default {
     /// The type of storage used by the application
-    type Storage: event_store::prelude::Storage;
+    type Storage: event_store::core::storage::Storage;
 
     /// Used to initiate the launch of the application
     ///

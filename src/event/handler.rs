@@ -2,8 +2,8 @@ use crate::event_store::EventStore;
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use actix::prelude::*;
+use event_store::core::storage::Storage;
 use event_store::prelude::{StartFrom, SubscriptionNotification};
-use event_store::storage::Storage;
 use tracing::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {

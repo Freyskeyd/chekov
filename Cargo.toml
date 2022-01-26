@@ -2,7 +2,7 @@
 members = [
 	".",
 	"chekov_macros",
-	"event_store",
+	"event_store/*",
 	"examples/*"
 ]
 
@@ -20,7 +20,7 @@ categories = []
 authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
 
 [dependencies]
-event_store = { version = "0.1", path = "event_store" }
+event_store = { version = "0.1", path = "event_store/event_store" }
 chekov_macros = { version = "0.1", path = "chekov_macros" }
 fnv = "1.0.7"
 chrono = "0.4.19"

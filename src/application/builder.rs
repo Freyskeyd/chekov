@@ -6,7 +6,7 @@ use crate::Router;
 use crate::SubscriberManager;
 use actix::Actor;
 use actix::SystemService;
-use event_store::prelude::Storage;
+use event_store::core::storage::Storage;
 use futures::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;

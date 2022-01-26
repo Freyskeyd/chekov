@@ -7,6 +7,7 @@ use crate::command::CommandMetadatas;
 use crate::Aggregate;
 use crate::Event;
 use actix::prelude::*;
+use event_store::core::storage::Storage;
 use event_store::prelude::*;
 use uuid::Uuid;
 
