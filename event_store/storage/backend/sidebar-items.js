@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["inmemory",""],["postgres",""]],"trait":[["Backend",""]]});
+initSidebarItems({"mod":[["inmemory",""],["postgres",""]]});

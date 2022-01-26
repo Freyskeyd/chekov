@@ -174,9 +174,9 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Application</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Handler</span>, <span class="ident">ResponseActFuture</span>, <span class="ident">Supervised</span>, <span class="ident">SystemService</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">Addr</span>, <span class="ident">AsyncContext</span>, <span class="ident">Context</span>, <span class="ident">Recipient</span>, <span class="ident">WrapFuture</span>};
+<span class="kw">use</span> <span class="ident">event_store::core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::StartFrom</span>;
-<span class="kw">use</span> <span class="ident">event_store::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">std::collections::BTreeMap</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">trace</span>, <span class="ident">Instrument</span>};
 

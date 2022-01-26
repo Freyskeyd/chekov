@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `event_store&#x2F;src&#x2F;storage&#x2F;event_bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>event_bus.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `event_store&#x2F;event_store&#x2F;src&#x2F;storage&#x2F;event_bus.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>event_bus.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
     <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../event_store/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -293,10 +293,18 @@
 <span id="292">292</span>
 <span id="293">293</span>
 <span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">convert::TryFrom</span>, <span class="ident">pin::Pin</span>, <span class="ident">str::FromStr</span>};
 
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">async_stream::try_stream</span>;
+<span class="kw">use</span> <span class="ident">event_store_core</span>::{
+    <span class="ident">event_bus</span>::{<span class="ident">BoxedStream</span>, <span class="ident">EventBus</span>, <span class="ident">EventBusMessage</span>, <span class="ident">EventNotification</span>},
+    <span class="ident">storage::Storage</span>,
+};
 <span class="kw">use</span> <span class="ident">futures</span>::{
     <span class="ident">future</span>::{<span class="self">self</span>, <span class="ident">BoxFuture</span>},
     <span class="ident">Future</span>, <span class="ident">FutureExt</span>, <span class="ident">StreamExt</span>,
@@ -304,92 +312,92 @@
 <span class="kw">use</span> <span class="ident">sqlx::postgres::PgListener</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>::{<span class="self">self</span>, <span class="ident">UnboundedReceiver</span>, <span class="ident">UnboundedSender</span>};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">connection::Connection</span>, <span class="ident">event::RecordedEvents</span>, <span class="ident">prelude::Storage</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">connection::Connection</span>, <span class="ident">event::RecordedEvents</span>};
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BoxedStream</span> <span class="op">=</span>
-    <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, ()<span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+<span class="comment">// pub type BoxedStream =</span>
+<span class="comment">//     Pin&lt;Box&lt;dyn Future&lt;Output = Pin&lt;Box&lt;dyn Stream&lt;Item = Result&lt;EventBusMessage, ()&gt;&gt;&gt;&gt;&gt;&gt;&gt;;</span>
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventBus</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
-    <span class="kw">fn</span> <span class="ident">bus_name</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+<span class="comment">// pub trait EventBus: std::fmt::Debug + Default + Send + std::marker::Unpin + &#39;static {</span>
+<span class="comment">//     fn bus_name() -&gt; &amp;&#39;static str;</span>
 
-    <span class="kw">fn</span> <span class="ident">prepare</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">storage</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">create_stream</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">BoxedStream</span>;
-}
+<span class="comment">//     fn prepare&lt;S: Storage&gt;(&amp;mut self, storage: Addr&lt;Connection&lt;S&gt;&gt;) -&gt; BoxFuture&lt;&#39;static, ()&gt;;</span>
+<span class="comment">//     fn create_stream(&amp;mut self) -&gt; BoxedStream;</span>
+<span class="comment">// }</span>
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Message</span>)]</span>
-<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EventBusMessage</span> {
-    <span class="ident">Notification</span>(<span class="ident">EventNotification</span>),
-    <span class="ident">Events</span>(<span class="ident">RecordedEvents</span>),
-    <span class="ident">Unkown</span>,
-}
+<span class="comment">// #[derive(Debug, Message)]</span>
+<span class="comment">// #[rtype(&quot;()&quot;)]</span>
+<span class="comment">// pub enum EventBusMessage {</span>
+<span class="comment">//     Notification(EventNotification),</span>
+<span class="comment">//     Events(RecordedEvents),</span>
+<span class="comment">//     Unkown,</span>
+<span class="comment">// }</span>
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Message</span>)]</span>
-<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;()&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventNotification</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">stream_id</span>: <span class="ident">i32</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">stream_uuid</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">first_stream_version</span>: <span class="ident">i32</span>,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">last_stream_version</span>: <span class="ident">i32</span>,
-}
+<span class="comment">// #[derive(Clone, Debug, Message)]</span>
+<span class="comment">// #[rtype(result = &quot;()&quot;)]</span>
+<span class="comment">// pub struct EventNotification {</span>
+<span class="comment">//     pub(crate) stream_id: i32,</span>
+<span class="comment">//     pub(crate) stream_uuid: String,</span>
+<span class="comment">//     pub(crate) first_stream_version: i32,</span>
+<span class="comment">//     pub(crate) last_stream_version: i32,</span>
+<span class="comment">// }</span>
 
-<span class="kw">struct</span> <span class="ident">NonEmptyString</span>(<span class="ident">String</span>);
+<span class="comment">// struct NonEmptyString(String);</span>
 
-<span class="kw">impl</span> <span class="ident">FromStr</span> <span class="kw">for</span> <span class="ident">NonEmptyString</span> {
-    <span class="kw">type</span> <span class="prelude-val">Err</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+<span class="comment">// impl FromStr for NonEmptyString {</span>
+<span class="comment">//     type Err = &amp;&#39;static str;</span>
 
-    <span class="kw">fn</span> <span class="ident">from_str</span>(<span class="ident">s</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Err</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="ident">s</span>.<span class="ident">is_empty</span>() {
-            <span class="prelude-val">Err</span>(<span class="string">&quot;unable to parse stream_uuid&quot;</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(<span class="ident">NonEmptyString</span>(<span class="ident">s</span>.<span class="ident">to_owned</span>()))
-        }
-    }
-}
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">NonEmptyString</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">s</span>: <span class="ident">NonEmptyString</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">s</span>.<span class="number">0</span>
-    }
-}
+<span class="comment">//     fn from_str(s: &amp;str) -&gt; Result&lt;Self, Self::Err&gt; {</span>
+<span class="comment">//         if s.is_empty() {</span>
+<span class="comment">//             Err(&quot;unable to parse stream_uuid&quot;)</span>
+<span class="comment">//         } else {</span>
+<span class="comment">//             Ok(NonEmptyString(s.to_owned()))</span>
+<span class="comment">//         }</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span>
+<span class="comment">// impl From&lt;NonEmptyString&gt; for String {</span>
+<span class="comment">//     fn from(s: NonEmptyString) -&gt; Self {</span>
+<span class="comment">//         s.0</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span>
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventNotification</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;
+<span class="comment">// impl&lt;&#39;a&gt; TryFrom&lt;&amp;&#39;a str&gt; for EventNotification {</span>
+<span class="comment">//     type Error = &amp;&#39;static str;</span>
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">through</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">splitn</span>(<span class="number">4</span>, <span class="string">&#39;,&#39;</span>);
+<span class="comment">//     fn try_from(value: &amp;&#39;a str) -&gt; Result&lt;Self, Self::Error&gt; {</span>
+<span class="comment">//         let mut through = value.splitn(4, &#39;,&#39;);</span>
 
-        <span class="kw">let</span> <span class="ident">stream_uuid</span> <span class="op">=</span> <span class="ident">through</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">ok_or</span>(<span class="string">&quot;unable to parse stream_uuid&quot;</span>)<span class="question-mark">?</span>
-            .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">NonEmptyString</span><span class="op">&gt;</span>()<span class="question-mark">?</span>
-            .<span class="ident">into</span>();
+<span class="comment">//         let stream_uuid = through</span>
+<span class="comment">//             .next()</span>
+<span class="comment">//             .ok_or(&quot;unable to parse stream_uuid&quot;)?</span>
+<span class="comment">//             .parse::&lt;NonEmptyString&gt;()?</span>
+<span class="comment">//             .into();</span>
 
-        <span class="kw">let</span> <span class="ident">stream_id</span> <span class="op">=</span> <span class="ident">through</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">ok_or</span>(<span class="string">&quot;unable to parse stream_id&quot;</span>)<span class="question-mark">?</span>
-            .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>()
-            .<span class="ident">or</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;unable to convert stream_id to i32&quot;</span>))<span class="question-mark">?</span>;
+<span class="comment">//         let stream_id = through</span>
+<span class="comment">//             .next()</span>
+<span class="comment">//             .ok_or(&quot;unable to parse stream_id&quot;)?</span>
+<span class="comment">//             .parse::&lt;i32&gt;()</span>
+<span class="comment">//             .or(Err(&quot;unable to convert stream_id to i32&quot;))?;</span>
 
-        <span class="kw">let</span> <span class="ident">first_stream_version</span> <span class="op">=</span> <span class="ident">through</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">ok_or</span>(<span class="string">&quot;unable to parse first_stream_version&quot;</span>)<span class="question-mark">?</span>
-            .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>()
-            .<span class="ident">or</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;unable to convert first_stream_version to i32&quot;</span>))<span class="question-mark">?</span>;
+<span class="comment">//         let first_stream_version = through</span>
+<span class="comment">//             .next()</span>
+<span class="comment">//             .ok_or(&quot;unable to parse first_stream_version&quot;)?</span>
+<span class="comment">//             .parse::&lt;i32&gt;()</span>
+<span class="comment">//             .or(Err(&quot;unable to convert first_stream_version to i32&quot;))?;</span>
 
-        <span class="kw">let</span> <span class="ident">last_stream_version</span> <span class="op">=</span> <span class="ident">through</span>
-            .<span class="ident">next</span>()
-            .<span class="ident">ok_or</span>(<span class="string">&quot;unable to parse last_stream_version&quot;</span>)<span class="question-mark">?</span>
-            .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>()
-            .<span class="ident">or</span>(<span class="prelude-val">Err</span>(<span class="string">&quot;unable to convert last_stream_version to i32&quot;</span>))<span class="question-mark">?</span>;
+<span class="comment">//         let last_stream_version = through</span>
+<span class="comment">//             .next()</span>
+<span class="comment">//             .ok_or(&quot;unable to parse last_stream_version&quot;)?</span>
+<span class="comment">//             .parse::&lt;i32&gt;()</span>
+<span class="comment">//             .or(Err(&quot;unable to convert last_stream_version to i32&quot;))?;</span>
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
-            <span class="ident">stream_uuid</span>,
-            <span class="ident">stream_id</span>,
-            <span class="ident">first_stream_version</span>,
-            <span class="ident">last_stream_version</span>,
-        })
-    }
-}
+<span class="comment">//         Ok(Self {</span>
+<span class="comment">//             stream_uuid,</span>
+<span class="comment">//             stream_id,</span>
+<span class="comment">//             first_stream_version,</span>
+<span class="comment">//             last_stream_version,</span>
+<span class="comment">//         })</span>
+<span class="comment">//     }</span>
+<span class="comment">// }</span>
 
 <span class="comment">// pub struct EventBusConnection&lt;S: Storage&gt; {</span>
 <span class="comment">//     storage: Addr&lt;Connection&lt;S&gt;&gt;,</span>
@@ -516,14 +524,14 @@
         <span class="string">&quot;InMemoryEventBus&quot;</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">prepare</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">storage</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">storage</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="ident">sender</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">sender</span>.<span class="ident">clone</span>();
-        <span class="kw">async</span> <span class="kw">move</span> {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">storage</span>.<span class="ident">send</span>(<span class="ident">OpenNotificationChannel</span> { <span class="ident">sender</span> }).<span class="kw">await</span>;
-        }
-        .<span class="ident">boxed</span>()
-    }
+    <span class="comment">// fn prepare&lt;S: Storage&gt;(&amp;mut self, storage: Addr&lt;Connection&lt;S&gt;&gt;) -&gt; BoxFuture&lt;&#39;static, ()&gt; {</span>
+    <span class="comment">//     let storage = storage.clone();</span>
+    <span class="comment">//     let sender = self.sender.clone();</span>
+    <span class="comment">//     async move {</span>
+    <span class="comment">//         let _ = storage.send(OpenNotificationChannel { sender }).await;</span>
+    <span class="comment">//     }</span>
+    <span class="comment">//     .boxed()</span>
+    <span class="comment">// }</span>
 
     <span class="kw">fn</span> <span class="ident">create_stream</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">BoxedStream</span> {
         <span class="kw">let</span> <span class="ident">receiver</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">receiver</span>.<span class="ident">take</span>().<span class="ident">unwrap</span>();
@@ -578,9 +586,9 @@
         <span class="string">&quot;PostgresEventBus&quot;</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">prepare</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, ()<span class="op">&gt;</span> {
-        <span class="ident">future::ready</span>(()).<span class="ident">boxed</span>()
-    }
+    <span class="comment">// fn prepare&lt;S: Storage&gt;(&amp;mut self, _: Addr&lt;Connection&lt;S&gt;&gt;) -&gt; BoxFuture&lt;&#39;static, ()&gt; {</span>
+    <span class="comment">//     future::ready(()).boxed()</span>
+    <span class="comment">// }</span>
 
     <span class="kw">fn</span> <span class="ident">create_stream</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="ident">BoxedStream</span> {
         <span class="kw">let</span> <span class="ident">listener</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">listener</span>.<span class="ident">take</span>().<span class="ident">unwrap</span>();

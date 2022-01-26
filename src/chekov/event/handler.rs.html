@@ -153,8 +153,8 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::ResolveAndApplyMany</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Application</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">event_store::core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude</span>::{<span class="ident">StartFrom</span>, <span class="ident">SubscriptionNotification</span>};
-<span class="kw">use</span> <span class="ident">event_store::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EventHandlerBuilder</span><span class="op">&lt;</span><span class="ident">E</span>: <span class="ident">EventHandler</span><span class="op">&gt;</span> {
