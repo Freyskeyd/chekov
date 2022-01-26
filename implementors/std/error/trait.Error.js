@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["event_store"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.56.1/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"event_store/prelude/enum.EventStoreError.html\" title=\"enum event_store::prelude::EventStoreError\">EventStoreError</a>","synthetic":false,"types":["event_store::error::EventStoreError"]}];
+implementors["event_store"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.58.1/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"event_store/prelude/enum.EventStoreError.html\" title=\"enum event_store::prelude::EventStoreError\">EventStoreError</a>","synthetic":false,"types":["event_store::error::EventStoreError"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
