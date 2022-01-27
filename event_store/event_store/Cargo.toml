@@ -29,6 +29,8 @@ event_store-core = { version = "0.1.0", path = "../event_store-core" }
 event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory", optional = true }
 event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres", optional = true }
 
+event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres", optional = true }
+
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
@@ -44,7 +46,7 @@ verbose = []
 
 postgres = ["postgres_backend", "postgres_event_bus"]
 postgres_backend = ["event_store-backend-postgres"]
-postgres_event_bus = []
+postgres_event_bus = ["event_store-eventbus-postgres"]
 
 inmemory = ["inmemory_backend", "inmemory_event_bus"]
 inmemory_backend = ["event_store-backend-inmemory"]

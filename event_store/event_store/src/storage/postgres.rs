@@ -3,8 +3,7 @@ use event_store_core::{
     event_bus::{BoxedStream, EventBus},
     storage::Storage,
 };
-
-use super::event_bus::PostgresEventBus;
+use event_store_eventbus_postgres::PostgresEventBus;
 
 #[derive(Debug, Default)]
 pub struct PostgresStorage {
