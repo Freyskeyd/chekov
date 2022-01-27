@@ -103,6 +103,7 @@ use crate::{event::handler::Subscribe, prelude::ApplyError, Application};
 use actix::AsyncContext;
 use actix::SystemService;
 use event_store::prelude::{RecordedEvent, SubscriptionNotification};
+use tracing::trace;
 
 #[doc(hidden)]
 pub mod resolver;
@@ -147,10 +148,11 @@ pub trait Aggregate: Send + Clone + Default + std::marker::Unpin + 'static {
         stream: &str,
         ctx: &actix::Context<AggregateInstance<Self>>,
     ) {
-        let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
-        let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
-        let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-        broker.do_send(Subscribe(stream.into(), recipient, recipient_sub));
+        // let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
+        // let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+        // let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
+        // trace!("Subscribe from Aggregate trait");
+        // broker.do_send(Subscribe(stream.into(), recipient, recipient_sub));
     }
 }
 

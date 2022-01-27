@@ -105,6 +105,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
         let addr = ctx.address().recipient();
         let fut = async move {
             let storage = EventStore::<A>::get_addr().await.unwrap();
+            trace!("Subscribing from EventHandler");
             event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
                 addr, opts, storage,
             )

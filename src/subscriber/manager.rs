@@ -94,6 +94,7 @@ impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
         Box::pin(
             async {
                 let addr = EventStore::<A>::get_addr().await.unwrap();
+                trace!("Subscribing from SubscriberManager");
                 let _ = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
                     recipient,
                     event_store::prelude::SubscriptionOptions {
