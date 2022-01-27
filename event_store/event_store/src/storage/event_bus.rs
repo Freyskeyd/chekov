@@ -1,19 +1,11 @@
-use std::{convert::TryFrom, pin::Pin, str::FromStr};
+use std::{convert::TryFrom, pin::Pin};
 
 use actix::prelude::*;
 use async_stream::try_stream;
-use event_store_core::{
-    event_bus::{BoxedStream, EventBus, EventBusMessage, EventNotification},
-    storage::Storage,
-};
-use futures::{
-    future::{self, BoxFuture},
-    Future, FutureExt, StreamExt,
-};
+use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage, EventNotification};
+use futures::{FutureExt, StreamExt};
 use sqlx::postgres::PgListener;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-
-use crate::{connection::Connection, event::RecordedEvents};
 
 #[derive(Message)]
 #[rtype("()")]

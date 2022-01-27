@@ -2,7 +2,6 @@ use crate::event_store::EventStore;
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use actix::prelude::*;
-use event_store::core::storage::Storage;
 use event_store::prelude::{StartFrom, SubscriptionNotification};
 use tracing::trace;
 
@@ -105,8 +104,8 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
         let addr = ctx.address().recipient();
         let fut = async move {
             let storage = EventStore::<A>::get_addr().await.unwrap();
-            trace!("Subscribing from EventHandler");
-            event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
+            // TODO: Handle error in case of subscription failure
+            let _ = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
                 addr, opts, storage,
             )
             .await;

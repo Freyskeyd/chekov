@@ -17,6 +17,7 @@ struct Notif(PgNotification);
 #[derive(Clone, Debug, Message)]
 #[rtype(result = "()")]
 pub struct EventNotification {
+    #[allow(dead_code)]
     stream_id: i32,
     stream_uuid: String,
     first_stream_version: i32,

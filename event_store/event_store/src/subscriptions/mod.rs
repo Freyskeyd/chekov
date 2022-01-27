@@ -1,5 +1,4 @@
 use crate::event::RecordedEvent;
-use crate::event::RecordedEvents;
 use crate::EventStore;
 use actix::Addr;
 use actix::Message;
@@ -43,9 +42,9 @@ pub struct SubscriptionOptions {
 impl Default for SubscriptionOptions {
     fn default() -> Self {
         Self {
-            stream_uuid: Default::default(),
+            stream_uuid: String::new(),
             subscription_name: Uuid::new_v4().to_string(),
-            start_from: Default::default(),
+            start_from: StartFrom::default(),
             transient: false,
         }
     }

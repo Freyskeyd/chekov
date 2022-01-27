@@ -1,6 +1,6 @@
 use crate::core::event::{RecordedEvent, UnsavedEvent};
 use crate::core::stream::Stream;
-use event_store_core::storage::{Backend, Storage, StorageError};
+use event_store_core::storage::{Backend, StorageError};
 use futures::Future;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;

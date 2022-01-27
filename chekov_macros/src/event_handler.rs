@@ -8,6 +8,7 @@ use syn::*;
 #[darling(attributes(aggregate), supports(struct_named))]
 struct EventHandlerAttrs {
     ident: Ident,
+    #[allow(dead_code)]
     generics: Generics,
 }
 

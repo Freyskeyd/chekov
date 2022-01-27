@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use darling::ast::Data;
 use darling::*;
 use proc_macro2::TokenStream as SynTokenStream;

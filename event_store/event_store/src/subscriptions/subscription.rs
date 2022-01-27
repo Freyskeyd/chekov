@@ -67,7 +67,6 @@ impl<S: Storage> Handler<Connect> for Subscription<S> {
 
                 fsm.connect_subscriber(recipient).await;
                 fsm.subscribe().await;
-            } else {
             }
 
             fsm.state
@@ -84,7 +83,7 @@ impl<S: Storage> Handler<Connect> for Subscription<S> {
 impl<S: Storage> Handler<CatchUp> for Subscription<S> {
     type Result = ResponseActFuture<Self, ()>;
 
-    fn handle(&mut self, _: CatchUp, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _: CatchUp, _ctx: &mut Self::Context) -> Self::Result {
         debug!(
             "{} attempting to catch up {:?}",
             self.subscription_name, self.stream_uuid
@@ -130,6 +129,7 @@ impl<S: Storage> Handler<Notify> for Subscription<S> {
 impl<S: Storage> Supervised for Subscription<S> {}
 
 impl<S: Storage> Subscription<S> {
+    #[must_use]
     pub fn start_with_options(
         options: &SubscriptionOptions,
         supervisor: Addr<SubscriptionsSupervisor<S>>,
@@ -138,7 +138,7 @@ impl<S: Storage> Subscription<S> {
         let subscription = Self {
             stream_uuid: options.stream_uuid.clone(),
             subscription_name: options.subscription_name.clone(),
-            subscription: Arc::new(Mutex::new(SubscriptionFSM::with_options(&options, storage))),
+            subscription: Arc::new(Mutex::new(SubscriptionFSM::with_options(options, storage))),
             retry_interval: 1_000,
             supervisor,
         };

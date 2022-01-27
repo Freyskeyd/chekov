@@ -1,9 +1,9 @@
 use std::{pin::Pin, str::FromStr};
 
-use actix::{Addr, Message};
-use futures::{future::BoxFuture, Future, Stream};
+use actix::Message;
+use futures::{Future, Stream};
 
-use crate::{event::RecordedEvent, storage::Storage};
+use crate::event::RecordedEvent;
 
 pub trait EventBus: std::fmt::Debug + Default + Send + std::marker::Unpin + 'static {
     fn bus_name() -> &'static str;

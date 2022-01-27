@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use crate::event::RecordedEvents;
 use crate::EventStore;
 
 use super::subscription::Subscription;

@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::event::{RecordedEvent, RecordedEvents};
+use crate::event::RecordedEvent;
 use crate::prelude::ReadVersion;
 use crate::storage::reader::Reader;
 use crate::EventStore;
@@ -10,8 +10,7 @@ use super::SubscriptionNotification;
 use super::{state::SubscriptionState, SubscriptionOptions};
 use actix::prelude::*;
 use event_store_core::storage::Storage;
-use futures::future::BoxFuture;
-use tracing::{debug, event, subscriber};
+use tracing::debug;
 
 /// connect_subscriber -> subscribe
 #[derive(PartialEq, Debug)]
@@ -64,7 +63,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         );
 
         if let Some(subscriber) = &self.data.subscriber {
-            subscriber.notify_subscribed().await;
+            let _ = subscriber.notify_subscribed().await;
         }
     }
 

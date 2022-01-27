@@ -8,6 +8,8 @@ use crate::{
 use actix::prelude::Handler as ActixHandler;
 use actix::prelude::*;
 
+type DispatchResult<H, A, E> = ResponseActFuture<H, Result<(Vec<E>, A), CommandExecutorError>>;
+
 #[derive(Default)]
 pub struct CommandHandlerInstance<H: CommandHandler> {
     pub(crate) inner: H,
@@ -25,7 +27,7 @@ where
     H: Handler<C, A>,
     A: CommandExecutor<C>,
 {
-    type Result = ResponseActFuture<Self, Result<(Vec<C::Event>, A), CommandExecutorError>>;
+    type Result = DispatchResult<Self, A, C::Event>;
     fn handle(
         &mut self,
         cmd: DispatchWithState<A, C, APP>,

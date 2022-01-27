@@ -1,6 +1,5 @@
 use crate::core::event::RecordedEvent;
 use crate::core::stream::Stream;
-use crate::event::RecordedEvents;
 use crate::storage::event_bus::OpenNotificationChannel;
 use crate::subscriptions::Subscriptions;
 use crate::EventStoreError;

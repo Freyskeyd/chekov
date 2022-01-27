@@ -11,7 +11,6 @@ use crate::{Aggregate, Application};
 use actix::prelude::*;
 use actix::Addr;
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
-use tracing::trace;
 use uuid::Uuid;
 
 // TODO rename this module to match the behaviours
@@ -61,8 +60,7 @@ impl<A: Aggregate> AggregateInstance<A> {
             let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
             let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
             let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-            trace!("Subscribe from AggregateInstance");
-            broker.do_send(Subscribe(identity.into(), recipient, recipient_sub));
+            broker.do_send(Subscribe(identity, recipient, recipient_sub));
 
             instance
         });

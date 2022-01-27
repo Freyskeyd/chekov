@@ -41,7 +41,9 @@ impl Subscriber {
 
         events.reverse();
 
-        self.recipient
+        // TODO: How to handle notification failure ?
+        let _ = self
+            .recipient
             .send(SubscriptionNotification::Events(events))
             .await;
     }
