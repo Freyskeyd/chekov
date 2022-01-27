@@ -27,6 +27,7 @@ async-stream = "0.3"
 event_store-core = { version = "0.1.0", path = "../event_store-core" }
 
 event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory", optional = true }
+event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
@@ -42,7 +43,7 @@ default = ["postgres", "inmemory"]
 verbose = []
 
 postgres = ["postgres_backend", "postgres_event_bus"]
-postgres_backend = []
+postgres_backend = ["event_store-backend-postgres"]
 postgres_event_bus = []
 
 inmemory = ["inmemory_backend", "inmemory_event_bus"]

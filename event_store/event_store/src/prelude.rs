@@ -8,7 +8,7 @@ pub use crate::versions::{ExpectedVersion, ReadVersion};
 pub use event_store_backend_inmemory::InMemoryBackend;
 
 #[cfg(feature = "postgres_backend")]
-pub use crate::storage::backend::postgres::PostgresBackend;
+pub use event_store_backend_postgres::PostgresBackend;
 
 #[cfg(feature = "inmemory_event_bus")]
 pub use crate::storage::event_bus::InMemoryEventBus;

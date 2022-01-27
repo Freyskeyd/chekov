@@ -1,7 +1,10 @@
-use event_store_core::{event_bus::{BoxedStream, EventBus}, storage::Storage};
+use event_store_backend_postgres::PostgresBackend;
+use event_store_core::{
+    event_bus::{BoxedStream, EventBus},
+    storage::Storage,
+};
 
 use super::event_bus::PostgresEventBus;
-use crate::prelude::PostgresBackend;
 
 #[derive(Debug, Default)]
 pub struct PostgresStorage {

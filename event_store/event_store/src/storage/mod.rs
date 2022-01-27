@@ -1,5 +1,5 @@
 pub mod appender;
-pub mod backend;
+
 pub mod event_bus;
 #[cfg(feature = "inmemory")]
 mod inmemory;

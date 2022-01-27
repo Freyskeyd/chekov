@@ -1,6 +1,6 @@
-use crate::core::event::RecordedEvent;
-use crate::core::event::UnsavedEvent;
-use crate::core::stream::Stream;
+use event_store_core::event::RecordedEvent;
+use event_store_core::event::UnsavedEvent;
+use event_store_core::stream::Stream;
 use log::trace;
 use sqlx::postgres::PgRow;
 use sqlx::Row;
@@ -167,11 +167,12 @@ FROM
 #[cfg(test)]
 mod test {
 
-    use super::create_append_indexes;
-    use crate::prelude::*;
+    use event_store_core::event::{Event, RecordedEvent, UnsavedEvent};
     use serde::{Deserialize, Serialize};
 
     use pretty_assertions::assert_eq;
+
+    use crate::sql::create_append_indexes;
 
     #[derive(Serialize, Deserialize)]
     struct MyEvent {}
@@ -185,9 +186,9 @@ mod test {
         }
     }
 
-    impl std::convert::TryFrom<crate::prelude::RecordedEvent> for MyEvent {
+    impl std::convert::TryFrom<RecordedEvent> for MyEvent {
         type Error = ();
-        fn try_from(e: crate::prelude::RecordedEvent) -> Result<Self, Self::Error> {
+        fn try_from(e: RecordedEvent) -> Result<Self, Self::Error> {
             serde_json::from_value(e.data).map_err(|_| ())
         }
     }
