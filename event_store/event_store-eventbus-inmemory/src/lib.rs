@@ -1,22 +1,14 @@
-use std::{convert::TryFrom, pin::Pin};
-
 use actix::prelude::*;
 use async_stream::try_stream;
-use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage, EventNotification};
-use futures::{FutureExt, StreamExt};
-use sqlx::postgres::PgListener;
+use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage};
+use futures::FutureExt;
+use std::pin::Pin;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
-
-#[derive(Message)]
-#[rtype("()")]
-pub struct OpenNotificationChannel {
-    pub(crate) sender: mpsc::UnboundedSender<EventBusMessage>,
-}
 
 #[derive(Debug)]
 pub struct InMemoryEventBus {
     receiver: Option<UnboundedReceiver<EventBusMessage>>,
-    pub(crate) sender: UnboundedSender<EventBusMessage>,
+    pub sender: UnboundedSender<EventBusMessage>,
 }
 
 impl Default for InMemoryEventBus {

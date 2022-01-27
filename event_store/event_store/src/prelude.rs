@@ -11,7 +11,7 @@ pub use event_store_backend_inmemory::InMemoryBackend;
 pub use event_store_backend_postgres::PostgresBackend;
 
 #[cfg(feature = "inmemory_event_bus")]
-pub use crate::storage::event_bus::InMemoryEventBus;
+pub use event_store_eventbus_inmemory::InMemoryEventBus;
 
 #[cfg(feature = "postgres_event_bus")]
 pub use event_store_eventbus_postgres::PostgresEventBus;

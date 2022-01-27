@@ -3,9 +3,8 @@ use event_store_core::{
     event_bus::{BoxedStream, EventBus, EventBusMessage},
     storage::Storage,
 };
+use event_store_eventbus_inmemory::InMemoryEventBus;
 use tokio::sync::mpsc::{self};
-
-use super::event_bus::InMemoryEventBus;
 
 /// InMemory storage used for tests mostly
 #[derive(Default, Debug)]

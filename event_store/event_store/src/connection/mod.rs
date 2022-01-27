@@ -1,15 +1,15 @@
 use crate::core::event::RecordedEvent;
 use crate::core::stream::Stream;
-use crate::storage::event_bus::OpenNotificationChannel;
 use crate::subscriptions::Subscriptions;
 use crate::EventStoreError;
-use actix::ActorFutureExt;
 use actix::{Actor, AsyncContext, Context, Handler};
+use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::{Backend, Storage};
 use std::borrow::Cow;
 use std::str::FromStr;
+use tokio::sync::mpsc;
 use tracing::trace;
 use tracing::Instrument;
 use uuid::Uuid;
@@ -17,6 +17,13 @@ use uuid::Uuid;
 mod messaging;
 
 pub use messaging::{Append, CreateStream, Read, StreamInfo};
+
+#[derive(Message)]
+#[rtype("()")]
+// TODO: Remove this by a better subscription channel
+pub struct OpenNotificationChannel {
+    pub(crate) sender: mpsc::UnboundedSender<EventBusMessage>,
+}
 
 #[derive(Debug)]
 pub struct Connection<S: Storage> {
