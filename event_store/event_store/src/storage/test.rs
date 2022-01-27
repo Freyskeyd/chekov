@@ -2,13 +2,12 @@ use uuid::Uuid;
 
 use crate::core::stream::Stream;
 
-use crate::storage::backend::inmemory::InMemoryBackend;
-
 use std::str::FromStr;
 
 mod creation {
     use super::*;
 
+    use event_store_backend_inmemory::InMemoryBackend;
     use event_store_core::storage::{Backend, StorageError};
     use pretty_assertions::assert_eq;
 
@@ -47,6 +46,7 @@ mod creation {
 mod deletion {
     use super::*;
 
+    use event_store_backend_inmemory::InMemoryBackend;
     use event_store_core::storage::{Backend, StorageError};
     use pretty_assertions::assert_eq;
 

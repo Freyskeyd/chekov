@@ -5,7 +5,7 @@ pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
 pub use crate::versions::{ExpectedVersion, ReadVersion};
 
 #[cfg(feature = "inmemory_backend")]
-pub use crate::storage::backend::inmemory::InMemoryBackend;
+pub use event_store_backend_inmemory::InMemoryBackend;
 
 #[cfg(feature = "postgres_backend")]
 pub use crate::storage::backend::postgres::PostgresBackend;

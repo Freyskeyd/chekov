@@ -185,9 +185,7 @@ impl<S: Storage> Subscription<S> {
 mod test {
 
     use super::*;
-    use crate::{
-        event::RecordedEvents, prelude::InMemoryEventBus, subscriptions::StartFrom, InMemoryStorage,
-    };
+    use crate::{event::RecordedEvents, subscriptions::StartFrom, InMemoryStorage};
 
     struct Dummy {}
     impl Actor for Dummy {

@@ -1,10 +1,9 @@
+use event_store_backend_inmemory::InMemoryBackend;
 use event_store_core::{
     event_bus::{BoxedStream, EventBus, EventBusMessage},
     storage::Storage,
 };
 use tokio::sync::mpsc::{self};
-
-use crate::prelude::InMemoryBackend;
 
 use super::event_bus::InMemoryEventBus;
 

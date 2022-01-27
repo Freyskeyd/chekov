@@ -1,9 +1,6 @@
 use super::{StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions};
 use crate::{
-    core::event::Event,
-    event::RecordedEvent,
-    prelude::{ExpectedVersion, InMemoryEventBus},
-    EventStore, InMemoryStorage,
+    core::event::Event, event::RecordedEvent, prelude::ExpectedVersion, EventStore, InMemoryStorage,
 };
 use actix::{Actor, Context, Handler, ResponseActFuture, WrapFuture};
 use serde_json::json;

@@ -1,6 +1,6 @@
 use crate as chekov;
 use crate::prelude::*;
-use event_store::{prelude::InMemoryEventBus, prelude::InMemoryStorage};
+use event_store::prelude::InMemoryStorage;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

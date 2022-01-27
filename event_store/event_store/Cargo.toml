@@ -26,6 +26,8 @@ async-stream = "0.3"
 
 event_store-core = { version = "0.1.0", path = "../event_store-core" }
 
+event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory", optional = true }
+
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
@@ -34,6 +36,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
     "env-filter",
     "fmt",
 ] }
+
 [features]
 default = ["postgres", "inmemory"]
 verbose = []
@@ -43,5 +46,5 @@ postgres_backend = []
 postgres_event_bus = []
 
 inmemory = ["inmemory_backend", "inmemory_event_bus"]
-inmemory_backend = []
+inmemory_backend = ["event_store-backend-inmemory"]
 inmemory_event_bus = []
