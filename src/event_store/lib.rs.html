@@ -366,8 +366,8 @@
 <span class="kw">mod</span> <span class="ident">event_store</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
-<span class="kw">mod</span> <span class="ident">versions</span>;
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::versions</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event_store::EventStore</span>;
 <span class="kw">use</span> <span class="ident">error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event::Event</span>;
