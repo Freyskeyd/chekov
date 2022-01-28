@@ -1,4 +1,4 @@
-use crate::core::stream::Stream;
+use crate::stream::Stream;
 
 #[derive(Debug)]
 pub enum ReadVersion {

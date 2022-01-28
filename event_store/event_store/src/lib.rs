@@ -165,8 +165,8 @@ mod event;
 mod event_store;
 pub mod storage;
 mod subscriptions;
-mod versions;
 
+pub use event_store_core::versions;
 pub use crate::event_store::EventStore;
 use error::EventStoreError;
 pub use event::Event;
