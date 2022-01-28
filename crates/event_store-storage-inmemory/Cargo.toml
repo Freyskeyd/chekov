@@ -1,0 +1,13 @@
+[package]
+name = "event_store-storage-inmemory"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+event_store-core = { version = "0.1.0", path = "../event_store-core" }
+event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory" }
+event_store-eventbus-inmemory = { version = "0.1.0", path = "../event_store-eventbus-inmemory" }
+
+tokio = { version = "1.12.0", features = ["full"] }

@@ -26,11 +26,13 @@ async-stream = "0.3"
 
 event_store-core = { version = "0.1.0", path = "../event_store-core" }
 
+event_store-storage-inmemory = { version = "0.1.0", path = "../event_store-storage-inmemory", optional = true }
 event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory", optional = true }
-event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres", optional = true }
-
-event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres", optional = true }
 event_store-eventbus-inmemory = { version = "0.1.0", path = "../event_store-eventbus-inmemory", optional = true }
+
+event_store-storage-postgres = { version = "0.1.0", path = "../event_store-storage-postgres", optional = true }
+event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres", optional = true }
+event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1.0.0"
@@ -45,10 +47,12 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 default = ["postgres", "inmemory"]
 verbose = []
 
-postgres = ["postgres_backend", "postgres_event_bus"]
+postgres = ["postgres_backend", "postgres_event_bus", "postgres_storage"]
+postgres_storage = ["event_store-storage-postgres"]
 postgres_backend = ["event_store-backend-postgres"]
 postgres_event_bus = ["event_store-eventbus-postgres"]
 
-inmemory = ["inmemory_backend", "inmemory_event_bus"]
+inmemory = ["inmemory_backend", "inmemory_event_bus", "inmemory_storage"]
+inmemory_storage = ["event_store-storage-inmemory"]
 inmemory_backend = ["event_store-backend-inmemory"]
 inmemory_event_bus = ["event_store-eventbus-inmemory"]

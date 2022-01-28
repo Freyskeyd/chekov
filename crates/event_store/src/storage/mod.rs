@@ -1,13 +1,10 @@
 pub mod appender;
 
-#[cfg(feature = "inmemory")]
-mod inmemory;
-#[cfg(feature = "inmemory")]
-pub use inmemory::InMemoryStorage;
-#[cfg(feature = "postgres")]
-mod postgres;
-#[cfg(feature = "postgres")]
-pub use postgres::PostgresStorage;
+#[cfg(feature = "inmemory_storage")]
+pub use event_store_storage_inmemory::InMemoryStorage;
+
+#[cfg(feature = "postgres_storage")]
+pub use event_store_storage_postgres::PostgresStorage;
 
 pub mod reader;
 

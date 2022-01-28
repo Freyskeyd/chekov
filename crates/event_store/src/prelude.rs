@@ -16,10 +16,10 @@ pub use event_store_eventbus_inmemory::InMemoryEventBus;
 #[cfg(feature = "postgres_event_bus")]
 pub use event_store_eventbus_postgres::PostgresEventBus;
 
-#[cfg(feature = "inmemory")]
+#[cfg(feature = "inmemory_storage")]
 pub use crate::storage::InMemoryStorage;
 
-#[cfg(feature = "postgres")]
+#[cfg(feature = "postgres_storage")]
 pub use crate::storage::PostgresStorage;
 
 pub use crate::storage::{appender::Appender, reader::Reader};
