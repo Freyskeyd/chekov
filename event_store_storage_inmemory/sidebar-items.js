@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["InMemoryStorage","InMemory storage used for tests mostly"]]});
