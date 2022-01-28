@@ -101,9 +101,7 @@
 <span id="100">100</span>
 <span id="101">101</span>
 <span id="102">102</span>
-<span id="103">103</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvents</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
 <span class="kw">use</span> <span class="ident">actix::Addr</span>;
 <span class="kw">use</span> <span class="ident">actix::Message</span>;
@@ -147,9 +145,9 @@
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">SubscriptionOptions</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">stream_uuid</span>: <span class="ident">Default::default</span>(),
+            <span class="ident">stream_uuid</span>: <span class="ident">String::new</span>(),
             <span class="ident">subscription_name</span>: <span class="ident">Uuid::new_v4</span>().<span class="ident">to_string</span>(),
-            <span class="ident">start_from</span>: <span class="ident">Default::default</span>(),
+            <span class="ident">start_from</span>: <span class="ident">StartFrom::default</span>(),
             <span class="ident">transient</span>: <span class="bool-val">false</span>,
         }
     }

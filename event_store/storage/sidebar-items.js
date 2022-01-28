@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["appender",""],["backend",""],["event_bus",""],["reader",""]],"struct":[["InMemoryStorage","InMemory storage used for tests mostly"],["PostgresStorage",""]]});
+initSidebarItems({"mod":[["appender",""],["reader",""]],"struct":[["InMemoryStorage","InMemory storage used for tests mostly"],["PostgresStorage",""]]});

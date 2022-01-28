@@ -326,19 +326,24 @@
 <span id="325">325</span>
 <span id="326">326</span>
 <span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::stream::Stream</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvents</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::OpenNotificationChannel</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStoreError</span>;
-<span class="kw">use</span> <span class="ident">actix::ActorFutureExt</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">AsyncContext</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>};
+<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">Message</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">StreamHandler</span>, <span class="ident">WrapFuture</span>};
 <span class="kw">use</span> <span class="ident">event_store_core::event_bus::EventBusMessage</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage</span>::{<span class="ident">Backend</span>, <span class="ident">Storage</span>};
 <span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+<span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">tracing::Instrument</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
@@ -346,6 +351,13 @@
 <span class="kw">mod</span> <span class="ident">messaging</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">messaging</span>::{<span class="ident">Append</span>, <span class="ident">CreateStream</span>, <span class="ident">Read</span>, <span class="ident">StreamInfo</span>};
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
+<span class="comment">// TODO: Remove this by a better subscription channel</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OpenNotificationChannel</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">sender</span>: <span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span><span class="op">&gt;</span>,
+}
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {

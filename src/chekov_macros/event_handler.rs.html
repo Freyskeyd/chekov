@@ -75,6 +75,7 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
+<span id="77">77</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">darling</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span> <span class="kw">as</span> <span class="ident">SynTokenStream</span>;
 <span class="kw">use</span> <span class="ident">quote</span>::<span class="kw-2">*</span>;
@@ -85,6 +86,7 @@
 <span class="attribute">#[<span class="ident">darling</span>(<span class="ident">attributes</span>(<span class="ident">aggregate</span>), <span class="ident">supports</span>(<span class="ident">struct_named</span>))]</span>
 <span class="kw">struct</span> <span class="ident">EventHandlerAttrs</span> {
     <span class="ident">ident</span>: <span class="ident">Ident</span>,
+    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
     <span class="ident">generics</span>: <span class="ident">Generics</span>,
 }
 

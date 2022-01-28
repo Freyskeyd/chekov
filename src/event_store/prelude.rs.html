@@ -42,16 +42,16 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::versions</span>::{<span class="ident">ExpectedVersion</span>, <span class="ident">ReadVersion</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_backend&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::inmemory::InMemoryBackend</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_backend_inmemory::InMemoryBackend</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_backend&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::backend::postgres::PostgresBackend</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_backend_postgres::PostgresBackend</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_event_bus&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::InMemoryEventBus</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_eventbus_inmemory::InMemoryEventBus</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;postgres_event_bus&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::event_bus::PostgresEventBus</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_eventbus_postgres::PostgresEventBus</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::InMemoryStorage</span>;

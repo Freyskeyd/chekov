@@ -297,10 +297,9 @@
 <span id="296">296</span>
 <span id="297">297</span>
 <span id="298">298</span>
-<span id="299">299</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::VecDeque</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude::ReadVersion</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::storage::reader::Reader</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
@@ -310,8 +309,7 @@
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">state::SubscriptionState</span>, <span class="ident">SubscriptionOptions</span>};
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
-<span class="kw">use</span> <span class="ident">futures::future::BoxFuture</span>;
-<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">event</span>, <span class="ident">subscriber</span>};
+<span class="kw">use</span> <span class="ident">tracing::debug</span>;
 
 <span class="doccomment">/// connect_subscriber -&gt; subscribe</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Debug</span>)]</span>
@@ -364,7 +362,7 @@
         );
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">subscriber</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">subscriber</span> {
-            <span class="ident">subscriber</span>.<span class="ident">notify_subscribed</span>().<span class="kw">await</span>;
+            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">subscriber</span>.<span class="ident">notify_subscribed</span>().<span class="kw">await</span>;
         }
     }
 

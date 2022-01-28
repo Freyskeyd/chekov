@@ -93,10 +93,10 @@
 <span id="92">92</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">pin::Pin</span>, <span class="ident">str::FromStr</span>};
 
-<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Message</span>};
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future::BoxFuture</span>, <span class="ident">Future</span>, <span class="ident">Stream</span>};
+<span class="kw">use</span> <span class="ident">actix::Message</span>;
+<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">Future</span>, <span class="ident">Stream</span>};
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::RecordedEvent</span>, <span class="ident">storage::Storage</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EventBus</span>: <span class="ident">std::fmt::Debug</span> <span class="op">+</span> <span class="ident">Default</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">std::marker::Unpin</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="kw">fn</span> <span class="ident">bus_name</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>;

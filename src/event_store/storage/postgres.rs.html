@@ -40,10 +40,14 @@
 <span id="39">39</span>
 <span id="40">40</span>
 <span id="41">41</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_core</span>::{<span class="ident">event_bus</span>::{<span class="ident">BoxedStream</span>, <span class="ident">EventBus</span>}, <span class="ident">storage::Storage</span>};
-
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::event_bus::PostgresEventBus</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude::PostgresBackend</span>;
+<span id="42">42</span>
+<span id="43">43</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_backend_postgres::PostgresBackend</span>;
+<span class="kw">use</span> <span class="ident">event_store_core</span>::{
+    <span class="ident">event_bus</span>::{<span class="ident">BoxedStream</span>, <span class="ident">EventBus</span>},
+    <span class="ident">storage::Storage</span>,
+};
+<span class="kw">use</span> <span class="ident">event_store_eventbus_postgres::PostgresEventBus</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PostgresStorage</span> {

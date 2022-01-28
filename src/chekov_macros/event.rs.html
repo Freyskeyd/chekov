@@ -196,7 +196,11 @@
 <span id="195">195</span>
 <span id="196">196</span>
 <span id="197">197</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">darling::ast::Data</span>;
+<span id="198">198</span>
+<span id="199">199</span>
+</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
+
+<span class="kw">use</span> <span class="ident">darling::ast::Data</span>;
 <span class="kw">use</span> <span class="ident">darling</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span> <span class="kw">as</span> <span class="ident">SynTokenStream</span>;
 <span class="kw">use</span> <span class="ident">quote</span>::<span class="kw-2">*</span>;

@@ -150,13 +150,6 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! An `Aggregate` is a simple Rust struct which will hold the state of the `Aggregate`.</span>
@@ -257,11 +250,8 @@
 <span class="kw">mod</span> <span class="ident">instance</span>;
 <span class="kw">mod</span> <span class="ident">registry</span>;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::ResolveAndApplyMany</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">event::handler::Subscribe</span>, <span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
-<span class="kw">use</span> <span class="ident">actix::AsyncContext</span>;
-<span class="kw">use</span> <span class="ident">actix::SystemService</span>;
-<span class="kw">use</span> <span class="ident">event_store::prelude</span>::{<span class="ident">RecordedEvent</span>, <span class="ident">SubscriptionNotification</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
+<span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">resolver</span>;
@@ -303,13 +293,9 @@
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="kw">fn</span> <span class="ident">on_start</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Application</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
-        <span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-        <span class="ident">ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">_stream</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
+        <span class="ident">_ctx</span>: <span class="kw-2">&amp;</span><span class="ident">actix::Context</span><span class="op">&lt;</span><span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) {
-        <span class="kw">let</span> <span class="ident">broker</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::subscriber::SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>();
-        <span class="kw">let</span> <span class="ident">recipient</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">ResolveAndApplyMany</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">recipient_sub</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">address</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>();
-        <span class="ident">broker</span>.<span class="ident">do_send</span>(<span class="ident">Subscribe</span>(<span class="ident">stream</span>.<span class="ident">into</span>(), <span class="ident">recipient</span>, <span class="ident">recipient_sub</span>));
     }
 }
 

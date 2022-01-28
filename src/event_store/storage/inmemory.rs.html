@@ -41,17 +41,13 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
-<span id="43">43</span>
-<span id="44">44</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_core</span>::{
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_backend_inmemory::InMemoryBackend</span>;
+<span class="kw">use</span> <span class="ident">event_store_core</span>::{
     <span class="ident">event_bus</span>::{<span class="ident">BoxedStream</span>, <span class="ident">EventBus</span>, <span class="ident">EventBusMessage</span>},
     <span class="ident">storage::Storage</span>,
 };
+<span class="kw">use</span> <span class="ident">event_store_eventbus_inmemory::InMemoryEventBus</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>::{<span class="self">self</span>};
-
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude::InMemoryBackend</span>;
-
-<span class="kw">use</span> <span class="ident"><span class="kw">super</span>::event_bus::InMemoryEventBus</span>;
 
 <span class="doccomment">/// InMemory storage used for tests mostly</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
