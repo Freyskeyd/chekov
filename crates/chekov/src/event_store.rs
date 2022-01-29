@@ -2,11 +2,11 @@ use crate::application::Application;
 use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetAddr};
 pub use ::event_store::prelude::Event;
 pub use ::event_store::prelude::RecordedEvent;
-use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
+use actix::{Addr, Context, Handler, MailboxError, ResponseFuture, SystemService};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
 use std::marker::PhantomData;
-use futures::{TryFutureExt};
+use futures::TryFutureExt;
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;
@@ -49,7 +49,7 @@ where
     }
 }
 
-impl<A> actix::Handler<GetAddr<A::Storage>> for EventStore<A>
+impl<A> Handler<GetAddr<A::Storage>> for EventStore<A>
 where
     A: Application,
 {
@@ -60,35 +60,35 @@ where
     }
 }
 
-impl<A> actix::Handler<ExecuteReader> for EventStore<A>
+impl<A> Handler<ExecuteReader> for EventStore<A>
 where
     A: Application,
 {
-    type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
+    type Result = ResponseFuture<Result<Vec<RecordedEvent>, EventStoreError>>;
 
     fn handle(&mut self, reader: ExecuteReader, _: &mut Self::Context) -> Self::Result {
         let addr = self.addr.clone();
-        Box::pin(async move { reader.0.execute(addr).await }.into_actor(self))
+        Box::pin(reader.0.execute(addr))
     }
 }
 
-impl<A> actix::Handler<ExecuteAppender> for EventStore<A>
+impl<A> Handler<ExecuteAppender> for EventStore<A>
 where
     A: Application,
 {
-    type Result = actix::ResponseActFuture<Self, Result<Vec<uuid::Uuid>, EventStoreError>>;
+    type Result = ResponseFuture<Result<Vec<uuid::Uuid>, EventStoreError>>;
 
     fn handle(&mut self, appender: ExecuteAppender, _: &mut Self::Context) -> Self::Result {
         let addr = self.addr.clone();
-        Box::pin(async move { appender.0.execute(addr).await }.into_actor(self))
+        Box::pin(appender.0.execute(addr))
     }
 }
 
-impl<A> actix::Handler<ExecuteStreamInfo> for EventStore<A>
+impl<A> Handler<ExecuteStreamInfo> for EventStore<A>
 where
     A: Application,
 {
-    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
+    type Result = ResponseFuture<Result<Stream, EventStoreError>>;
 
     fn handle(&mut self, appender: ExecuteStreamInfo, _: &mut Self::Context) -> Self::Result {
         let addr = self.addr.clone();
@@ -98,8 +98,7 @@ where
                 correlation_id: uuid::Uuid::new_v4(),
                 stream_uuid: appender.0,
             })
-            .map_ok_or_else(|_| Err(EventStoreError::Any), |r| r)
-            .into_actor(self),
+            .map_ok_or_else(|_| Err(EventStoreError::Any), |r| r),
         )
     }
 }

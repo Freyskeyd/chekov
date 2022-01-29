@@ -3,7 +3,7 @@ use crate::event::handler::Subscribe;
 use crate::event_store::EventStore;
 use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
-use actix::{Actor, Handler, ResponseActFuture, Supervised, SystemService};
+use actix::{Actor, Handler, ResponseActFuture, ResponseFuture, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use event_store::prelude::RecordedEvent;
 use event_store::prelude::StartFrom;
@@ -81,7 +81,7 @@ impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
 }
 
 impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
-    type Result = ResponseActFuture<Self, ()>;
+    type Result = ResponseFuture<()>;
 
     fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
         let stream_uuid = subscription.0.to_string();
@@ -90,24 +90,21 @@ impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
 
         self.add_sub(&subscription.0, subscription.1);
 
-        Box::pin(
-            async {
-                let addr = EventStore::<A>::get_addr().await.unwrap();
-                trace!("Subscribing from SubscriberManager");
-                let _ = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
-                    recipient,
-                    event_store::prelude::SubscriptionOptions {
-                        stream_uuid,
-                        subscription_name,
-                        start_from: StartFrom::Origin,
-                        transient: false,
-                    },
-                    addr,
-                )
-                .await;
-            }
-            .into_actor(self),
-        )
+        Box::pin(async {
+            let addr = EventStore::<A>::get_addr().await.unwrap();
+            trace!("Subscribing from SubscriberManager");
+            let _ = event_store::prelude::Subscriptions::<A::Storage>::subscribe_to_stream(
+                recipient,
+                event_store::prelude::SubscriptionOptions {
+                    stream_uuid,
+                    subscription_name,
+                    start_from: StartFrom::Origin,
+                    transient: false,
+                },
+                addr,
+            )
+            .await;
+        })
     }
 }
 

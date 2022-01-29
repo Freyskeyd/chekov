@@ -111,7 +111,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
             .await;
         };
 
-        ctx.spawn(fut.into_actor(self).map(|_, _, _| ()));
+        tokio::spawn(fut);
 
         EventHandler::started(&mut self.handler, ctx);
     }
@@ -120,7 +120,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
 impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
     for EventHandlerInstance<A, E>
 {
-    type Result = ResponseActFuture<Self, Result<(), ()>>;
+    type Result = ResponseFuture<Result<(), ()>>;
 
     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
     fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
@@ -129,22 +129,14 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
                 let mut handler = self.handler.clone();
                 let events = events;
 
-                Box::pin(
-                    async move {
-                        for event in events {
-                            EventHandler::handle_recorded_event(&mut handler, event).await?;
-                        }
-                        Ok(())
+                Box::pin(async move {
+                    for event in events {
+                        EventHandler::handle_recorded_event(&mut handler, event).await?;
                     }
-                    .into_actor(self)
-                    .map(|_res: Result<(), ()>, _actor, _ctx| Ok(())),
-                )
+                    Ok(())
+                })
             }
-            SubscriptionNotification::Subscribed => Box::pin(
-                async move { Ok(()) }
-                    .into_actor(self)
-                    .map(|_: Result<(), ()>, _, _| Ok(())),
-            ),
+            SubscriptionNotification::Subscribed => Box::pin(async { Ok(()) }),
         }
     }
 }

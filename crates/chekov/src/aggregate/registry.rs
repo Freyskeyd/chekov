@@ -62,8 +62,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
             let stream_id = cmd.command.identifier();
 
             Box::pin(
-                async move { fut.await }
-                    .instrument(tracing::Span::current())
+                fut.instrument(tracing::Span::current())
                     .into_actor(self)
                     .map(move |result, actor, _| match result {
                         Ok(addr) => {

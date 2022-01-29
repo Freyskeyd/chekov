@@ -7,7 +7,7 @@ use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::{Backend, Storage};
-use futures::TryFutureExt;
+use futures::{FutureExt, TryFutureExt};
 use std::str::FromStr;
 use tokio::sync::mpsc;
 use tracing::trace;
@@ -50,7 +50,7 @@ impl<S: Storage> Actor for Connection<S> {
 }
 
 impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
-    fn handle(&mut self, item: Result<EventBusMessage, ()>, ctx: &mut Context<Self>) {
+    fn handle(&mut self, item: Result<EventBusMessage, ()>, _ctx: &mut Context<Self>) {
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(events) => {
@@ -75,13 +75,12 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
                             correlation_id,
                         )
                         .in_current_span()
-                        .into_actor(self)
-                        .map(move |res, _actor, _ctx| match res {
+                        .map(move |res| match res {
                             Ok(events) => Subscriptions::<S>::notify_subscribers(events),
                             Err(_) => todo!(),
                         });
 
-                    ctx.spawn(fut);
+                    tokio::spawn(fut);
                 }
                 EventBusMessage::Unkown => {}
             }
@@ -156,7 +155,7 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
 }
 
 impl<S: Storage> Handler<StreamInfo> for Connection<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
+    type Result = ResponseFuture<Result<Stream, EventStoreError>>;
 
     #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
@@ -166,10 +165,7 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
             .backend()
             .read_stream_info(msg.stream_uuid, msg.correlation_id);
 
-        Box::pin(
-            fut.map_err(|error| EventStoreError::Storage(error))
-                .into_actor(self),
-        )
+        Box::pin(fut.map_err(|error| EventStoreError::Storage(error)))
     }
 }
 

@@ -2,7 +2,8 @@ use crate::{
     command::Command, command::CommandMetadatas, message::Dispatch, Application,
     CommandExecutorError,
 };
-use actix::{prelude::WrapFuture, SystemService};
+use actix::{ResponseFuture, SystemService};
+use futures::TryFutureExt;
 use tracing::trace;
 
 #[doc(hidden)]
@@ -23,7 +24,7 @@ impl<A: Application, T: Command> ::actix::Handler<Dispatch<T, A>> for Router<A>
 where
     <T as Command>::ExecutorRegistry: actix::Handler<Dispatch<T, A>>,
 {
-    type Result = actix::ResponseActFuture<Self, Result<Vec<T::Event>, CommandExecutorError>>;
+    type Result = ResponseFuture<Result<Vec<T::Event>, CommandExecutorError>>;
 
     #[tracing::instrument(name = "Router", skip(self, _ctx, msg), fields(correlation_id = %msg.metadatas.correlation_id))]
     fn handle(&mut self, msg: Dispatch<T, A>, _ctx: &mut Self::Context) -> Self::Result {
@@ -33,7 +34,7 @@ where
             to = ::std::any::type_name::<T::ExecutorRegistry>(),
             "Route command",
         );
-        Box::pin(async move { to.send(msg).await? }.into_actor(self))
+        Box::pin(to.send(msg).map_ok_or_else(|e| Err(e.into()), |r| r))
     }
 }
 
