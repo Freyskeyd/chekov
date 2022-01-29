@@ -122,17 +122,16 @@
 <span id="121">121</span>
 <span id="122">122</span>
 <span id="123">123</span>
-<span id="124">124</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::application::Application</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message</span>::{<span class="ident">ExecuteAppender</span>, <span class="ident">ExecuteReader</span>, <span class="ident">ExecuteStreamInfo</span>, <span class="ident">GetAddr</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">::event_store::prelude::Event</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">::event_store::prelude::RecordedEvent</span>;
-<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">MailboxError</span>, <span class="ident">SystemService</span>, <span class="ident">WrapFuture</span>};
+<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">MailboxError</span>, <span class="ident">ResponseFuture</span>, <span class="ident">SystemService</span>};
 <span class="kw">use</span> <span class="ident">event_store::prelude::EventStoreError</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::Stream</span>;
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
+<span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresEventBus</span>;
@@ -175,7 +174,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">actix::Handler</span><span class="op">&lt;</span><span class="ident">GetAddr</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">GetAddr</span><span class="op">&lt;</span><span class="ident">A::Storage</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Application</span>,
 {
@@ -186,35 +185,35 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">actix::Handler</span><span class="op">&lt;</span><span class="ident">ExecuteReader</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">ExecuteReader</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Application</span>,
 {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">reader</span>: <span class="ident">ExecuteReader</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">addr</span>.<span class="ident">clone</span>();
-        <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="ident">reader</span>.<span class="number">0</span>.<span class="ident">execute</span>(<span class="ident">addr</span>).<span class="kw">await</span> }.<span class="ident">into_actor</span>(<span class="self">self</span>))
+        <span class="ident">Box::pin</span>(<span class="ident">reader</span>.<span class="number">0</span>.<span class="ident">execute</span>(<span class="ident">addr</span>))
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">actix::Handler</span><span class="op">&lt;</span><span class="ident">ExecuteAppender</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">ExecuteAppender</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Application</span>,
 {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">uuid::Uuid</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">uuid::Uuid</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">appender</span>: <span class="ident">ExecuteAppender</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">addr</span>.<span class="ident">clone</span>();
-        <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="ident">appender</span>.<span class="number">0</span>.<span class="ident">execute</span>(<span class="ident">addr</span>).<span class="kw">await</span> }.<span class="ident">into_actor</span>(<span class="self">self</span>))
+        <span class="ident">Box::pin</span>(<span class="ident">appender</span>.<span class="number">0</span>.<span class="ident">execute</span>(<span class="ident">addr</span>))
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">actix::Handler</span><span class="op">&lt;</span><span class="ident">ExecuteStreamInfo</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">ExecuteStreamInfo</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">Application</span>,
 {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">ResponseFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">appender</span>: <span class="ident">ExecuteStreamInfo</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">addr</span>.<span class="ident">clone</span>();
@@ -224,8 +223,7 @@
                 <span class="ident">correlation_id</span>: <span class="ident">uuid::Uuid::new_v4</span>(),
                 <span class="ident">stream_uuid</span>: <span class="ident">appender</span>.<span class="number">0</span>,
             })
-            .<span class="ident">map_ok_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>), <span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>)
-            .<span class="ident">into_actor</span>(<span class="self">self</span>),
+            .<span class="ident">map_ok_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>), <span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>),
         )
     }
 }
