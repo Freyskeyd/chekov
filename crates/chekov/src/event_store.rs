@@ -7,6 +7,7 @@ pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
+use futures::{FutureExt, TryFutureExt};
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;
@@ -94,18 +95,11 @@ where
         let addr = self.addr.clone();
 
         Box::pin(
-            async move {
-                match addr
-                    .send(event_store::prelude::StreamInfo {
-                        correlation_id: uuid::Uuid::new_v4(),
-                        stream_uuid: appender.0,
-                    })
-                    .await
-                {
-                    Ok(Ok(stream)) => Ok(stream.into_owned()),
-                    _ => Err(EventStoreError::Any),
-                }
-            }
+            addr.send(event_store::prelude::StreamInfo {
+                correlation_id: uuid::Uuid::new_v4(),
+                stream_uuid: appender.0,
+            })
+            .map_ok_or_else(|_| Err(EventStoreError::Any), |r| r)
             .into_actor(self),
         )
     }

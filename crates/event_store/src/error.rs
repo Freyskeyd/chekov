@@ -1,3 +1,4 @@
+use actix::MailboxError;
 use event_store_core::storage::StorageError;
 
 use crate::ParseEventError;

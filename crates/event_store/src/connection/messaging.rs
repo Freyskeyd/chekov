@@ -3,18 +3,17 @@ use crate::{
     ExpectedVersion,
 };
 use actix::Message;
-use std::borrow::Cow;
 use uuid::Uuid;
 
 #[derive(Message)]
-#[rtype(result = "Result<Cow<'static, Stream>, EventStoreError>")]
+#[rtype(result = "Result<Stream, EventStoreError>")]
 pub struct StreamInfo {
     pub correlation_id: Uuid,
     pub stream_uuid: String,
 }
 
 #[derive(Message)]
-#[rtype(result = "Result<Cow<'static, Stream>, EventStoreError>")]
+#[rtype(result = "Result<Stream, EventStoreError>")]
 pub struct CreateStream {
     pub(crate) correlation_id: Uuid,
     pub(crate) stream_uuid: String,

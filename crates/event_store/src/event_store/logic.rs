@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use super::{EventStore, EventStoreBuilder};
 use crate::{
     connection::{Append, Connection, CreateStream, Read, StreamInfo},
@@ -61,16 +59,17 @@ impl<S: Storage> EventStore<S> {
     pub(crate) async fn stream_info(
         connection: Addr<Connection<S>>,
         request: StreamInfo,
-    ) -> Result<Cow<'static, Stream>, EventStoreError> {
+    ) -> Result<Stream, EventStoreError> {
         connection.send(request).await?
     }
 
     pub(crate) async fn create_stream(
         connection: Addr<Connection<S>>,
         request: CreateStream,
-    ) -> Result<Cow<'static, Stream>, EventStoreError> {
+    ) -> Result<Stream, EventStoreError> {
         connection.send(request).await?
     }
+
     pub(crate) async fn append(
         connection: Addr<Connection<S>>,
         request: AppendToStreamRequest,

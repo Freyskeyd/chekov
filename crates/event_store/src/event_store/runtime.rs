@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::{
     connection::{CreateStream, StreamInfo},
     core::stream::Stream,
@@ -52,7 +50,7 @@ impl<S: Storage> Handler<reader::ReadStreamRequest> for EventStore<S> {
 }
 
 impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::StreamInfo", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(&mut self, request: StreamInfo, _ctx: &mut Self::Context) -> Self::Result {
@@ -67,7 +65,7 @@ impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
 }
 
 impl<S: Storage> Handler<CreateStream> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Cow<'static, Stream>, EventStoreError>>;
+    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::CreateStream", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(&mut self, request: CreateStream, _ctx: &mut Self::Context) -> Self::Result {
