@@ -198,7 +198,6 @@
 <span id="197">197</span>
 <span id="198">198</span>
 <span id="199">199</span>
-<span id="200">200</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">warn</span>(
     <span class="ident">clippy::all</span>,
     <span class="ident">clippy::pedantic</span>,
@@ -367,11 +366,10 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::versions</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event_store::EventStore</span>;
 <span class="kw">use</span> <span class="ident">error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event::Event</span>;
-<span class="kw">use</span> <span class="ident">event::ParseEventError</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::versions</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>};
 <span class="kw">use</span> <span class="ident">versions::ExpectedVersion</span>;
 <span class="kw">use</span> <span class="ident">versions::ReadVersion</span>;
