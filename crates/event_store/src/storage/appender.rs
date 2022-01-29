@@ -1,5 +1,5 @@
-use crate::core::event::ParseEventError;
 use crate::core::event::UnsavedEvent;
+use crate::core::event::UnsavedEventError;
 use crate::core::stream::Stream;
 use crate::versions::ExpectedVersionResult;
 use crate::Event;
@@ -113,7 +113,7 @@ impl Appender {
         trace!(
             parent: &self.span,
             "Attemting to add {} event(s)", events.len());
-        let events: Vec<Result<UnsavedEvent, ParseEventError>> = events
+        let events: Vec<Result<UnsavedEvent, UnsavedEventError>> = events
             .iter()
             .map(|event| UnsavedEvent::try_from(*event))
             .collect();
@@ -352,7 +352,7 @@ mod test {
             .execute(addr.clone())
             .await;
 
-        assert_eq!(res, Err(EventStoreError::Any));
+        assert!(matches!(res, Err(EventStoreError::Any)));
 
         let res = Appender::default()
             .to(&uuid)?
