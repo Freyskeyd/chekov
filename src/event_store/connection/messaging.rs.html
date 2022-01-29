@@ -41,24 +41,22 @@
 <span id="40">40</span>
 <span id="41">41</span>
 <span id="42">42</span>
-<span id="43">43</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">core::stream::Stream</span>, <span class="ident">event::RecordedEvent</span>, <span class="ident">event::UnsavedEvent</span>, <span class="ident">EventStoreError</span>,
     <span class="ident">ExpectedVersion</span>,
 };
 <span class="kw">use</span> <span class="ident">actix::Message</span>;
-<span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
-<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Cow&lt;&#39;static, Stream&gt;, EventStoreError&gt;&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Stream, EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StreamInfo</span> {
     <span class="kw">pub</span> <span class="ident">correlation_id</span>: <span class="ident">Uuid</span>,
     <span class="kw">pub</span> <span class="ident">stream_uuid</span>: <span class="ident">String</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
-<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Cow&lt;&#39;static, Stream&gt;, EventStoreError&gt;&quot;</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Stream, EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CreateStream</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">correlation_id</span>: <span class="ident">Uuid</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">stream_uuid</span>: <span class="ident">String</span>,

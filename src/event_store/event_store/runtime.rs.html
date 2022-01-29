@@ -96,11 +96,7 @@
 <span id="95">95</span>
 <span id="96">96</span>
 <span id="97">97</span>
-<span id="98">98</span>
-<span id="99">99</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
-
-<span class="kw">use</span> <span class="kw">crate</span>::{
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">connection</span>::{<span class="ident">CreateStream</span>, <span class="ident">StreamInfo</span>},
     <span class="ident">core::stream::Stream</span>,
     <span class="ident">event::RecordedEvent</span>,
@@ -152,7 +148,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">StreamInfo</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Stream</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventStore::StreamInfo&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">request</span>, <span class="ident">_ctx</span>), <span class="ident">fields</span>(<span class="ident">correlation_id</span> <span class="op">=</span> <span class="op">%</span><span class="ident">request</span>.<span class="ident">correlation_id</span>))]</span>
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">request</span>: <span class="ident">StreamInfo</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
@@ -167,7 +163,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">CreateStream</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStore</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Stream</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">actix::ResponseActFuture</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;EventStore::CreateStream&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">request</span>, <span class="ident">_ctx</span>), <span class="ident">fields</span>(<span class="ident">correlation_id</span> <span class="op">=</span> <span class="op">%</span><span class="ident">request</span>.<span class="ident">correlation_id</span>))]</span>
     <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">request</span>: <span class="ident">CreateStream</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {

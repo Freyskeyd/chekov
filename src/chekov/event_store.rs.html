@@ -123,12 +123,6 @@
 <span id="122">122</span>
 <span id="123">123</span>
 <span id="124">124</span>
-<span id="125">125</span>
-<span id="126">126</span>
-<span id="127">127</span>
-<span id="128">128</span>
-<span id="129">129</span>
-<span id="130">130</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::application::Application</span>;
@@ -138,6 +132,7 @@
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">MailboxError</span>, <span class="ident">SystemService</span>, <span class="ident">WrapFuture</span>};
 <span class="kw">use</span> <span class="ident">event_store::prelude::EventStoreError</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::Stream</span>;
+<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresEventBus</span>;
@@ -225,18 +220,11 @@
         <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">addr</span>.<span class="ident">clone</span>();
 
         <span class="ident">Box::pin</span>(
-            <span class="kw">async</span> <span class="kw">move</span> {
-                <span class="kw">match</span> <span class="ident">addr</span>
-                    .<span class="ident">send</span>(<span class="ident">event_store::prelude::StreamInfo</span> {
-                        <span class="ident">correlation_id</span>: <span class="ident">uuid::Uuid::new_v4</span>(),
-                        <span class="ident">stream_uuid</span>: <span class="ident">appender</span>.<span class="number">0</span>,
-                    })
-                    .<span class="kw">await</span>
-                {
-                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="ident">stream</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">stream</span>.<span class="ident">into_owned</span>()),
-                    <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>),
-                }
-            }
+            <span class="ident">addr</span>.<span class="ident">send</span>(<span class="ident">event_store::prelude::StreamInfo</span> {
+                <span class="ident">correlation_id</span>: <span class="ident">uuid::Uuid::new_v4</span>(),
+                <span class="ident">stream_uuid</span>: <span class="ident">appender</span>.<span class="number">0</span>,
+            })
+            .<span class="ident">map_ok_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>), <span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>)
             .<span class="ident">into_actor</span>(<span class="self">self</span>),
         )
     }

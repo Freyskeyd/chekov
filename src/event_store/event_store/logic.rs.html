@@ -111,10 +111,7 @@
 <span id="110">110</span>
 <span id="111">111</span>
 <span id="112">112</span>
-<span id="113">113</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
-
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventStore</span>, <span class="ident">EventStoreBuilder</span>};
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventStore</span>, <span class="ident">EventStoreBuilder</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">connection</span>::{<span class="ident">Append</span>, <span class="ident">Connection</span>, <span class="ident">CreateStream</span>, <span class="ident">Read</span>, <span class="ident">StreamInfo</span>},
     <span class="ident">core::stream::Stream</span>,
@@ -175,16 +172,17 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">stream_info</span>(
         <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">request</span>: <span class="ident">StreamInfo</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Stream</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
         <span class="ident">connection</span>.<span class="ident">send</span>(<span class="ident">request</span>).<span class="kw">await</span><span class="question-mark">?</span>
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_stream</span>(
         <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">request</span>: <span class="ident">CreateStream</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Stream</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
         <span class="ident">connection</span>.<span class="ident">send</span>(<span class="ident">request</span>).<span class="kw">await</span><span class="question-mark">?</span>
     }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">append</span>(
         <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">request</span>: <span class="ident">AppendToStreamRequest</span>,
