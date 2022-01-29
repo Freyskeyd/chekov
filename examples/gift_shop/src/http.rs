@@ -1,13 +1,15 @@
 use super::*;
 use crate::account::*;
 use crate::commands::*;
+use actix_web::body::BoxBody;
 use actix_web::post;
 use actix_web::web;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use uuid::Uuid;
 
 impl Responder for Account {
-    fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
+    type Body = BoxBody;
+    fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
         let body = serde_json::to_string(&self).unwrap();
 
         HttpResponse::Ok()

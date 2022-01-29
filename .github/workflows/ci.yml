@@ -18,7 +18,7 @@ jobs:
           override: true
 
 
-      - run: docker-compose -f tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - name: Run cargo check
@@ -41,7 +41,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - run: docker-compose -f tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - name: Run cargo test
@@ -64,7 +64,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - run: docker-compose -f tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - run: cargo doc --no-deps --all --exclude bank
@@ -103,7 +103,7 @@ jobs:
           toolchain: nightly
           override: true
 
-      - run: docker-compose -f tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - uses: actions-rs/cargo@v1
