@@ -1,5 +1,4 @@
 use event_store_core::{event::UnsavedEventError, storage::StorageError};
-
 use std::fmt;
 
 #[derive(Debug)]

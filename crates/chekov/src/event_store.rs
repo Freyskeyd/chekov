@@ -5,8 +5,8 @@ pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
-use futures::TryFutureExt;
 use std::marker::PhantomData;
+use futures::{TryFutureExt};
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;
