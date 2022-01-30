@@ -57,16 +57,20 @@
 <span id="56">56</span>
 <span id="57">57</span>
 <span id="58">58</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_core</span>::{<span class="ident">event::UnsavedEventError</span>, <span class="ident">storage::StorageError</span>};
+<span id="59">59</span>
+<span id="60">60</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">actix::MailboxError</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::storage::StorageError</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ParseEventError</span>;
 <span class="kw">use</span> <span class="ident">std::fmt</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EventStoreError</span> {
     <span class="ident">Any</span>,
     <span class="ident">NoStorage</span>,
     <span class="ident">InvalidStreamId</span>,
     <span class="ident">Storage</span>(<span class="ident">StorageError</span>),
-    <span class="ident">EventProcessing</span>(<span class="ident">UnsavedEventError</span>),
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">EventStoreError</span> {
@@ -83,10 +87,10 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">std::convert::From</span><span class="op">&lt;</span><span class="ident">UnsavedEventError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStoreError</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">UnsavedEventError</span>) -&gt; <span class="self">Self</span> {
+<span class="kw">impl</span> <span class="ident">std::convert::From</span><span class="op">&lt;</span><span class="ident">ParseEventError</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EventStoreError</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">ParseEventError</span>) -&gt; <span class="self">Self</span> {
         <span class="macro">tracing::error!</span>(<span class="string">&quot;Error: {:?}&quot;</span>, <span class="ident">e</span>);
-        <span class="ident"><span class="self">Self</span>::EventProcessing</span>(<span class="ident">e</span>)
+        <span class="ident"><span class="self">Self</span>::Any</span>
     }
 }
 
@@ -103,7 +107,7 @@
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">testing_that_a_parse_event_error_can_be_converted</span>() {
-        <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">UnsavedEventError::UnknownFailure</span>;
+        <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::ParseEventError::UnknownFailure</span>;
 
         <span class="kw">let</span> <span class="kw">_</span>: <span class="ident">EventStoreError</span> <span class="op">=</span> <span class="ident">err</span>.<span class="ident">into</span>();
     }
