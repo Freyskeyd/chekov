@@ -7,8 +7,9 @@ use crate::{
 };
 use actix::prelude::Handler as ActixHandler;
 use actix::prelude::*;
+use futures::{FutureExt, TryFutureExt};
 
-type DispatchResult<H, A, E> = ResponseActFuture<H, Result<(Vec<E>, A), CommandExecutorError>>;
+type DispatchResult<A, E> = ResponseFuture<Result<(Vec<E>, A), CommandExecutorError>>;
 
 #[derive(Default)]
 pub struct CommandHandlerInstance<H: CommandHandler> {
@@ -27,7 +28,7 @@ where
     H: Handler<C, A>,
     A: CommandExecutor<C>,
 {
-    type Result = DispatchResult<Self, A, C::Event>;
+    type Result = DispatchResult<A, C::Event>;
     fn handle(
         &mut self,
         cmd: DispatchWithState<A, C, APP>,
@@ -37,19 +38,16 @@ where
         let state = cmd.state;
         let fut = self.inner.handle(command, state.clone());
         Box::pin(
-            async move { fut.await }
-                .into_actor(self)
-                .timeout(Duration::from_secs(5))
-                .map(|res, _, _| match res {
+            tokio::time::timeout(Duration::from_secs(5), fut)
+                .map(|res| match res {
                     Ok(r) => r.map(|events| (events, state)),
                     Err(e) => {
                         tracing::error!("First : {:?}", e);
                         Err(CommandExecutorError::Any)
                     }
                 })
-                .map_err(|a, _, c| {
+                .map_err(|a| {
                     tracing::error!("{:?}", a);
-                    tracing::error!("{:?}", c);
                     CommandExecutorError::Any
                 }),
         )

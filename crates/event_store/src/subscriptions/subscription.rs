@@ -108,7 +108,7 @@ impl<S: Storage> Handler<CatchUp> for Subscription<S> {
 }
 
 impl<S: Storage> Handler<Notify> for Subscription<S> {
-    type Result = ResponseActFuture<Self, ()>;
+    type Result = ResponseFuture<()>;
 
     fn handle(&mut self, msg: Notify, _ctx: &mut Self::Context) -> Self::Result {
         debug!(
@@ -119,9 +119,7 @@ impl<S: Storage> Handler<Notify> for Subscription<S> {
         let fsm = self.subscription.clone();
         let fut = async move {
             fsm.lock().await.notify_events(msg.0).await;
-        }
-        .into_actor(self)
-        .map(|_, _, _| {});
+        };
 
         Box::pin(fut)
     }

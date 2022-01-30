@@ -1,15 +1,13 @@
-use actix::MailboxError;
-use event_store_core::storage::StorageError;
-
-use crate::ParseEventError;
+use event_store_core::{event::UnsavedEventError, storage::StorageError};
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum EventStoreError {
     Any,
     NoStorage,
     InvalidStreamId,
     Storage(StorageError),
+    EventProcessing(UnsavedEventError),
 }
 
 impl fmt::Display for EventStoreError {
@@ -26,10 +24,10 @@ impl std::convert::From<actix::MailboxError> for EventStoreError {
     }
 }
 
-impl std::convert::From<ParseEventError> for EventStoreError {
-    fn from(e: ParseEventError) -> Self {
+impl std::convert::From<UnsavedEventError> for EventStoreError {
+    fn from(e: UnsavedEventError) -> Self {
         tracing::error!("Error: {:?}", e);
-        Self::Any
+        Self::EventProcessing(e)
     }
 }
 
@@ -46,7 +44,7 @@ mod test {
 
     #[test]
     fn testing_that_a_parse_event_error_can_be_converted() {
-        let err = crate::ParseEventError::UnknownFailure;
+        let err = UnsavedEventError::UnknownFailure;
 
         let _: EventStoreError = err.into();
     }

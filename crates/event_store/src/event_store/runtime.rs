@@ -31,7 +31,7 @@ impl<S: Storage> StreamHandler<EventBusMessage> for EventStore<S> {
 }
 
 impl<S: Storage> Handler<reader::ReadStreamRequest> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Vec<RecordedEvent>, EventStoreError>>;
+    type Result = ResponseFuture<Result<Vec<RecordedEvent>, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::ReadStreamRequest", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(
@@ -41,16 +41,12 @@ impl<S: Storage> Handler<reader::ReadStreamRequest> for EventStore<S> {
     ) -> Self::Result {
         let connection = self.connection.clone();
 
-        let fut = Self::read(connection, request)
-            .instrument(tracing::Span::current())
-            .into_actor(self);
-
-        Box::pin(fut)
+        Box::pin(Self::read(connection, request).instrument(tracing::Span::current()))
     }
 }
 
 impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
+    type Result = ResponseFuture<Result<Stream, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::StreamInfo", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(&mut self, request: StreamInfo, _ctx: &mut Self::Context) -> Self::Result {
@@ -58,14 +54,13 @@ impl<S: Storage> Handler<StreamInfo> for EventStore<S> {
 
         Box::pin(
             Self::stream_info(self.connection.clone(), request)
-                .instrument(tracing::Span::current())
-                .into_actor(self),
+                .instrument(tracing::Span::current()),
         )
     }
 }
 
 impl<S: Storage> Handler<CreateStream> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Stream, EventStoreError>>;
+    type Result = ResponseFuture<Result<Stream, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::CreateStream", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(&mut self, request: CreateStream, _ctx: &mut Self::Context) -> Self::Result {
@@ -73,14 +68,13 @@ impl<S: Storage> Handler<CreateStream> for EventStore<S> {
 
         Box::pin(
             Self::create_stream(self.connection.clone(), request)
-                .instrument(tracing::Span::current())
-                .into_actor(self),
+                .instrument(tracing::Span::current()),
         )
     }
 }
 
 impl<S: Storage> Handler<appender::AppendToStreamRequest> for EventStore<S> {
-    type Result = actix::ResponseActFuture<Self, Result<Vec<Uuid>, EventStoreError>>;
+    type Result = ResponseFuture<Result<Vec<Uuid>, EventStoreError>>;
 
     #[tracing::instrument(name = "EventStore::AppendToStream", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(
@@ -89,9 +83,7 @@ impl<S: Storage> Handler<appender::AppendToStreamRequest> for EventStore<S> {
         _ctx: &mut Self::Context,
     ) -> Self::Result {
         Box::pin(
-            Self::append(self.connection.clone(), request)
-                .instrument(tracing::Span::current())
-                .into_actor(self),
+            Self::append(self.connection.clone(), request).instrument(tracing::Span::current()),
         )
     }
 }

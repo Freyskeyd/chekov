@@ -2,7 +2,7 @@ use super::{StartFrom, SubscriptionNotification, SubscriptionOptions, Subscripti
 use crate::{
     core::event::Event, event::RecordedEvent, prelude::ExpectedVersion, EventStore, InMemoryStorage,
 };
-use actix::{Actor, Context, Handler, ResponseActFuture, WrapFuture};
+use actix::{Actor, Context, Handler, ResponseActFuture, ResponseFuture, WrapFuture};
 use serde_json::json;
 use std::{collections::VecDeque, convert::TryFrom, sync::Arc};
 use test_log::test;
@@ -52,19 +52,16 @@ impl TryFrom<RecordedEvent> for MyEvent {
 }
 
 impl Handler<SubscriptionNotification> for InnerSub {
-    type Result = ResponseActFuture<Self, Result<(), ()>>;
+    type Result = ResponseFuture<Result<(), ()>>;
 
     fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
         let aquire = Arc::clone(&self.reference);
 
-        Box::pin(
-            async move {
-                let mut mutex = aquire.lock().await;
-                mutex.push_back(msg);
-                Ok(())
-            }
-            .into_actor(self),
-        )
+        Box::pin(async move {
+            let mut mutex = aquire.lock().await;
+            mutex.push_back(msg);
+            Ok(())
+        })
     }
 }
 

@@ -10,10 +10,14 @@ mod test;
 
 /// Represent event that can be handled by an `EventStore`
 pub trait Event: Serialize + Send + std::convert::TryFrom<RecordedEvent> {
-    /// Return a static str which define the event type
+    /// Returns a `'static str` which defines the event type
     ///
-    /// This str must be as precise as possible.
+    /// This `str` must be as precise as possible.
     fn event_type(&self) -> &'static str;
+
+    /// Returns every possible string representations of the event.
+    ///
+    /// Useful to define particular variant types for an enum
     fn all_event_types() -> Vec<&'static str>;
 }
 
@@ -58,15 +62,16 @@ impl RecordedEvent {
     }
 }
 
+/// Errors related to a recorded event
 pub enum RecordedEventError {
     Deserialize,
 }
 
-/// An `UnsavedEvent` is created from a type that implement Event
+/// An `UnsavedEvent` is created from a type that implement `Event`
 ///
-/// This kind of event represents an unsaved event, meaning that it has less information
+/// This kind of event represents an unsaved event, meaning that it has less informations
 /// than a `RecordedEvent`. It's a generic form to simplify the event processing but also a way to
-/// define `metadata`, `causation_id` and `correlation_id`
+/// define `metadata`, `causation_id` and `correlation_id`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnsavedEvent {
     /// a `causation_id` defines who caused this event
@@ -85,21 +90,28 @@ pub struct UnsavedEvent {
     pub created_at: DateTime<chrono::offset::Utc>,
 }
 
+/// Errors related to a unsaved event
 #[derive(Debug)]
-pub enum ParseEventError {
+pub enum UnsavedEventError {
+    SerializeError(serde_json::Error),
     UnknownFailure,
 }
 
-impl From<serde_json::Error> for ParseEventError {
-    fn from(_: serde_json::Error) -> Self {
-        Self::UnknownFailure
+impl From<serde_json::Error> for UnsavedEventError {
+    fn from(e: serde_json::Error) -> Self {
+        Self::SerializeError(e)
     }
 }
 
 impl UnsavedEvent {
+    /// Try to create an `UnsavedEvent` from a struct that implement `Event`.
+    ///
+    /// In case of a success an `UnsavedEvent` is returned with no context or metadata.
+    ///
     /// # Errors
-    /// If `serde` isn't able to serialize the `Event`
-    pub fn try_from<E: Event>(event: &E) -> Result<Self, ParseEventError> {
+    /// If `serde` isn't able to serialize the `Event` an `UnsavedEventError::SerializeError` is
+    /// returned
+    pub fn try_from<E: Event>(event: &E) -> Result<Self, UnsavedEventError> {
         Ok(Self {
             causation_id: None,
             correlation_id: None,

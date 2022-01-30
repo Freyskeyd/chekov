@@ -166,11 +166,10 @@ mod event_store;
 pub mod storage;
 mod subscriptions;
 
-pub use event_store_core::versions;
 pub use crate::event_store::EventStore;
 use error::EventStoreError;
 pub use event::Event;
-use event::ParseEventError;
+pub use event_store_core::versions;
 use storage::{appender::Appender, reader::Reader};
 use versions::ExpectedVersion;
 use versions::ReadVersion;
