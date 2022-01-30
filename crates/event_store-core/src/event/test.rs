@@ -93,9 +93,9 @@ mod unsaved {
     #[test]
     fn test_that_serde_error_are_handled() {
         use serde::ser::Error;
-        let err = ParseEventError::from(serde_json::Error::custom("test"));
+        let err = UnsavedEventError::from(serde_json::Error::custom("test"));
 
-        let _: ParseEventError = err.into();
+        let _: UnsavedEventError = err.into();
     }
 
     #[derive(serde::Serialize, serde::Deserialize)]

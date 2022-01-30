@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::application::Application;
 use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetAddr};
 pub use ::event_store::prelude::Event;
@@ -7,7 +5,8 @@ pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, MailboxError, SystemService, WrapFuture};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
-use futures::{FutureExt, TryFutureExt};
+use futures::TryFutureExt;
+use std::marker::PhantomData;
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;

@@ -24,6 +24,7 @@ pub enum EventBusMessage {
     Unkown,
 }
 
+/// Notification produced by the `EventBus` which contains events/streams related informations
 #[derive(Clone, Debug, Message)]
 #[rtype(result = "()")]
 pub struct EventNotification {
