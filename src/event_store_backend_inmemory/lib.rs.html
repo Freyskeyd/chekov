@@ -211,8 +211,8 @@
 <span class="kw">use</span> <span class="ident">event_store_core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event::UnsavedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event_bus::EventBusMessage</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::storage::error::StorageError</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Backend</span>;
-<span class="kw">use</span> <span class="ident">event_store_core::storage::StorageError</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">futures::FutureExt</span>;
@@ -287,7 +287,7 @@
         <span class="self">self</span>.<span class="ident">streams</span>.<span class="ident">remove</span>(<span class="ident">stream</span>.<span class="ident">stream_uuid</span>());
         <span class="self">self</span>.<span class="ident">events</span>.<span class="ident">remove</span>(<span class="ident">stream</span>.<span class="ident">stream_uuid</span>());
 
-        <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> { <span class="prelude-val">Ok</span>(()) })
+        <span class="ident">futures::future::ok</span>(()).<span class="ident">boxed</span>()
     }
 
     <span class="attribute">#[<span class="ident">tracing::instrument</span>(<span class="ident">name</span> <span class="op">=</span> <span class="string">&quot;InMemoryBackend::ReadStream&quot;</span>, <span class="ident">skip</span>(<span class="self">self</span>))]</span>

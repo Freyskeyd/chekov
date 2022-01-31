@@ -324,6 +324,9 @@
 <span id="323">323</span>
 <span id="324">324</span>
 <span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
 </pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">proc_macro</span>;
 
 <span class="kw">mod</span> <span class="ident">aggregate</span>;
@@ -543,7 +546,10 @@
                         <span class="kw">use</span> <span class="ident">std::convert::TryFrom</span>;
                         <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
 
-                        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> #<span class="ident">event::try_from</span>(<span class="ident">event</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">ApplyError::Any</span>)<span class="question-mark">?</span>;
+                        <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> #<span class="ident">event::try_from</span>(<span class="ident">event</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                            <span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>);
+                            <span class="ident">ApplyError::Any</span>
+                        })<span class="question-mark">?</span>;
                         <span class="ident">aggregate</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>)
                     }
                 }
@@ -622,7 +628,7 @@
             #<span class="ident">aggregate_event_resolver</span> {
                 <span class="ident">names</span>: #<span class="ident">event::all_event_types</span>(),
                 <span class="ident">type_id</span>: <span class="ident">std::any::TypeId::of</span>::<span class="op">&lt;</span>#<span class="ident">event</span><span class="op">&gt;</span>(),
-                <span class="ident">handler</span>: <span class="op">|</span><span class="ident">handler</span>: <span class="kw-2">&amp;mut</span> #<span class="ident">apply_to</span>, <span class="ident">event</span>: <span class="ident">chekov::RecordedEvent</span><span class="op">|</span>  -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span><span class="op">&gt;</span> {
+                <span class="ident">handler</span>: <span class="op">|</span><span class="ident">handler</span>: <span class="kw-2">&amp;mut</span> #<span class="ident">apply_to</span>, <span class="ident">event</span>: <span class="ident">chekov::RecordedEvent</span><span class="op">|</span>  -&gt; <span class="ident">BoxFuture</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">chekov::error::HandleError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
                     <span class="kw">use</span> <span class="ident">chekov::Event</span>;
                     <span class="kw">use</span> <span class="ident">chekov::event::Handler</span>;
                     <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
@@ -630,7 +636,7 @@
 
                     <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> <span class="kw">match</span> #<span class="ident">event::try_from</span>(<span class="ident">event</span>) {
                         <span class="prelude-val">Ok</span>(<span class="ident">result</span>) =&gt; <span class="ident">result</span>,
-                        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="kw">async</span> {<span class="prelude-val">Err</span>(())}.<span class="ident">boxed</span>()
+                        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="kw">async</span> {<span class="prelude-val">Err</span>(<span class="ident">chekov::error::HandleError::Any</span>)}.<span class="ident">boxed</span>()
                     };
 
                     <span class="ident">handler</span>.<span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>)

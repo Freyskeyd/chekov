@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["__init6975399932409363649",""]],"struct":[["ACCOUNTPROJECTOR_STATIC_EVENT_HANDLER_EVENT_RESOLVER",""],["AccountProjector",""],["AccountProjectorEventHandlerEventRegistry",""]]});
+initSidebarItems({"fn":[["__init677153121337850190",""]],"struct":[["ACCOUNTPROJECTOR_STATIC_EVENT_HANDLER_EVENT_RESOLVER",""],["AccountProjector",""],["AccountProjectorEventHandlerEventRegistry",""]]});

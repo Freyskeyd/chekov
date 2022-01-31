@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["RecordedEventError","Errors related to a recorded event"],["UnsavedEventError","Errors related to a unsaved event"]]});

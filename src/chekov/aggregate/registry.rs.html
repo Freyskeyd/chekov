@@ -82,11 +82,13 @@
 <span id="81">81</span>
 <span id="82">82</span>
 <span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Application</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">aggregate::AggregateInstance</span>, <span class="ident">Aggregate</span>, <span class="ident">Command</span>, <span class="ident">CommandExecutorError</span>, <span class="ident">Dispatch</span>};
-<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">WrapFuture</span>};
-<span class="kw">use</span> <span class="ident">tracing::trace</span>;
+<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">ActorTryFutureExt</span>, <span class="ident">WrapFuture</span>};
 <span class="kw">use</span> <span class="ident">tracing::Instrument</span>;
+<span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
@@ -146,17 +148,19 @@
             <span class="kw">let</span> <span class="ident">stream_id</span> <span class="op">=</span> <span class="ident">cmd</span>.<span class="ident">command</span>.<span class="ident">identifier</span>();
 
             <span class="ident">Box::pin</span>(
-                <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">fut</span>.<span class="kw">await</span> }
-                    .<span class="ident">instrument</span>(<span class="ident">tracing::Span::current</span>())
+                <span class="ident">fut</span>.<span class="ident">instrument</span>(<span class="ident">tracing::Span::current</span>())
                     .<span class="ident">into_actor</span>(<span class="self">self</span>)
                     .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">result</span>, <span class="ident">actor</span>, <span class="kw">_</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">result</span> {
                         <span class="prelude-val">Ok</span>(<span class="ident">addr</span>) =&gt; {
                             <span class="ident">actor</span>.<span class="ident">registry</span>.<span class="ident">insert</span>(<span class="ident">stream_id</span>, <span class="ident">addr</span>.<span class="ident">clone</span>());
-                            <span class="ident">addr</span>
+                            <span class="prelude-val">Ok</span>(<span class="ident">addr</span>)
                         }
-                        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
+                        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; {
+                            <span class="macro">debug!</span>(<span class="string">&quot;Error: {:?}&quot;</span>, <span class="ident">e</span>);
+                            <span class="prelude-val">Err</span>(<span class="ident">CommandExecutorError::Any</span>)
+                        }
                     })
-                    .<span class="ident">then</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">addr</span>, <span class="ident">actor</span>, <span class="ident">_ctx</span><span class="op">|</span> {
+                    .<span class="ident">and_then</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">addr</span>, <span class="ident">actor</span>, <span class="ident">_ctx</span><span class="op">|</span> {
                         <span class="ident">AggregateInstance::execute_command</span>(<span class="ident">addr</span>, <span class="ident">cmd</span>)
                             .<span class="ident">instrument</span>(<span class="ident">tracing::Span::current</span>())
                             .<span class="ident">into_actor</span>(<span class="ident">actor</span>)

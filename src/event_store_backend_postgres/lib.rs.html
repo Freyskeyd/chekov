@@ -187,8 +187,10 @@
 <span id="186">186</span>
 <span id="187">187</span>
 <span id="188">188</span>
+<span id="189">189</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_core::event</span>::{<span class="ident">RecordedEvent</span>, <span class="ident">UnsavedEvent</span>};
-<span class="kw">use</span> <span class="ident">event_store_core::storage</span>::{<span class="ident">Backend</span>, <span class="ident">StorageError</span>};
+<span class="kw">use</span> <span class="ident">event_store_core::storage::error::StorageError</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::storage::Backend</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">sqlx::postgres::PgPoolOptions</span>;

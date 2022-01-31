@@ -198,6 +198,10 @@
 <span id="197">197</span>
 <span id="198">198</span>
 <span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
 <span class="kw">use</span> <span class="ident">darling::ast::Data</span>;
@@ -272,11 +276,15 @@
 
         <span class="kw">let</span> <span class="ident">try_from</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">is_enum</span>() {
             <span class="macro">quote!</span> {
-                <span class="prelude-val">Err</span>(())
+                <span class="ident">::serde_json::from_value</span>::<span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span>(#<span class="ident">input_name</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                    ()
+                })
             }
         } <span class="kw">else</span> {
             <span class="macro">quote!</span> {
-                <span class="ident">::serde_json::from_value</span>::<span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span>(#<span class="ident">input_name</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span>())
+                <span class="ident">::serde_json::from_value</span>::<span class="op">&lt;</span>#<span class="ident">struct_name</span><span class="op">&gt;</span>(#<span class="ident">input_name</span>.<span class="ident">data</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span>{
+                ()
+                })
             }
         };
 
