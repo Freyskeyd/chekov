@@ -140,7 +140,7 @@
 pub mod aggregate;
 pub mod application;
 pub mod command;
-mod error;
+pub mod error;
 pub mod event;
 pub mod event_store;
 #[doc(hidden)]

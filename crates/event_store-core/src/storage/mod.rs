@@ -8,6 +8,9 @@ use crate::{
     stream::Stream,
 };
 
+pub use self::error::StorageError;
+pub mod error;
+
 /// A `Storage` is responsible for storing and managing `Stream` and `Event`for a `Backend`
 pub trait Storage: std::fmt::Debug + Default + Send + std::marker::Unpin + 'static {
     type Backend: Backend;
@@ -20,13 +23,6 @@ pub trait Storage: std::fmt::Debug + Default + Send + std::marker::Unpin + 'stat
 
     fn create_stream(&mut self) -> BoxedStream;
     fn backend(&mut self) -> &mut Self::Backend;
-}
-
-#[derive(Debug, PartialEq)]
-pub enum StorageError {
-    StreamDoesntExists,
-    StreamAlreadyExists,
-    Unknown,
 }
 
 pub trait Backend {

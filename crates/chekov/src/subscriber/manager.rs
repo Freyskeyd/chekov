@@ -3,7 +3,7 @@ use crate::event::handler::Subscribe;
 use crate::event_store::EventStore;
 use crate::message::{ResolveAndApplyMany, StartListening};
 use crate::Application;
-use actix::{Actor, Handler, ResponseActFuture, ResponseFuture, Supervised, SystemService};
+use actix::{Actor, Handler, ResponseFuture, Supervised, SystemService};
 use actix::{ActorFutureExt, Addr, AsyncContext, Context, Recipient, WrapFuture};
 use event_store::prelude::RecordedEvent;
 use event_store::prelude::StartFrom;

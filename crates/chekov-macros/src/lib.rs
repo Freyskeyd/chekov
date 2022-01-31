@@ -217,7 +217,10 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
                         use std::convert::TryFrom;
                         use futures::TryFutureExt;
 
-                        let r = #event::try_from(event).map_err(|_| ApplyError::Any)?;
+                        let r = #event::try_from(event).map_err(|e| {
+                            println!("{:?}", e);
+                            ApplyError::Any
+                        })?;
                         aggregate.apply(&r)
                     }
                 }
@@ -296,7 +299,7 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
             #aggregate_event_resolver {
                 names: #event::all_event_types(),
                 type_id: std::any::TypeId::of::<#event>(),
-                handler: |handler: &mut #apply_to, event: chekov::RecordedEvent|  -> BoxFuture<Result<(), ()>> {
+                handler: |handler: &mut #apply_to, event: chekov::RecordedEvent|  -> BoxFuture<Result<(), chekov::error::HandleError>> {
                     use chekov::Event;
                     use chekov::event::Handler;
                     use futures::TryFutureExt;
@@ -304,7 +307,7 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
 
                     let r = match #event::try_from(event) {
                         Ok(result) => result,
-                        Err(_) => return async {Err(())}.boxed()
+                        Err(_) => return async {Err(chekov::error::HandleError::Any)}.boxed()
                     };
 
                     handler.handle(&r)

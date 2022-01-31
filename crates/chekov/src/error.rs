@@ -30,3 +30,7 @@ impl std::convert::From<ApplyError> for CommandExecutorError {
 pub enum ApplyError {
     Any,
 }
+
+pub enum HandleError {
+    Any,
+}

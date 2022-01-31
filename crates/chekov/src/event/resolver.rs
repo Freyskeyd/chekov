@@ -1,7 +1,8 @@
 use super::*;
+use crate::error::HandleError;
 
 #[doc(hidden)]
-pub type EventHandlerFn<A> = fn(&mut A, RecordedEvent) -> BoxFuture<Result<(), ()>>;
+pub type EventHandlerFn<A> = fn(&mut A, RecordedEvent) -> BoxFuture<Result<(), HandleError>>;
 
 #[doc(hidden)]
 pub struct EventHandlerResolverRegistry<E: EventHandler> {

@@ -5,8 +5,8 @@ use chrono::Utc;
 use event_store_core::event::RecordedEvent;
 use event_store_core::event::UnsavedEvent;
 use event_store_core::event_bus::EventBusMessage;
+use event_store_core::storage::error::StorageError;
 use event_store_core::storage::Backend;
-use event_store_core::storage::StorageError;
 use event_store_core::stream::Stream;
 use futures::Future;
 use futures::FutureExt;
@@ -81,7 +81,7 @@ impl Backend for InMemoryBackend {
         self.streams.remove(stream.stream_uuid());
         self.events.remove(stream.stream_uuid());
 
-        Box::pin(async move { Ok(()) })
+        futures::future::ok(()).boxed()
     }
 
     #[tracing::instrument(name = "InMemoryBackend::ReadStream", skip(self))]

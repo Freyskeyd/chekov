@@ -1,8 +1,8 @@
 use crate::Application;
 use crate::{aggregate::AggregateInstance, Aggregate, Command, CommandExecutorError, Dispatch};
-use actix::{ActorFutureExt, WrapFuture};
-use tracing::trace;
+use actix::{ActorFutureExt, ActorTryFutureExt, WrapFuture};
 use tracing::Instrument;
+use tracing::{debug, trace};
 
 #[doc(hidden)]
 #[derive(Default)]
@@ -67,11 +67,14 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                     .map(move |result, actor, _| match result {
                         Ok(addr) => {
                             actor.registry.insert(stream_id, addr.clone());
-                            addr
+                            Ok(addr)
                         }
-                        Err(_) => todo!(),
+                        Err(e) => {
+                            debug!("Error: {:?}", e);
+                            Err(CommandExecutorError::Any)
+                        }
                     })
-                    .then(move |addr, actor, _ctx| {
+                    .and_then(move |addr, actor, _ctx| {
                         AggregateInstance::execute_command(addr, cmd)
                             .instrument(tracing::Span::current())
                             .into_actor(actor)

@@ -72,11 +72,15 @@ impl EventState {
 
         let try_from = if self.data.is_enum() {
             quote! {
-                Err(())
+                ::serde_json::from_value::<#struct_name>(#input_name.data).map_err(|e| {
+                    ()
+                })
             }
         } else {
             quote! {
-                ::serde_json::from_value::<#struct_name>(#input_name.data).map_err(|_|())
+                ::serde_json::from_value::<#struct_name>(#input_name.data).map_err(|e|{
+                ()
+                })
             }
         };
 

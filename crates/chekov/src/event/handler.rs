@@ -1,6 +1,6 @@
-use crate::event_store::EventStore;
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
+use crate::{error::HandleError, event_store::EventStore};
 use actix::prelude::*;
 use event_store::prelude::{StartFrom, SubscriptionNotification};
 use tracing::trace;
@@ -42,7 +42,7 @@ pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {
     async fn handle_recorded_event(
         state: &mut Self,
         event: event_store::prelude::RecordedEvent,
-    ) -> Result<(), ()>;
+    ) -> Result<(), HandleError>;
 
     fn listen<A: Application>(&self, _ctx: &mut actix::Context<EventHandlerInstance<A, Self>>) {
         // let broker = crate::subscriber::SubscriberManager::<A>::from_registry();
@@ -111,7 +111,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
             .await;
         };
 
-        tokio::spawn(fut);
+        ctx.spawn(fut.into_actor(self));
 
         EventHandler::started(&mut self.handler, ctx);
     }
@@ -131,7 +131,10 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
 
                 Box::pin(async move {
                     for event in events {
-                        EventHandler::handle_recorded_event(&mut handler, event).await?;
+                        // TODO: Deal with handle error
+                        EventHandler::handle_recorded_event(&mut handler, event)
+                            .await
+                            .map_err(|_| ())?;
                     }
                     Ok(())
                 })

@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::EventStore;
 
+use super::error::SubscriptionError;
 use super::subscription::Subscription;
 use super::SubscriptionOptions;
 use actix::prelude::*;
@@ -25,13 +26,13 @@ impl<S: Storage> SubscriptionsSupervisor<S> {
     pub async fn start_subscription(
         options: &SubscriptionOptions,
         storage: Addr<EventStore<S>>,
-    ) -> Result<Addr<Subscription<S>>, ()> {
+    ) -> Result<Addr<Subscription<S>>, SubscriptionError> {
         match Self::from_registry()
             .send(CreateSubscription(options.clone(), storage))
             .await
         {
             Ok(v) => Ok(v),
-            Err(_) => Err(()),
+            Err(_) => Err(SubscriptionError::UnableToStart),
         }
     }
 

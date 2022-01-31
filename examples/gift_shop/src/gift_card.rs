@@ -1,3 +1,4 @@
+use chekov::error::HandleError;
 use chekov::prelude::*;
 use futures::future::BoxFuture;
 use futures::FutureExt;
@@ -68,7 +69,7 @@ pub struct GiftCardProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<GiftCardCreated> for GiftCardProjector {
-    fn handle(&mut self, event: &GiftCardCreated) -> BoxFuture<Result<(), ()>> {
+    fn handle(&mut self, event: &GiftCardCreated) -> BoxFuture<Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {

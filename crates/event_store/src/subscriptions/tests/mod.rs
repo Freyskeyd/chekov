@@ -2,7 +2,7 @@ use super::{StartFrom, SubscriptionNotification, SubscriptionOptions, Subscripti
 use crate::{
     core::event::Event, event::RecordedEvent, prelude::ExpectedVersion, EventStore, InMemoryStorage,
 };
-use actix::{Actor, Context, Handler, ResponseActFuture, ResponseFuture, WrapFuture};
+use actix::{Actor, Context, Handler, ResponseFuture};
 use serde_json::json;
 use std::{collections::VecDeque, convert::TryFrom, sync::Arc};
 use test_log::test;
@@ -60,6 +60,7 @@ impl Handler<SubscriptionNotification> for InnerSub {
         Box::pin(async move {
             let mut mutex = aquire.lock().await;
             mutex.push_back(msg);
+
             Ok(())
         })
     }

@@ -7,6 +7,7 @@ use event_store_core::storage::Storage;
 use std::marker::PhantomData;
 use uuid::Uuid;
 
+mod error;
 mod fsm;
 mod state;
 mod subscriber;
@@ -16,6 +17,7 @@ mod supervisor;
 #[cfg(test)]
 mod tests;
 
+use self::error::SubscriptionError;
 pub use self::subscription::Subscription;
 pub use supervisor::SubscriptionsSupervisor;
 
@@ -82,18 +84,15 @@ impl<S: Storage> Subscriptions<S> {
         subscriber: Recipient<SubscriptionNotification>,
         options: SubscriptionOptions,
         storage: Addr<EventStore<S>>,
-    ) -> Result<Addr<Subscription<S>>, ()>
+    ) -> Result<Addr<Subscription<S>>, SubscriptionError>
     where
         S: Storage,
     {
-        match SubscriptionsSupervisor::<S>::start_subscription(&options, storage).await {
-            Ok(subscription) => {
-                let _ = Subscription::connect(&subscription, subscriber, &options).await;
-                Ok(subscription)
-            }
+        let subscription =
+            SubscriptionsSupervisor::<S>::start_subscription(&options, storage).await?;
+        let _ = Subscription::connect(&subscription, subscriber, &options).await;
 
-            Err(_) => Err(()),
-        }
+        Ok(subscription)
     }
 
     pub fn notify_subscribers(events: Vec<RecordedEvent>) {

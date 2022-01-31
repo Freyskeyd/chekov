@@ -13,7 +13,7 @@ pub struct AccountOpened {
     pub name: String,
 }
 
-#[derive(Clone, chekov::Event, Deserialize, Serialize)]
+#[derive(Debug, Clone, chekov::Event, Deserialize, Serialize)]
 pub enum AccountUpdated {
     NameChanged(Uuid, String, String),
     Deleted,

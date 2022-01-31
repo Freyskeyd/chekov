@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chekov::error::HandleError;
 use chekov::prelude::*;
 use futures::future::BoxFuture;
 use futures::FutureExt;
@@ -157,7 +158,7 @@ pub struct OrderProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<OrderCreated> for OrderProjector {
-    fn handle(&mut self, event: &OrderCreated) -> BoxFuture<Result<(), ()>> {
+    fn handle(&mut self, event: &OrderCreated) -> BoxFuture<Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {
@@ -172,7 +173,7 @@ impl chekov::event::Handler<OrderCreated> for OrderProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<GiftCardAdded> for OrderProjector {
-    fn handle(&mut self, event: &GiftCardAdded) -> BoxFuture<Result<(), ()>> {
+    fn handle(&mut self, event: &GiftCardAdded) -> BoxFuture<Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {

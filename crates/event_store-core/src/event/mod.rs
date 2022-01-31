@@ -5,6 +5,10 @@ use serde::Serialize;
 use serde_json::json;
 use uuid::Uuid;
 
+pub mod error;
+
+pub use error::*;
+
 #[cfg(test)]
 mod test;
 
@@ -55,16 +59,8 @@ impl RecordedEvent {
     >(
         &'de self,
     ) -> Result<T, RecordedEventError> {
-        match T::deserialize(&self.data) {
-            Ok(e) => Ok(e),
-            Err(_) => Err(RecordedEventError::Deserialize),
-        }
+        Ok(T::deserialize(&self.data)?)
     }
-}
-
-/// Errors related to a recorded event
-pub enum RecordedEventError {
-    Deserialize,
 }
 
 /// An `UnsavedEvent` is created from a type that implement `Event`
@@ -88,19 +84,6 @@ pub struct UnsavedEvent {
     pub stream_uuid: String,
     pub stream_version: i64,
     pub created_at: DateTime<chrono::offset::Utc>,
-}
-
-/// Errors related to a unsaved event
-#[derive(Debug)]
-pub enum UnsavedEventError {
-    SerializeError(serde_json::Error),
-    UnknownFailure,
-}
-
-impl From<serde_json::Error> for UnsavedEventError {
-    fn from(e: serde_json::Error) -> Self {
-        Self::SerializeError(e)
-    }
 }
 
 impl UnsavedEvent {

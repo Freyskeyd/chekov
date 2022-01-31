@@ -44,7 +44,8 @@ mod test {
 
     #[test]
     fn testing_that_a_parse_event_error_can_be_converted() {
-        let err = UnsavedEventError::UnknownFailure;
+        let error = serde_json::from_str::<'_, String>("{").unwrap_err();
+        let err = UnsavedEventError::SerializeError(error);
 
         let _: EventStoreError = err.into();
     }

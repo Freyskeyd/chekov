@@ -11,6 +11,7 @@ use crate::{Aggregate, Application};
 use actix::prelude::*;
 use actix::Addr;
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
+use tracing::trace;
 use uuid::Uuid;
 
 // TODO rename this module to match the behaviours
@@ -42,10 +43,12 @@ impl<A: Aggregate> AggregateInstance<A> {
         // Populate aggregate state
         let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
 
+        trace!("AggregateInstance received {:?}", events);
         let mut instance = AggregateInstance::<A>::default();
 
         if let Ok(events) = events {
             for event in events {
+                trace!("Applying {} event ({})", event.event_uuid, event.event_type);
                 if instance.apply_recorded_event(event).is_err() {
                     return Err(CommandExecutorError::Any);
                 }
@@ -53,6 +56,8 @@ impl<A: Aggregate> AggregateInstance<A> {
                 instance.current_version += 1;
             }
         }
+
+        trace!("AggregateInstance applied past events");
 
         // subscribe to events
         let addr = AggregateInstance::create(move |ctx| {

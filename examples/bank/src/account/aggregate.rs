@@ -51,6 +51,7 @@ impl EventApplier<AccountUpdated> for Account {
         if let AccountUpdated::NameChanged(_, _, new_name) = event {
             self.name = new_name.to_string();
         }
+
         Ok(())
     }
 }
