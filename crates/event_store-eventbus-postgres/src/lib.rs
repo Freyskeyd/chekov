@@ -1,6 +1,8 @@
 use std::pin::Pin;
 
-use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage, EventNotification};
+use event_store_core::event_bus::{
+    error::EventBusError, BoxedStream, EventBus, EventBusMessage, EventNotification,
+};
 use futures::{FutureExt, Stream, StreamExt};
 use sqlx::postgres::PgListener;
 
@@ -26,7 +28,7 @@ impl PostgresEventBus {
 
     async fn start_listening(
         mut listener: PgListener,
-    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>> {
         listener.listen("events").await.unwrap();
 
         listener
@@ -39,7 +41,7 @@ impl PostgresEventBus {
 
                     Ok(EventBusMessage::Unkown)
                 }
-                Err(_) => Err(()),
+                Err(e) => Err(EventBusError::InternalEventBusError(Box::new(e))),
             })
             .boxed()
     }

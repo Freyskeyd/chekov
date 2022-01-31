@@ -5,6 +5,7 @@ use tokio::sync::Mutex;
 use crate::EventStore;
 
 use super::{
+    error::SubscriptionError,
     fsm::{InternalFSMState, SubscriptionFSM},
     supervisor::{Down, GoingDown, Notify, Started, SubscriptionsSupervisor},
 };
@@ -148,7 +149,7 @@ impl<S: Storage> Subscription<S> {
         addr: &Addr<Self>,
         recipient: Recipient<SubscriptionNotification>,
         options: &SubscriptionOptions,
-    ) -> Result<(), ()> {
+    ) -> Result<(), SubscriptionError> {
         debug!(
             "Send Connect command to subscription {}",
             options.subscription_name

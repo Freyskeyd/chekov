@@ -1,6 +1,6 @@
 use actix::prelude::*;
 use async_stream::try_stream;
-use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage};
+use event_store_core::event_bus::{error::EventBusError, BoxedStream, EventBus, EventBusMessage};
 use futures::FutureExt;
 use std::pin::Pin;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -29,7 +29,7 @@ impl InMemoryEventBus {
 
     async fn start_listening(
         mut receiver: UnboundedReceiver<EventBusMessage>,
-    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>> {
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>> {
         Box::pin(try_stream! {
             while let Some(event) = receiver.recv().await {
                 yield event;

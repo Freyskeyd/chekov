@@ -55,8 +55,6 @@ impl std::convert::TryFrom<RecordedEvent> for MyStructEvent {
 mod unsaved {
     use super::*;
 
-    use pretty_assertions::assert_eq;
-
     #[test]
     fn must_have_a_valide_event_type() {
         let source_events = vec![

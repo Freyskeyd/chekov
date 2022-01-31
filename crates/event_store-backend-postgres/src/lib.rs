@@ -1,8 +1,8 @@
 use event_store_core::event::{RecordedEvent, UnsavedEvent};
 use event_store_core::storage::error::StorageError;
-use event_store_core::storage::Backend;
+use event_store_core::storage::{Backend, Storage};
 use event_store_core::stream::Stream;
-use futures::Future;
+use futures::{Future, TryFutureExt};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tracing::Instrument;
@@ -11,6 +11,18 @@ use uuid::Uuid;
 
 mod sql;
 
+struct PostgresBackendError(sqlx::Error);
+
+impl From<sqlx::Error> for PostgresBackendError {
+    fn from(e: sqlx::Error) -> Self {
+        Self(e)
+    }
+}
+impl Into<StorageError> for PostgresBackendError {
+    fn into(self) -> StorageError {
+        StorageError::InternalStorageError(Box::new(self.0))
+    }
+}
 pub struct PostgresBackend {
     pool: PgPool,
 }
@@ -96,30 +108,27 @@ impl Backend for PostgresBackend {
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
     {
-        let pool = self.pool.acquire();
+        let pool = self
+            .pool
+            .acquire()
+            .map_err(|e| StorageError::InternalStorageError(Box::new(e)));
 
         Box::pin(
             async move {
-                match pool.await {
-                    Ok(mut conn) => match sql::stream_info(&mut conn, &stream_uuid).await {
-                        // TODO Remove this hack, should be nicely handled by the client
-                        Err(_) => Ok(vec![]),
-                        Ok(stream) => {
-                            match sql::read_stream(&mut conn, stream.stream_id, version, limit)
-                                .await
-                            {
-                                Err(e) => {
-                                    tracing::error!("{:?}", e);
-                                    Err(StorageError::StreamAlreadyExists)
-                                }
-                                Ok(s) => {
-                                    info!("Read stream {} {}", stream_uuid, s.len());
-                                    Ok(s)
-                                }
-                            }
-                        }
-                    },
-                    Err(..) => Err(StorageError::Unknown),
+                let mut conn = pool.await?;
+                let stream = sql::stream_info(&mut conn, &stream_uuid)
+                    .map_err(|e| StorageError::InternalStorageError(Box::new(e)))
+                    .await?;
+
+                match sql::read_stream(&mut conn, stream.stream_id, version, limit).await {
+                    Err(e) => {
+                        tracing::error!("{:?}", e);
+                        Err(StorageError::StreamAlreadyExists)
+                    }
+                    Ok(s) => {
+                        info!("Read stream {} {}", stream_uuid, s.len());
+                        Ok(s)
+                    }
                 }
             }
             .instrument(tracing::Span::current()),
@@ -179,7 +188,7 @@ impl Backend for PostgresBackend {
             async move {
                 match sql::stream_info(&mut pool, &stream_uuid).await {
                     Err(sqlx::Error::RowNotFound) => Err(StorageError::StreamDoesntExists),
-                    Err(_) => Err(StorageError::Unknown),
+                    Err(e) => Err(StorageError::InternalStorageError(Box::new(e))),
                     Ok(s) => Ok(s),
                 }
             }

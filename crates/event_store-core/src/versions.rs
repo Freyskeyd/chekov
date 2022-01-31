@@ -70,7 +70,6 @@ pub enum ExpectedVersionResult {
 mod test {
     use super::*;
     use chrono::Utc;
-    use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     #[test]

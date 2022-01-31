@@ -57,7 +57,6 @@ impl std::str::FromStr for Stream {
 mod test {
     use super::*;
 
-    use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     #[test]

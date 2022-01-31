@@ -5,6 +5,7 @@ use crate::EventStoreError;
 use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture};
 use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
+use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::{Backend, Storage};
 use futures::{FutureExt, TryFutureExt};
@@ -49,8 +50,8 @@ impl<S: Storage> Actor for Connection<S> {
     }
 }
 
-impl<S: Storage> StreamHandler<Result<EventBusMessage, ()>> for Connection<S> {
-    fn handle(&mut self, item: Result<EventBusMessage, ()>, _ctx: &mut Context<Self>) {
+impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Connection<S> {
+    fn handle(&mut self, item: Result<EventBusMessage, EventBusError>, _ctx: &mut Context<Self>) {
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(events) => {

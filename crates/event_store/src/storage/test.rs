@@ -9,7 +9,6 @@ mod creation {
 
     use event_store_backend_inmemory::InMemoryBackend;
     use event_store_core::storage::{Backend, StorageError};
-    use pretty_assertions::assert_eq;
 
     #[tokio::test]
     async fn success() {
@@ -34,12 +33,12 @@ mod creation {
             .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
             .await
             .is_ok());
-        assert_eq!(
+        assert!(matches!(
             storage
                 .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
                 .await,
             Err(StorageError::StreamAlreadyExists)
-        );
+        ));
     }
 }
 
@@ -48,7 +47,6 @@ mod deletion {
 
     use event_store_backend_inmemory::InMemoryBackend;
     use event_store_core::storage::{Backend, StorageError};
-    use pretty_assertions::assert_eq;
 
     #[tokio::test]
     async fn success() {
@@ -73,11 +71,11 @@ mod deletion {
         let uuid = Uuid::new_v4().to_string();
         let c_id = Uuid::new_v4();
 
-        assert_eq!(
+        assert!(matches!(
             storage
                 .delete_stream(&Stream::from_str(&uuid).unwrap(), c_id)
                 .await,
             Err(StorageError::StreamDoesntExists)
-        );
+        ));
     }
 }

@@ -5,7 +5,7 @@ use futures::{Future, Stream};
 
 use crate::event::RecordedEvent;
 
-use self::error::EventNotificationError;
+use self::error::{EventBusError, EventNotificationError};
 
 pub mod error;
 
@@ -17,8 +17,9 @@ pub trait EventBus: std::fmt::Debug + Default + Send + std::marker::Unpin + 'sta
     fn create_stream(&mut self) -> BoxedStream;
 }
 
-pub type BoxedStream =
-    Pin<Box<dyn Future<Output = Pin<Box<dyn Stream<Item = Result<EventBusMessage, ()>>>>>>>;
+pub type BoxedStream = Pin<
+    Box<dyn Future<Output = Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>>>>,
+>;
 
 #[derive(Debug, Message)]
 #[rtype("()")]
