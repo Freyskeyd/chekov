@@ -300,6 +300,7 @@
 <span id="299">299</span>
 <span id="300">300</span>
 <span id="301">301</span>
+<span id="302">302</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
@@ -307,6 +308,7 @@
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">AsyncContext</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">ResponseFuture</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">Message</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">StreamHandler</span>, <span class="ident">WrapFuture</span>};
+<span class="kw">use</span> <span class="ident">event_store_core::event_bus::error::EventBusError</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event_bus::EventBusMessage</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage</span>::{<span class="ident">Backend</span>, <span class="ident">Storage</span>};
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
@@ -351,8 +353,8 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">StreamHandler</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, ()<span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, ()<span class="op">&gt;</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) {
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> <span class="ident">StreamHandler</span><span class="op">&lt;</span><span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">item</span>: <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Context</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>) {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">message</span>) <span class="op">=</span> <span class="ident">item</span> {
             <span class="kw">match</span> <span class="ident">message</span> {
                 <span class="ident">EventBusMessage::Events</span>(<span class="ident">events</span>) =&gt; {
