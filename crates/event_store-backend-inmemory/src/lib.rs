@@ -2,11 +2,11 @@
 #![allow(unused_braces)]
 
 use chrono::Utc;
+use event_store_core::backend::Backend;
 use event_store_core::event::RecordedEvent;
 use event_store_core::event::UnsavedEvent;
 use event_store_core::event_bus::EventBusMessage;
-use event_store_core::storage::error::StorageError;
-use event_store_core::storage::Backend;
+use event_store_core::storage::StorageError;
 use event_store_core::stream::Stream;
 use futures::Future;
 use futures::FutureExt;
@@ -35,6 +35,8 @@ impl InMemoryBackend {
         })
     }
 }
+
+pub enum InMemoryError {}
 
 impl Backend for InMemoryBackend {
     fn backend_name() -> &'static str {

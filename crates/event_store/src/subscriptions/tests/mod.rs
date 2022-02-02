@@ -91,7 +91,6 @@ async fn should_receive_subscribed_message_once_subscribed() {
         .expect("Unable to subscribe");
 
     let x = tracker.lock().await.pop_front();
-    println!("{:?}", x);
     assert!(matches!(x, Some(SubscriptionNotification::Subscribed)));
 }
 

@@ -1,6 +1,7 @@
+use error::PostgresBackendError;
+use event_store_core::backend::Backend;
 use event_store_core::event::{RecordedEvent, UnsavedEvent};
-use event_store_core::storage::error::StorageError;
-use event_store_core::storage::{Backend, Storage};
+use event_store_core::storage::StorageError;
 use event_store_core::stream::Stream;
 use futures::{Future, TryFutureExt};
 use sqlx::postgres::PgPoolOptions;
@@ -9,20 +10,9 @@ use tracing::Instrument;
 use tracing::{debug, info, trace};
 use uuid::Uuid;
 
+mod error;
 mod sql;
 
-struct PostgresBackendError(sqlx::Error);
-
-impl From<sqlx::Error> for PostgresBackendError {
-    fn from(e: sqlx::Error) -> Self {
-        Self(e)
-    }
-}
-impl Into<StorageError> for PostgresBackendError {
-    fn into(self) -> StorageError {
-        StorageError::InternalStorageError(Box::new(self.0))
-    }
-}
 pub struct PostgresBackend {
     pool: PgPool,
 }
@@ -57,6 +47,7 @@ impl PostgresBackend {
         })
     }
 }
+
 impl Backend for PostgresBackend {
     fn backend_name() -> &'static str {
         "PostgresBackend"
@@ -75,13 +66,10 @@ impl Backend for PostgresBackend {
 
         Box::pin(
             async move {
-                match sql::create_stream(&mut pool, &stream_uuid).await {
-                    Err(_) => Err(StorageError::StreamAlreadyExists),
-                    Ok(s) => {
-                        info!("Created stream {}", stream_uuid);
-                        Ok(s)
-                    }
-                }
+                let s = sql::create_stream(&mut pool, &stream_uuid).await?;
+
+                info!("Created stream {}", stream_uuid);
+                Ok(s)
             }
             .instrument(tracing::Span::current()),
         )
@@ -108,16 +96,15 @@ impl Backend for PostgresBackend {
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<RecordedEvent>, StorageError>> + Send>>
     {
-        let pool = self
-            .pool
-            .acquire()
-            .map_err(|e| StorageError::InternalStorageError(Box::new(e)));
+        let pool = self.pool.acquire();
 
         Box::pin(
             async move {
-                let mut conn = pool.await?;
+                let mut conn = pool
+                    .map_err(|error| PostgresBackendError::PoolAcquisitionError(error))
+                    .await?;
                 let stream = sql::stream_info(&mut conn, &stream_uuid)
-                    .map_err(|e| StorageError::InternalStorageError(Box::new(e)))
+                    .map_err(|error| PostgresBackendError::SQLError(error))
                     .await?;
 
                 match sql::read_stream(&mut conn, stream.stream_id, version, limit).await {
@@ -154,23 +141,27 @@ impl Backend for PostgresBackend {
         let pool = self.pool.acquire();
         let stream_uuid = stream_uuid.to_string();
         let events = events.to_vec();
+
         Box::pin(
             async move {
-                match pool.await {
-                    Ok(mut conn) => {
-                        let events = sql::insert_events(&mut conn, &stream_uuid, &events)
-                            .await
-                            .map_err(|_| StorageError::StreamDoesntExists)?;
-                        debug!(
-                            "Successfully append {} event(s) to stream {}",
-                            events.len(),
-                            stream_uuid
-                        );
+                let mut conn = pool
+                    .map_err(|error| PostgresBackendError::PoolAcquisitionError(error))
+                    .await?;
 
-                        Ok(events)
-                    }
-                    Err(_) => Err(StorageError::StreamDoesntExists),
-                }
+                let events = sql::insert_events(&mut conn, &stream_uuid, &events)
+                    .map_err(|error| match error {
+                        sqlx::Error::RowNotFound => StorageError::StreamDoesntExists,
+                        e => PostgresBackendError::SQLError(e).into(),
+                    })
+                    .await?;
+
+                debug!(
+                    "Successfully append {} event(s) to stream {}",
+                    events.len(),
+                    stream_uuid
+                );
+
+                Ok(events)
             }
             .instrument(tracing::Span::current()),
         )
@@ -186,11 +177,12 @@ impl Backend for PostgresBackend {
 
         Box::pin(
             async move {
-                match sql::stream_info(&mut pool, &stream_uuid).await {
-                    Err(sqlx::Error::RowNotFound) => Err(StorageError::StreamDoesntExists),
-                    Err(e) => Err(StorageError::InternalStorageError(Box::new(e))),
-                    Ok(s) => Ok(s),
-                }
+                sql::stream_info(&mut pool, &stream_uuid)
+                    .map_err(|error| match error {
+                        sqlx::Error::RowNotFound => StorageError::StreamDoesntExists,
+                        e => PostgresBackendError::SQLError(e).into(),
+                    })
+                    .await
             }
             .instrument(tracing::Span::current()),
         )

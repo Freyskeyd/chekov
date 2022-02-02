@@ -160,14 +160,12 @@
 pub use event_store_core as core;
 
 mod connection;
-mod error;
 mod event;
 mod event_store;
 pub mod storage;
 mod subscriptions;
 
 pub use crate::event_store::EventStore;
-use error::EventStoreError;
 pub use event::Event;
 pub use event_store_core::versions;
 use storage::{appender::Appender, reader::Reader};
@@ -195,5 +193,7 @@ pub fn append() -> Appender {
 pub fn read() -> Reader {
     Reader::default()
 }
+
+pub use event_store_core::error::EventStoreError;
 
 pub mod prelude;

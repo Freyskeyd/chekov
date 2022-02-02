@@ -1,8 +1,8 @@
 pub use crate::connection::StreamInfo;
 
-pub use crate::error::EventStoreError;
 pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
 pub use crate::versions::{ExpectedVersion, ReadVersion};
+pub use event_store_core::error::EventStoreError;
 
 #[cfg(feature = "inmemory_backend")]
 pub use event_store_backend_inmemory::InMemoryBackend;

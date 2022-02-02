@@ -218,7 +218,6 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
                         use futures::TryFutureExt;
 
                         let r = #event::try_from(event).map_err(|e| {
-                            println!("{:?}", e);
                             ApplyError::Any
                         })?;
                         aggregate.apply(&r)

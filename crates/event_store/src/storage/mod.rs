@@ -1,5 +1,4 @@
 pub mod appender;
-pub mod error;
 
 #[cfg(feature = "inmemory_storage")]
 pub use event_store_storage_inmemory::InMemoryStorage;

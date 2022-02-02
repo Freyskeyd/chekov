@@ -5,8 +5,8 @@ pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, Handler, MailboxError, ResponseFuture, SystemService};
 use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
-use std::marker::PhantomData;
 use futures::TryFutureExt;
+use std::marker::PhantomData;
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;
@@ -98,7 +98,7 @@ where
                 correlation_id: uuid::Uuid::new_v4(),
                 stream_uuid: appender.0,
             })
-            .map_ok_or_else(|_| Err(EventStoreError::Any), |r| r),
+            .map_ok_or_else(|e| Err(e.into()), |r| r),
         )
     }
 }

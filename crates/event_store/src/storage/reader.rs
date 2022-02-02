@@ -87,7 +87,7 @@ impl Reader {
             "Attempting to execute");
 
         if !Stream::validates_stream_id(&self.stream) {
-            return Err(EventStoreError::Any);
+            return Err(EventStoreError::InvalidStreamId);
         }
 
         event_store

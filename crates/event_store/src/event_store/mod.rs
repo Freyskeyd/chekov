@@ -1,8 +1,7 @@
 use crate::connection::Connection;
-use crate::error::EventStoreError;
 pub use crate::event::Event;
 use actix::prelude::*;
-use event_store_core::storage::Storage;
+use event_store_core::{error::EventStoreError, storage::Storage};
 use tracing::{instrument, trace};
 
 mod logic;

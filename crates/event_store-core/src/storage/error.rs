@@ -1,7 +1,8 @@
 use thiserror::Error;
 
-// Convenience type alias for usage within event_store.
-type BoxDynError = Box<dyn std::error::Error + 'static + Send + Sync>;
+use crate::backend::error::BackendError;
+
+pub trait InternalStorageError: std::error::Error + 'static + Send + Sync {}
 
 #[derive(Error, Debug)]
 pub enum StorageError {
@@ -9,6 +10,15 @@ pub enum StorageError {
     StreamDoesntExists,
     #[error("The stream already exists")]
     StreamAlreadyExists,
-    #[error("Internal storage error: {0}")]
-    InternalStorageError(#[source] BoxDynError),
+    #[error("BackendError: {0}")]
+    InternalBackendError(Box<dyn BackendError>),
+}
+
+impl<T> From<T> for StorageError
+where
+    T: BackendError,
+{
+    fn from(e: T) -> Self {
+        Self::InternalBackendError(Box::new(e))
+    }
 }

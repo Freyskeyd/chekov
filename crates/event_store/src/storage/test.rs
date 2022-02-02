@@ -8,7 +8,7 @@ mod creation {
     use super::*;
 
     use event_store_backend_inmemory::InMemoryBackend;
-    use event_store_core::storage::{Backend, StorageError};
+    use event_store_core::{backend::Backend, storage::StorageError};
 
     #[tokio::test]
     async fn success() {
@@ -46,7 +46,7 @@ mod deletion {
     use super::*;
 
     use event_store_backend_inmemory::InMemoryBackend;
-    use event_store_core::storage::{Backend, StorageError};
+    use event_store_core::{backend::Backend, storage::StorageError};
 
     #[tokio::test]
     async fn success() {

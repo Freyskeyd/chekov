@@ -113,23 +113,25 @@ impl Appender {
         trace!(
             parent: &self.span,
             "Attemting to add {} event(s)", events.len());
-        let events: Vec<Result<UnsavedEvent, UnsavedEventError>> = events
+
+        match events
             .iter()
             .map(|event| UnsavedEvent::try_from(*event))
-            .collect();
-
-        if events.iter().any(Result::is_err) {
-            trace!(
-            parent: &self.span,
-                "Failed to add {} event(s)", events.len(),);
-            return Err(EventStoreError::Any);
+            .collect::<Result<Vec<UnsavedEvent>, UnsavedEventError>>()
+        {
+            Err(error) => {
+                trace!(
+                        parent: &self.span,
+                        "Failed to add {} event(s)", events.len(),);
+                return Err(EventStoreError::EventProcessing(error));
+            }
+            Ok(mut unsaved_events) => {
+                trace!(
+                        parent: &self.span,
+                        "Added {} event(s)", unsaved_events.len());
+                self.events.append(&mut unsaved_events);
+            }
         }
-
-        let mut events: Vec<UnsavedEvent> = events.into_iter().map(Result::unwrap).collect();
-        trace!(
-            parent: &self.span,
-            "Added {} event(s)", events.len());
-        self.events.append(&mut events);
 
         Ok(self)
     }
@@ -238,7 +240,8 @@ impl Appender {
                     parent: &self.span,
                     "Stream {} does not exists", self.stream);
 
-                return Err(EventStoreError::Any);
+                // TODO handle the real error case here
+                return Err(EventStoreError::Storage(StorageError::StreamDoesntExists));
             }
         };
 
@@ -352,7 +355,14 @@ mod test {
             .execute(addr.clone())
             .await;
 
-        assert!(matches!(res, Err(EventStoreError::Any)));
+        assert!(
+            matches!(
+                res,
+                Err(EventStoreError::Storage(StorageError::StreamDoesntExists))
+            ),
+            "{:?}",
+            res
+        );
 
         let res = Appender::default()
             .to(&uuid)?

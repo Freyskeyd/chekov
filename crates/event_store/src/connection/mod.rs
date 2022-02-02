@@ -5,9 +5,10 @@ use crate::EventStoreError;
 use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture};
 use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
+use event_store_core::backend::Backend;
 use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
-use event_store_core::storage::{Backend, Storage};
+use event_store_core::storage::Storage;
 use futures::{FutureExt, TryFutureExt};
 use std::str::FromStr;
 use tokio::sync::mpsc;
@@ -92,6 +93,7 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
         trace!("finished");
     }
 }
+
 impl<S: Storage> Handler<OpenNotificationChannel> for Connection<S> {
     type Result = ();
 
@@ -109,16 +111,13 @@ impl<S: Storage> Handler<Read> for Connection<S> {
         let version = msg.version;
 
         trace!("Reading {} event(s)", msg.stream);
-        Box::pin(
-            self.storage
-                .backend()
-                .read_stream(msg.stream, version, limit, msg.correlation_id)
-                .map_err(|e| {
-                    tracing::error!("Connection error: {:?}", e);
-                    EventStoreError::Any
-                })
-                .instrument(tracing::Span::current()),
-        )
+
+        self.storage
+            .backend()
+            .read_stream(msg.stream, version, limit, msg.correlation_id)
+            .map_err(Into::into)
+            .instrument(tracing::Span::current())
+            .boxed()
     }
 }
 
@@ -128,12 +127,12 @@ impl<S: Storage> Handler<Append> for Connection<S> {
     #[tracing::instrument(name = "Connection::Append", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: Append, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Appending {} event(s) to {}", msg.events.len(), msg.stream);
-        Box::pin(
-            self.storage
-                .backend()
-                .append_to_stream(&msg.stream, &msg.events, msg.correlation_id)
-                .map_err(|_| EventStoreError::Any),
-        )
+
+        self.storage
+            .backend()
+            .append_to_stream(&msg.stream, &msg.events, msg.correlation_id)
+            .map_err(Into::into)
+            .boxed()
     }
 }
 
@@ -146,12 +145,11 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
 
         let stream = Stream::from_str(&msg.stream_uuid).unwrap();
 
-        Box::pin(
-            self.storage
-                .backend()
-                .create_stream(stream, msg.correlation_id)
-                .map_err(|_| EventStoreError::Any),
-        )
+        self.storage
+            .backend()
+            .create_stream(stream, msg.correlation_id)
+            .map_err(Into::into)
+            .boxed()
     }
 }
 
@@ -161,12 +159,12 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
     #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Execute StreamInfo for {}", msg.stream_uuid);
-        let fut = self
-            .storage
-            .backend()
-            .read_stream_info(msg.stream_uuid, msg.correlation_id);
 
-        Box::pin(fut.map_err(|error| EventStoreError::Storage(error)))
+        self.storage
+            .backend()
+            .read_stream_info(msg.stream_uuid, msg.correlation_id)
+            .map_err(Into::into)
+            .boxed()
     }
 }
 

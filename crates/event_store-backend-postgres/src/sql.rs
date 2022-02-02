@@ -7,6 +7,8 @@ use sqlx::Row;
 use std::convert::TryInto;
 use uuid::Uuid;
 
+use crate::error::PostgresBackendError;
+
 pub async fn read_stream(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_id: i64,
@@ -62,12 +64,12 @@ pub async fn stream_info(
 pub async fn create_stream(
     pool: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_uuid: &str,
-) -> Result<Stream, sqlx::Error> {
+) -> Result<Stream, PostgresBackendError> {
     #[allow(clippy::used_underscore_binding)]
-    sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
-      .bind(&stream_uuid)
-      .fetch_one(pool)
-      .await
+    Ok(sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES () RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
+            .bind(&stream_uuid)
+            .fetch_one(pool)
+            .await?)
 }
 
 fn create_append_indexes(events: usize) -> String {
