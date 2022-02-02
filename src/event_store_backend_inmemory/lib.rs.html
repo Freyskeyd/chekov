@@ -204,15 +204,17 @@
 <span id="203">203</span>
 <span id="204">204</span>
 <span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
 </pre><pre class="rust"><code><span class="comment">// TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">unused_braces</span>)]</span>
 
 <span class="kw">use</span> <span class="ident">chrono::Utc</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::backend::Backend</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event::UnsavedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event_bus::EventBusMessage</span>;
-<span class="kw">use</span> <span class="ident">event_store_core::storage::error::StorageError</span>;
-<span class="kw">use</span> <span class="ident">event_store_core::storage::Backend</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::storage::StorageError</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident">futures::Future</span>;
 <span class="kw">use</span> <span class="ident">futures::FutureExt</span>;
@@ -241,6 +243,8 @@
         })
     }
 }
+
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">InMemoryError</span> {}
 
 <span class="kw">impl</span> <span class="ident">Backend</span> <span class="kw">for</span> <span class="ident">InMemoryBackend</span> {
     <span class="kw">fn</span> <span class="ident">backend_name</span>() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {

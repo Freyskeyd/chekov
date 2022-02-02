@@ -360,14 +360,12 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core</span> <span class="kw">as</span> <span class="ident">core</span>;
 
 <span class="kw">mod</span> <span class="ident">connection</span>;
-<span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">event</span>;
 <span class="kw">mod</span> <span class="ident">event_store</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span>;
 <span class="kw">mod</span> <span class="ident">subscriptions</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event_store::EventStore</span>;
-<span class="kw">use</span> <span class="ident">error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event::Event</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::versions</span>;
 <span class="kw">use</span> <span class="ident">storage</span>::{<span class="ident">appender::Appender</span>, <span class="ident">reader::Reader</span>};
@@ -395,6 +393,8 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>() -&gt; <span class="ident">Reader</span> {
     <span class="ident">Reader::default</span>()
 }
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::error::EventStoreError</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">prelude</span>;
 </code></pre></div>

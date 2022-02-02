@@ -47,12 +47,10 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
-<span id="49">49</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::Connection</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::Event</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
+<span class="kw">use</span> <span class="ident">event_store_core</span>::{<span class="ident">error::EventStoreError</span>, <span class="ident">storage::Storage</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">instrument</span>, <span class="ident">trace</span>};
 
 <span class="kw">mod</span> <span class="ident">logic</span>;

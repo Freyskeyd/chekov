@@ -207,6 +207,8 @@
 <span id="206">206</span>
 <span id="207">207</span>
 <span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">event_store_core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event::UnsavedEvent</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::stream::Stream</span>;
@@ -215,6 +217,8 @@
 <span class="kw">use</span> <span class="ident">sqlx::Row</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::PostgresBackendError</span>;
 
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">read_stream</span>(
     <span class="ident">conn</span>: <span class="kw">impl</span> <span class="ident">sqlx::Executor</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Database</span> <span class="op">=</span> <span class="ident">sqlx::Postgres</span><span class="op">&gt;</span>,
@@ -271,12 +275,12 @@
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_stream</span>(
     <span class="ident">pool</span>: <span class="kw">impl</span> <span class="ident">sqlx::Executor</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span>, <span class="ident">Database</span> <span class="op">=</span> <span class="ident">sqlx::Postgres</span><span class="op">&gt;</span>,
     <span class="ident">stream_uuid</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">sqlx::Error</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">PostgresBackendError</span><span class="op">&gt;</span> {
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::used_underscore_binding</span>)]</span>
-    <span class="ident">sqlx::query_as</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Stream</span><span class="op">&gt;</span>(<span class="string">&quot;INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at&quot;</span>)
-      .<span class="ident">bind</span>(<span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>)
-      .<span class="ident">fetch_one</span>(<span class="ident">pool</span>)
-      .<span class="kw">await</span>
+    <span class="prelude-val">Ok</span>(<span class="ident">sqlx::query_as</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Stream</span><span class="op">&gt;</span>(<span class="string">&quot;INSERT INTO streams (stream_uuid) VALUES () RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at&quot;</span>)
+            .<span class="ident">bind</span>(<span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>)
+            .<span class="ident">fetch_one</span>(<span class="ident">pool</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>)
 }
 
 <span class="kw">fn</span> <span class="ident">create_append_indexes</span>(<span class="ident">events</span>: <span class="ident">usize</span>) -&gt; <span class="ident">String</span> {

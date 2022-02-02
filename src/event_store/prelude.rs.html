@@ -37,9 +37,9 @@
 <span id="36">36</span>
 </pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::connection::StreamInfo</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::EventStoreError</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event</span>::{<span class="ident">Event</span>, <span class="ident">RecordedEvent</span>, <span class="ident">RecordedEvents</span>, <span class="ident">UnsavedEvent</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::versions</span>::{<span class="ident">ExpectedVersion</span>, <span class="ident">ReadVersion</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_core::error::EventStoreError</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;inmemory_backend&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store_backend_inmemory::InMemoryBackend</span>;

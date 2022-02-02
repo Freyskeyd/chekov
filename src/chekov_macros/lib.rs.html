@@ -326,7 +326,6 @@
 <span id="325">325</span>
 <span id="326">326</span>
 <span id="327">327</span>
-<span id="328">328</span>
 </pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">proc_macro</span>;
 
 <span class="kw">mod</span> <span class="ident">aggregate</span>;
@@ -547,7 +546,6 @@
                         <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
 
                         <span class="kw">let</span> <span class="ident">r</span> <span class="op">=</span> #<span class="ident">event::try_from</span>(<span class="ident">event</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                            <span class="macro">println!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">e</span>);
                             <span class="ident">ApplyError::Any</span>
                         })<span class="question-mark">?</span>;
                         <span class="ident">aggregate</span>.<span class="ident">apply</span>(<span class="kw-2">&amp;</span><span class="ident">r</span>)

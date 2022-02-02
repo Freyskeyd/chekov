@@ -128,8 +128,8 @@
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Addr</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">MailboxError</span>, <span class="ident">ResponseFuture</span>, <span class="ident">SystemService</span>};
 <span class="kw">use</span> <span class="ident">event_store::prelude::EventStoreError</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude::Stream</span>;
-<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 <span class="kw">use</span> <span class="ident">futures::TryFutureExt</span>;
+<span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">event_store::prelude::PostgresEventBus</span>;
@@ -221,7 +221,7 @@
                 <span class="ident">correlation_id</span>: <span class="ident">uuid::Uuid::new_v4</span>(),
                 <span class="ident">stream_uuid</span>: <span class="ident">appender</span>.<span class="number">0</span>,
             })
-            .<span class="ident">map_ok_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>), <span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>),
+            .<span class="ident">map_ok_or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>.<span class="ident">into</span>()), <span class="op">|</span><span class="ident">r</span><span class="op">|</span> <span class="ident">r</span>),
         )
     }
 }

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["StorageError",""]]});
+initSidebarItems({"enum":[["StorageError",""]],"trait":[["InternalStorageError",""]]});

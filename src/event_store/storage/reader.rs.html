@@ -205,7 +205,7 @@
             <span class="string">&quot;Attempting to execute&quot;</span>);
 
         <span class="kw">if</span> <span class="op">!</span><span class="ident">Stream::validates_stream_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">stream</span>) {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::Any</span>);
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EventStoreError::InvalidStreamId</span>);
         }
 
         <span class="ident">event_store</span>

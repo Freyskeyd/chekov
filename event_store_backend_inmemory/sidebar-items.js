@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["InMemoryBackend",""]]});
+initSidebarItems({"enum":[["InMemoryError",""]],"struct":[["InMemoryBackend",""]]});

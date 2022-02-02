@@ -13,10 +13,21 @@
 <span id="12">12</span>
 <span id="13">13</span>
 <span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 
-<span class="comment">// Convenience type alias for usage within event_store.</span>
-<span class="kw">type</span> <span class="ident">BoxDynError</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::backend::error::BackendError</span>;
+
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">InternalStorageError</span>: <span class="ident">std::error::Error</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span> {}
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">StorageError</span> {
@@ -24,8 +35,17 @@
     <span class="ident">StreamDoesntExists</span>,
     <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;The stream already exists&quot;</span>)]</span>
     <span class="ident">StreamAlreadyExists</span>,
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;Internal storage error: {0}&quot;</span>)]</span>
-    <span class="ident">InternalStorageError</span>(<span class="attribute">#[<span class="ident">source</span>]</span> <span class="ident">BoxDynError</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;BackendError: {0}&quot;</span>)]</span>
+    <span class="ident">InternalBackendError</span>(<span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">BackendError</span><span class="op">&gt;</span>),
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">StorageError</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">BackendError</span>,
+{
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">e</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::InternalBackendError</span>(<span class="ident">Box::new</span>(<span class="ident">e</span>))
+    }
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="event_store_core" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
