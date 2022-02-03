@@ -165,6 +165,10 @@ impl Appender {
         // TODO: validate stream name format
         self.stream = stream.to_string();
 
+        if !Stream::validates_stream_id(&self.stream) {
+            return Err(EventStoreError::InvalidStreamId);
+        }
+
         trace!(
             parent: &self.span,
             "Defined stream {} as target", self.stream,);

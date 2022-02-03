@@ -1,6 +1,10 @@
 use chrono::DateTime;
 use sqlx::FromRow;
 
+pub mod error;
+
+use error::StreamError;
+
 /// A `Stream` represents an `Event` stream
 #[derive(Clone, Debug, PartialEq, FromRow)]
 pub struct Stream {
@@ -28,11 +32,6 @@ impl Stream {
     pub fn validates_stream_id(stream_id: &str) -> bool {
         !stream_id.contains(' ')
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum StreamError {
-    MalformedStreamUUID,
 }
 
 impl std::str::FromStr for Stream {
