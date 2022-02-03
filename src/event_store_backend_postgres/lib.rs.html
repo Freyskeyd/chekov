@@ -189,23 +189,6 @@
 <span id="188">188</span>
 <span id="189">189</span>
 <span id="190">190</span>
-<span id="191">191</span>
-<span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">error::PostgresBackendError</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::backend::Backend</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::event</span>::{<span class="ident">RecordedEvent</span>, <span class="ident">UnsavedEvent</span>};
@@ -221,18 +204,6 @@
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">sql</span>;
 
-<span class="comment">// struct PostgresBackendError(sqlx::Error);</span>
-
-<span class="comment">// impl From&lt;sqlx::Error&gt; for PostgresBackendError {</span>
-<span class="comment">//     fn from(e: sqlx::Error) -&gt; Self {</span>
-<span class="comment">//         Self(e)</span>
-<span class="comment">//     }</span>
-<span class="comment">// }</span>
-<span class="comment">// impl Into&lt;BackendError&gt; for PostgresBackendError {</span>
-<span class="comment">//     fn into(self) -&gt; BackendError {</span>
-<span class="comment">//         BackendError::InternalBackendError(Box::new(self.0))</span>
-<span class="comment">//     }</span>
-<span class="comment">// }</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PostgresBackend</span> {
     <span class="ident">pool</span>: <span class="ident">PgPool</span>,
 }
@@ -288,12 +259,8 @@
             <span class="kw">async</span> <span class="kw">move</span> {
                 <span class="kw">let</span> <span class="ident">s</span> <span class="op">=</span> <span class="ident">sql::create_stream</span>(<span class="kw-2">&amp;mut</span> <span class="ident">pool</span>, <span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>).<span class="kw">await</span><span class="question-mark">?</span>;
 
-                <span class="comment">// Err(_) =&gt; Err(BackendError::StreamAlreadyExists),</span>
-                <span class="comment">// Ok(s) =&gt; {</span>
                 <span class="macro">info!</span>(<span class="string">&quot;Created stream {}&quot;</span>, <span class="ident">stream_uuid</span>);
                 <span class="prelude-val">Ok</span>(<span class="ident">s</span>)
-                <span class="comment">// }</span>
-                <span class="comment">// }</span>
             }
             .<span class="ident">instrument</span>(<span class="ident">tracing::Span::current</span>()),
         )
@@ -321,7 +288,6 @@
     ) -&gt; <span class="ident">std::pin::Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>, <span class="ident">StorageError</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>
     {
         <span class="kw">let</span> <span class="ident">pool</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pool</span>.<span class="ident">acquire</span>();
-        <span class="comment">// .map_err(|e| BackendError::InternalBackendError(Box::new(e)));</span>
 
         <span class="ident">Box::pin</span>(
             <span class="kw">async</span> <span class="kw">move</span> {
