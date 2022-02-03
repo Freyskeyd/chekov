@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["StreamError",""]],"struct":[["Stream","A `Stream` represents an `Event` stream"]]});
+initSidebarItems({"mod":[["error",""]],"struct":[["Stream","A `Stream` represents an `Event` stream"]]});
