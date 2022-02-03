@@ -136,20 +136,13 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
-<span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
-<span id="141">141</span>
-<span id="142">142</span>
-<span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::stream::Stream</span>;
 
+<span class="doccomment">/// Version used to read a stream.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// A `ReadVersion` is a simple way to define at what cursor you want to read the stream.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// `ReadVersion::Origin` is the same as `ReadVersion::Version(0)`</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ReadVersion</span> {
     <span class="ident">Origin</span>,
@@ -170,46 +163,42 @@
 }
 
 <span class="kw">impl</span> <span class="ident">ExpectedVersion</span> {
+    <span class="doccomment">/// Verify if the given `Stream` match the `ExpectedVersion`</span>
     <span class="attribute">#[<span class="ident">must_use</span>]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">Stream</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="ident">ExpectedVersionResult</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">verify</span>(<span class="ident">stream</span>: <span class="kw-2">&amp;</span><span class="ident">Stream</span>, <span class="ident">expected</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ExpectedVersionError</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">expected</span> {
             <span class="kw">_</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() <span class="op">&amp;&amp;</span> <span class="ident">stream</span>.<span class="ident">deleted_at</span>.<span class="ident">is_some</span>() =&gt; {
-                <span class="ident">ExpectedVersionResult::StreamDeleted</span>
+                <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamDeleted</span>)
             }
             <span class="ident"><span class="self">Self</span>::NoStream</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::Version</span>(<span class="number">0</span>) <span class="op">|</span> <span class="ident"><span class="self">Self</span>::AnyVersion</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">stream</span>.<span class="ident">is_persisted</span>() =&gt; {
-                <span class="ident">ExpectedVersionResult::NeedCreation</span>
+                <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>)
             }
 
             <span class="ident"><span class="self">Self</span>::StreamExists</span> <span class="kw">if</span> <span class="op">!</span><span class="ident">stream</span>.<span class="ident">is_persisted</span>() =&gt; {
-                <span class="ident">ExpectedVersionResult::StreamDoesntExists</span>
+                <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamDoesntExists</span>)
             }
 
-            <span class="ident"><span class="self">Self</span>::AnyVersion</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::StreamExists</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() =&gt; {
-                <span class="ident">ExpectedVersionResult::Ok</span>
-            }
+            <span class="ident"><span class="self">Self</span>::AnyVersion</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::StreamExists</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() =&gt; <span class="prelude-val">Ok</span>(()),
 
             <span class="ident"><span class="self">Self</span>::Version</span>(<span class="ident">version</span>)
                 <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() <span class="op">&amp;&amp;</span> <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">==</span> <span class="kw-2">*</span><span class="ident">version</span> =&gt;
             {
-                <span class="ident">ExpectedVersionResult::Ok</span>
+                <span class="prelude-val">Ok</span>(())
             }
 
             <span class="ident"><span class="self">Self</span>::NoStream</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() <span class="op">&amp;&amp;</span> <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> =&gt; {
-                <span class="ident">ExpectedVersionResult::StreamAlreadyExists</span>
+                <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamAlreadyExists</span>)
             }
 
-            <span class="ident"><span class="self">Self</span>::NoStream</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() <span class="op">&amp;&amp;</span> <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">==</span> <span class="number">0</span> =&gt; {
-                <span class="ident">ExpectedVersionResult::Ok</span>
-            }
-            <span class="kw">_</span> =&gt; <span class="ident">ExpectedVersionResult::WrongExpectedVersion</span>,
+            <span class="ident"><span class="self">Self</span>::NoStream</span> <span class="kw">if</span> <span class="ident">stream</span>.<span class="ident">is_persisted</span>() <span class="op">&amp;&amp;</span> <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">==</span> <span class="number">0</span> =&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::WrongExpectedVersion</span>),
         }
     }
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExpectedVersionResult</span> {
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ExpectedVersionError</span> {
     <span class="ident">NeedCreation</span>,
-    <span class="prelude-val">Ok</span>,
     <span class="ident">StreamAlreadyExists</span>,
     <span class="ident">StreamDeleted</span>,
     <span class="ident">StreamDoesntExists</span>,
@@ -226,10 +215,10 @@
     <span class="kw">fn</span> <span class="ident">test_that_an_unexisting_stream_with_any_is_created</span>() {
         <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">Stream::from_str</span>(<span class="string">&quot;stream_1&quot;</span>).<span class="ident">unwrap</span>();
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::AnyVersion</span>),
-            <span class="ident">ExpectedVersionResult::NeedCreation</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>)
+        ));
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -238,63 +227,50 @@
         <span class="ident">stream</span>.<span class="ident">stream_id</span> <span class="op">=</span> <span class="number">1</span>;
         <span class="ident">stream</span>.<span class="ident">deleted_at</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Utc::now</span>());
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::AnyVersion</span>),
-            <span class="ident">ExpectedVersionResult::StreamDeleted</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamDeleted</span>)
+        ));
 
         <span class="ident">stream</span>.<span class="ident">stream_id</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="ident">stream</span>.<span class="ident">deleted_at</span> <span class="op">=</span> <span class="prelude-val">None</span>;
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::NoStream</span>),
-            <span class="ident">ExpectedVersionResult::NeedCreation</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>)
+        ));
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::Version</span>(<span class="number">0</span>)),
-            <span class="ident">ExpectedVersionResult::NeedCreation</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>)
+        ));
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::AnyVersion</span>),
-            <span class="ident">ExpectedVersionResult::NeedCreation</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>)
+        ));
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::StreamExists</span>),
-            <span class="ident">ExpectedVersionResult::StreamDoesntExists</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamDoesntExists</span>)
+        ));
 
         <span class="ident">stream</span>.<span class="ident">stream_id</span> <span class="op">=</span> <span class="number">1</span>;
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::AnyVersion</span>),
-            <span class="ident">ExpectedVersionResult::Ok</span>
-        );
-
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::StreamExists</span>),
-            <span class="ident">ExpectedVersionResult::Ok</span>
-        );
+        <span class="macro">assert!</span>(<span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::AnyVersion</span>).<span class="ident">is_ok</span>());
+        <span class="macro">assert!</span>(<span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::StreamExists</span>).<span class="ident">is_ok</span>());
 
         <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">=</span> <span class="number">1</span>;
 
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::Version</span>(<span class="number">1</span>)),
-            <span class="ident">ExpectedVersionResult::Ok</span>
-        );
+        <span class="macro">assert!</span>(<span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::Version</span>(<span class="number">1</span>)).<span class="ident">is_ok</span>());
 
-        <span class="macro">assert_eq!</span>(
+        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::NoStream</span>),
-            <span class="ident">ExpectedVersionResult::StreamAlreadyExists</span>
-        );
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::StreamAlreadyExists</span>)
+        ));
 
         <span class="ident">stream</span>.<span class="ident">stream_version</span> <span class="op">=</span> <span class="number">0</span>;
 
-        <span class="macro">assert_eq!</span>(
-            <span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::NoStream</span>),
-            <span class="ident">ExpectedVersionResult::Ok</span>
-        );
+        <span class="macro">assert!</span>(<span class="ident">ExpectedVersion::verify</span>(<span class="kw-2">&amp;</span><span class="ident">stream</span>, <span class="kw-2">&amp;</span><span class="ident">ExpectedVersion::NoStream</span>).<span class="ident">is_ok</span>());
     }
 }
 </code></pre></div>

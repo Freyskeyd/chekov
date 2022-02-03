@@ -382,7 +382,6 @@
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::UnsavedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::UnsavedEventError</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::stream::Stream</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::versions::ExpectedVersionResult</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Event</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStoreError</span>;
@@ -390,6 +389,7 @@
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::StorageError</span>;
+<span class="kw">use</span> <span class="ident">event_store_core::versions::ExpectedVersionError</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
@@ -598,11 +598,11 @@
                     <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">expected_version</span>,
                 )
             }
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="ident">ExpectedVersionResult::WrongExpectedVersion</span>,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::WrongExpectedVersion</span>),
         };
 
         <span class="kw">let</span> <span class="ident">stream</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">expected_version_result</span> {
-            <span class="ident">ExpectedVersionResult::NeedCreation</span> =&gt; {
+            <span class="prelude-val">Err</span>(<span class="ident">ExpectedVersionError::NeedCreation</span>) =&gt; {
                 <span class="macro">trace!</span>(
                     <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
                     <span class="string">&quot;Stream {} does not exists&quot;</span>, <span class="self">self</span>.<span class="ident">stream</span>);
@@ -614,7 +614,7 @@
                     })
                     .<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span>
             }
-            <span class="ident">ExpectedVersionResult::Ok</span> =&gt; {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                 <span class="macro">trace!</span>(
                     <span class="ident">parent</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">span</span>,
                     <span class="string">&quot;Fetched stream {} informations&quot;</span>, <span class="self">self</span>.<span class="ident">stream</span>,);

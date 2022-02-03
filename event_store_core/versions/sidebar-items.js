@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ExpectedVersion","The `ExpectedVersion` used to define optimistic concurrency"],["ExpectedVersionResult",""],["ReadVersion",""]]});
+initSidebarItems({"enum":[["ExpectedVersion","The `ExpectedVersion` used to define optimistic concurrency"],["ExpectedVersionError",""],["ReadVersion","Version used to read a stream."]]});
