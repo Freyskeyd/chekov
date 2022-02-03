@@ -1,7 +1,6 @@
 use crate::core::event::UnsavedEvent;
 use crate::core::event::UnsavedEventError;
 use crate::core::stream::Stream;
-use crate::versions::ExpectedVersionResult;
 use crate::Event;
 use crate::EventStore;
 use crate::EventStoreError;
@@ -9,6 +8,7 @@ use crate::ExpectedVersion;
 use actix::prelude::*;
 use event_store_core::storage::Storage;
 use event_store_core::storage::StorageError;
+use event_store_core::versions::ExpectedVersionError;
 use std::str::FromStr;
 use tracing::trace;
 use uuid::Uuid;
@@ -217,11 +217,11 @@ impl Appender {
                     &self.expected_version,
                 )
             }
-            Err(_) => ExpectedVersionResult::WrongExpectedVersion,
+            Err(_) => Err(ExpectedVersionError::WrongExpectedVersion),
         };
 
         let stream = match expected_version_result {
-            ExpectedVersionResult::NeedCreation => {
+            Err(ExpectedVersionError::NeedCreation) => {
                 trace!(
                     parent: &self.span,
                     "Stream {} does not exists", self.stream);
@@ -233,7 +233,7 @@ impl Appender {
                     })
                     .await??
             }
-            ExpectedVersionResult::Ok => {
+            Ok(_) => {
                 trace!(
                     parent: &self.span,
                     "Fetched stream {} informations", self.stream,);

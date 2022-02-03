@@ -1,5 +1,10 @@
 use crate::stream::Stream;
 
+/// Version used to read a stream.
+///
+/// A `ReadVersion` is a simple way to define at what cursor you want to read the stream.
+///
+/// `ReadVersion::Origin` is the same as `ReadVersion::Version(0)`
 #[derive(Debug)]
 pub enum ReadVersion {
     Origin,
@@ -20,46 +25,42 @@ pub enum ExpectedVersion {
 }
 
 impl ExpectedVersion {
+    /// Verify if the given `Stream` match the `ExpectedVersion`
     #[must_use]
-    pub const fn verify(stream: &Stream, expected: &Self) -> ExpectedVersionResult {
+    pub const fn verify(stream: &Stream, expected: &Self) -> Result<(), ExpectedVersionError> {
         match expected {
             _ if stream.is_persisted() && stream.deleted_at.is_some() => {
-                ExpectedVersionResult::StreamDeleted
+                Err(ExpectedVersionError::StreamDeleted)
             }
             Self::NoStream | Self::Version(0) | Self::AnyVersion if !stream.is_persisted() => {
-                ExpectedVersionResult::NeedCreation
+                Err(ExpectedVersionError::NeedCreation)
             }
 
             Self::StreamExists if !stream.is_persisted() => {
-                ExpectedVersionResult::StreamDoesntExists
+                Err(ExpectedVersionError::StreamDoesntExists)
             }
 
-            Self::AnyVersion | Self::StreamExists if stream.is_persisted() => {
-                ExpectedVersionResult::Ok
-            }
+            Self::AnyVersion | Self::StreamExists if stream.is_persisted() => Ok(()),
 
             Self::Version(version)
                 if stream.is_persisted() && stream.stream_version == *version =>
             {
-                ExpectedVersionResult::Ok
+                Ok(())
             }
 
             Self::NoStream if stream.is_persisted() && stream.stream_version != 0 => {
-                ExpectedVersionResult::StreamAlreadyExists
+                Err(ExpectedVersionError::StreamAlreadyExists)
             }
 
-            Self::NoStream if stream.is_persisted() && stream.stream_version == 0 => {
-                ExpectedVersionResult::Ok
-            }
-            _ => ExpectedVersionResult::WrongExpectedVersion,
+            Self::NoStream if stream.is_persisted() && stream.stream_version == 0 => Ok(()),
+            _ => Err(ExpectedVersionError::WrongExpectedVersion),
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
-pub enum ExpectedVersionResult {
+pub enum ExpectedVersionError {
     NeedCreation,
-    Ok,
     StreamAlreadyExists,
     StreamDeleted,
     StreamDoesntExists,
@@ -76,10 +77,10 @@ mod test {
     fn test_that_an_unexisting_stream_with_any_is_created() {
         let stream = Stream::from_str("stream_1").unwrap();
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::AnyVersion),
-            ExpectedVersionResult::NeedCreation
-        );
+            Err(ExpectedVersionError::NeedCreation)
+        ));
     }
 
     #[test]
@@ -88,62 +89,49 @@ mod test {
         stream.stream_id = 1;
         stream.deleted_at = Some(Utc::now());
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::AnyVersion),
-            ExpectedVersionResult::StreamDeleted
-        );
+            Err(ExpectedVersionError::StreamDeleted)
+        ));
 
         stream.stream_id = 0;
         stream.deleted_at = None;
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::NoStream),
-            ExpectedVersionResult::NeedCreation
-        );
+            Err(ExpectedVersionError::NeedCreation)
+        ));
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::Version(0)),
-            ExpectedVersionResult::NeedCreation
-        );
+            Err(ExpectedVersionError::NeedCreation)
+        ));
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::AnyVersion),
-            ExpectedVersionResult::NeedCreation
-        );
+            Err(ExpectedVersionError::NeedCreation)
+        ));
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::StreamExists),
-            ExpectedVersionResult::StreamDoesntExists
-        );
+            Err(ExpectedVersionError::StreamDoesntExists)
+        ));
 
         stream.stream_id = 1;
-        assert_eq!(
-            ExpectedVersion::verify(&stream, &ExpectedVersion::AnyVersion),
-            ExpectedVersionResult::Ok
-        );
-
-        assert_eq!(
-            ExpectedVersion::verify(&stream, &ExpectedVersion::StreamExists),
-            ExpectedVersionResult::Ok
-        );
+        assert!(ExpectedVersion::verify(&stream, &ExpectedVersion::AnyVersion).is_ok());
+        assert!(ExpectedVersion::verify(&stream, &ExpectedVersion::StreamExists).is_ok());
 
         stream.stream_version = 1;
 
-        assert_eq!(
-            ExpectedVersion::verify(&stream, &ExpectedVersion::Version(1)),
-            ExpectedVersionResult::Ok
-        );
+        assert!(ExpectedVersion::verify(&stream, &ExpectedVersion::Version(1)).is_ok());
 
-        assert_eq!(
+        assert!(matches!(
             ExpectedVersion::verify(&stream, &ExpectedVersion::NoStream),
-            ExpectedVersionResult::StreamAlreadyExists
-        );
+            Err(ExpectedVersionError::StreamAlreadyExists)
+        ));
 
         stream.stream_version = 0;
 
-        assert_eq!(
-            ExpectedVersion::verify(&stream, &ExpectedVersion::NoStream),
-            ExpectedVersionResult::Ok
-        );
+        assert!(ExpectedVersion::verify(&stream, &ExpectedVersion::NoStream).is_ok());
     }
 }
