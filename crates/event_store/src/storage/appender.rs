@@ -1,13 +1,14 @@
 use crate::core::event::UnsavedEvent;
 use crate::core::event::UnsavedEventError;
-use crate::core::stream::Stream;
 use crate::Event;
 use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
-use actix::prelude::*;
+use actix::Addr;
+use actix::Message;
 use event_store_core::storage::Storage;
 use event_store_core::storage::StorageError;
+use event_store_core::stream::Stream;
 use event_store_core::versions::ExpectedVersionError;
 use std::str::FromStr;
 use tracing::trace;
@@ -99,6 +100,7 @@ impl Appender {
 
         appender
     }
+
     /// Add a list of `Event`s to the `Appender`
     ///
     /// Any struct that implement `Event` can be passed to this method.

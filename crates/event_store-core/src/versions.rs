@@ -1,3 +1,5 @@
+//! Contains every type to deal with versions in event_store.
+
 use crate::stream::Stream;
 
 /// Version used to read a stream.
@@ -15,12 +17,20 @@ pub enum ReadVersion {
 #[derive(Debug, PartialEq)]
 pub enum ExpectedVersion {
     /// Define that we expect a stream in any version
+    ///
+    /// This expected version is always valid
     AnyVersion,
     /// Define that we expect a non existing stream
+    ///
+    /// This expected version is valid when a stream is persisted and the current version is 0
     NoStream,
     /// Define that we expect an existing stream
+    ///
+    /// This expected version is valid when the stream is persisted
     StreamExists,
     /// Define that we expect a stream in a particular version
+    ///
+    /// This expected version is valid when the stream is persisted and at the same version
     Version(i64),
 }
 
@@ -58,6 +68,10 @@ impl ExpectedVersion {
     }
 }
 
+/// Error returned when the version verification fails
+///
+/// Those errors can define why the verification fails, it can be used to define what the
+/// event_store need to do to be ready to proceed the query.
 #[derive(Debug, PartialEq)]
 pub enum ExpectedVersionError {
     NeedCreation,

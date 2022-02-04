@@ -1,4 +1,4 @@
-use event_store_core::backend::error::BackendError;
+use event_store_core::backend::BackendError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PostgresBackendError {

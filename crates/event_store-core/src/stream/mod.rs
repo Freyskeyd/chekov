@@ -1,11 +1,12 @@
+//! `Stream` related types
+
 use chrono::DateTime;
 use sqlx::FromRow;
 
 pub mod error;
+pub use error::StreamError;
 
-use error::StreamError;
-
-/// A `Stream` represents an `Event` stream
+/// A `Stream` represents a stream of `Event`s
 #[derive(Clone, Debug, PartialEq, FromRow)]
 pub struct Stream {
     pub stream_id: i64,

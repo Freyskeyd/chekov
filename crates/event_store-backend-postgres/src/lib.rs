@@ -100,24 +100,17 @@ impl Backend for PostgresBackend {
 
         Box::pin(
             async move {
-                let mut conn = pool
-                    .map_err(|error| PostgresBackendError::PoolAcquisitionError(error))
-                    .await?;
-                let stream = sql::stream_info(&mut conn, &stream_uuid)
-                    .map_err(|error| PostgresBackendError::SQLError(error))
-                    .await?;
+                let mut conn = pool.await?;
 
-                match sql::read_stream(&mut conn, stream.stream_id, version, limit).await {
-                    Err(e) => {
-                        tracing::error!("{:?}", e);
-                        Err(StorageError::StreamAlreadyExists)
-                    }
-                    Ok(s) => {
-                        info!("Read stream {} {}", stream_uuid, s.len());
-                        Ok(s)
-                    }
-                }
+                let stream = sql::stream_info(&mut conn, &stream_uuid).await?;
+
+                let events = sql::read_stream(&mut conn, stream.stream_id, version, limit).await?;
+
+                info!("Read stream {} {}", stream_uuid, events.len());
+
+                Ok(events)
             }
+            .map_err(|error| PostgresBackendError::SQLError(error).into())
             .instrument(tracing::Span::current()),
         )
     }

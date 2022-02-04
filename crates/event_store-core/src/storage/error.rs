@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::backend::error::BackendError;
+use crate::backend::BackendError;
 
 pub trait InternalStorageError: std::error::Error + 'static + Send + Sync {}
 

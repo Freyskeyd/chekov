@@ -2,16 +2,25 @@ use thiserror::Error;
 
 use crate::{event::UnsavedEventError, storage::StorageError};
 
+/// Global EventStoreError aimed to exposed and used by client.
 #[derive(Error, Debug)]
 pub enum EventStoreError {
+    /// Returned when a storage has been initialized without a `Storage`
     #[error("No storage is defined")]
     NoStorage,
+
+    /// Used to defined that a streamId is invalid.
+    ///
+    /// For now a valid streamId is
     #[error("The streamId is invalid")]
     InvalidStreamId,
+
     #[error(transparent)]
     Storage(StorageError),
+
     #[error(transparent)]
     EventProcessing(UnsavedEventError),
+
     #[error("Internal event store error: {0}")]
     InternalEventStoreError(#[source] BoxDynError),
 }
@@ -28,6 +37,7 @@ impl std::convert::From<UnsavedEventError> for EventStoreError {
     }
 }
 
+/// Type allowing one to propagate failure of different kind
 type BoxDynError = Box<dyn std::error::Error + 'static + Send + Sync>;
 
 #[cfg(feature = "actix-rt")]
@@ -36,6 +46,7 @@ impl From<actix::MailboxError> for EventStoreError {
         Self::InternalEventStoreError(Box::new(error))
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
