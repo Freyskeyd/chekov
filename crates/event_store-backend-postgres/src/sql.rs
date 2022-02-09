@@ -66,7 +66,7 @@ pub async fn create_stream(
     stream_uuid: &str,
 ) -> Result<Stream, PostgresBackendError> {
     #[allow(clippy::used_underscore_binding)]
-    Ok(sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES () RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
+    Ok(sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
             .bind(&stream_uuid)
             .fetch_one(pool)
             .await?)
