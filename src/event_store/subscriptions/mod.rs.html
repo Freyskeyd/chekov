@@ -101,6 +101,8 @@
 <span id="99"> 99</span>
 <span id="100">100</span>
 <span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStore</span>;
 <span class="kw">use</span> <span class="ident">actix::Addr</span>;
@@ -108,6 +110,8 @@
 <span class="kw">use</span> <span class="ident">actix::Recipient</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+<span class="kw">use</span> <span class="ident">std::sync::RwLock</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
 
 <span class="kw">mod</span> <span class="ident">error</span>;
@@ -178,7 +182,7 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;(), ()&gt;&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">SubscriptionNotification</span> {
-    <span class="ident">Events</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>),
+    <span class="ident">Events</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span><span class="op">&gt;</span>),
     <span class="ident">Subscribed</span>,
 }
 
@@ -198,8 +202,8 @@
         <span class="prelude-val">Ok</span>(<span class="ident">subscription</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_subscribers</span>(<span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>) {
-        <span class="ident">SubscriptionsSupervisor</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::notify_subscribers</span>(<span class="ident">events</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_subscribers</span>(<span class="ident">stream_uuid</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>) {
+        <span class="ident">SubscriptionsSupervisor</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::notify_subscribers</span>(<span class="ident">stream_uuid</span>, <span class="ident">events</span>);
     }
 }
 </code></pre></div>

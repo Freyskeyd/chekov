@@ -298,7 +298,11 @@
 <span id="296">296</span>
 <span id="297">297</span>
 <span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::VecDeque</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::prelude::ReadVersion</span>;
@@ -369,6 +373,7 @@
 
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">notify_events</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>) {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">subscriber</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">subscriber</span> {
+            <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">events</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">Arc::new</span>(<span class="ident">event</span>)).<span class="ident">collect</span>();
             <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">subscriber</span>
                 .<span class="ident">recipient</span>
                 .<span class="ident">send</span>(<span class="ident">SubscriptionNotification::Events</span>(<span class="ident">events</span>))
@@ -520,8 +525,9 @@
             <span class="string">&quot;Executing notify_subscribers for {}&quot;</span>,
             <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">subscription_name</span>
         );
-        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">to_notify</span> @ <span class="ident">RecordedEvent</span> { <span class="ident">event_number</span>, .. }) <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">queue</span>.<span class="ident">pop_front</span>()
+        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">to_notify</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">queue</span>.<span class="ident">pop_front</span>()
         {
+            <span class="kw">let</span> <span class="ident">event_number</span> <span class="op">=</span> <span class="ident">to_notify</span>.<span class="ident">event_number</span>;
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">subscriber</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">subscriber</span>.<span class="ident">as_mut</span>() {
                 <span class="ident">subscriber</span>.<span class="ident">track_in_flight</span>(<span class="ident">to_notify</span>);
 
@@ -552,7 +558,7 @@
 
         <span class="ident">events</span>.<span class="ident">sort_by_key</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">e</span>.<span class="ident">event_number</span>);
 
-        <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">queue</span>.<span class="ident">extend</span>(<span class="ident">events</span>);
+        <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">queue</span>.<span class="ident">extend</span>(<span class="ident">events</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">Arc::new</span>(<span class="ident">event</span>)).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>());
         <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">last_received</span> <span class="op">=</span> <span class="ident">last_received</span>;
     }
 

@@ -145,7 +145,11 @@
 <span id="143">143</span>
 <span id="144">144</span>
 <span id="145">145</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::ResolveAndApplyMany</span>;
+<span id="146">146</span>
+<span id="147">147</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::ResolveAndApplyMany</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Application</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">error::HandleError</span>, <span class="ident">event_store::EventStore</span>};
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
@@ -242,7 +246,7 @@
 
     <span class="kw">fn</span> <span class="ident">started</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) {
         <span class="kw">let</span> <span class="ident">opts</span> <span class="op">=</span> <span class="ident">event_store::prelude::SubscriptionOptions</span> {
-            <span class="ident">stream_uuid</span>: <span class="self">self</span>.<span class="ident">_name</span>.<span class="ident">to_owned</span>(),
+            <span class="ident">stream_uuid</span>: <span class="string">&quot;$all&quot;</span>.<span class="ident">to_owned</span>(),
             <span class="ident">subscription_name</span>: <span class="self">self</span>.<span class="ident">_name</span>.<span class="ident">to_owned</span>(),
             <span class="ident">start_from</span>: <span class="ident">StartFrom::Origin</span>,
             <span class="ident">transient</span>: <span class="bool-val">false</span>,
@@ -277,12 +281,12 @@
                 <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">events</span>;
 
                 <span class="ident">Box::pin</span>(<span class="kw">async</span> <span class="kw">move</span> {
-                    <span class="kw">for</span> <span class="ident">event</span> <span class="kw">in</span> <span class="ident">events</span> {
-                        <span class="comment">// TODO: Deal with handle error</span>
-                        <span class="ident">EventHandler::handle_recorded_event</span>(<span class="kw-2">&amp;mut</span> <span class="ident">handler</span>, <span class="ident">event</span>)
-                            .<span class="kw">await</span>
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())<span class="question-mark">?</span>;
-                    }
+                    <span class="comment">// for event in events {</span>
+                    <span class="comment">//     // TODO: Deal with handle error</span>
+                    <span class="comment">//     EventHandler::handle_recorded_event(&amp;mut handler, Arc::into_raw(event).clone())</span>
+                    <span class="comment">//         .await</span>
+                    <span class="comment">//         .map_err(|_| ())?;</span>
+                    <span class="comment">// }</span>
                     <span class="prelude-val">Ok</span>(())
                 })
             }

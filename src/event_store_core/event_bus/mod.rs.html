@@ -127,7 +127,7 @@
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EventBusMessage</span> {
     <span class="ident">Notification</span>(<span class="ident">EventNotification</span>),
-    <span class="ident">Events</span>(<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>),
+    <span class="ident">Events</span>(<span class="ident">String</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RecordedEvent</span><span class="op">&gt;</span>),
     <span class="ident">Unkown</span>,
 }
 
