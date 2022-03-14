@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use crate::EventStore;
 
@@ -12,7 +14,7 @@ use event_store_core::storage::Storage;
 #[derive(Default, Debug)]
 pub struct SubscriptionsSupervisor<S: Storage> {
     _storage: PhantomData<S>,
-    subscriptions: Vec<Addr<Subscription<S>>>,
+    subscriptions: HashMap<String, Vec<Addr<Subscription<S>>>>,
 }
 
 impl<S: Storage> Actor for SubscriptionsSupervisor<S> {
@@ -36,22 +38,23 @@ impl<S: Storage> SubscriptionsSupervisor<S> {
         }
     }
 
-    pub fn notify_subscribers(events: Vec<RecordedEvent>) {
-        Self::from_registry().do_send(Notify(events));
+    pub fn notify_subscribers(stream_uuid: &str, events: Vec<RecordedEvent>) {
+        Self::from_registry().do_send(Notify(stream_uuid.into(), events));
     }
 }
 
 #[derive(Debug, Message, Clone)]
 #[rtype(result = "()")]
-pub struct Notify(pub(crate) Vec<RecordedEvent>);
+pub struct Notify(pub(crate) String, pub(crate) Vec<RecordedEvent>);
 
 impl<S: Storage> Handler<Notify> for SubscriptionsSupervisor<S> {
     type Result = ();
 
-    fn handle(&mut self, msg: Notify, _ctx: &mut Self::Context) -> Self::Result {
-        self.subscriptions
-            .iter()
-            .for_each(|sub| sub.do_send(msg.clone()));
+    fn handle(&mut self, Notify(stream_uuid, events): Notify, _ctx: &mut Self::Context) -> Self::Result {
+        if let Some(subscriptions) = self.subscriptions.get(&stream_uuid) {
+            subscriptions.iter()
+            .for_each(|sub| sub.do_send(Notify(stream_uuid.clone(), events.clone())));
+        }
     }
 }
 
@@ -65,7 +68,7 @@ impl<S: Storage> Handler<CreateSubscription<S>> for SubscriptionsSupervisor<S> {
     fn handle(&mut self, msg: CreateSubscription<S>, ctx: &mut Self::Context) -> Self::Result {
         let addr = Subscription::start_with_options(&msg.0, ctx.address(), msg.1);
 
-        self.subscriptions.push(addr.clone());
+        self.subscriptions.entry(msg.0.stream_uuid).or_default().push(addr.clone());
 
         MessageResult(addr)
     }

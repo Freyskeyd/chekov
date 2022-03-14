@@ -49,7 +49,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         if let Ok(events) = events {
             for event in events {
                 trace!("Applying {} event ({})", event.event_uuid, event.event_type);
-                if let Err(e) = instance.apply_recorded_event(event) {
+                if let Err(e) = instance.apply_recorded_event(&event) {
                     return Err(CommandExecutorError::ApplyError(e));
                 }
 
@@ -99,9 +99,10 @@ impl<A: Aggregate> AggregateInstance<A> {
         state.apply(event)
     }
 
-    fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError> {
+    fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
         if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
-            return (resolver)(&mut self.inner, event);
+            // TODO: Remove clone
+            return (resolver)(&mut self.inner, event.clone());
         }
 
         Ok(())

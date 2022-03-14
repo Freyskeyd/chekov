@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
@@ -95,7 +97,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
 
     fn started(&mut self, ctx: &mut Self::Context) {
         let opts = event_store::prelude::SubscriptionOptions {
-            stream_uuid: self._name.to_owned(),
+            stream_uuid: "$all".to_owned(),
             subscription_name: self._name.to_owned(),
             start_from: StartFrom::Origin,
             transient: false,
@@ -130,12 +132,12 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
                 let events = events;
 
                 Box::pin(async move {
-                    for event in events {
-                        // TODO: Deal with handle error
-                        EventHandler::handle_recorded_event(&mut handler, event)
-                            .await
-                            .map_err(|_| ())?;
-                    }
+                    // for event in events {
+                    //     // TODO: Deal with handle error
+                    //     EventHandler::handle_recorded_event(&mut handler, Arc::into_raw(event).clone())
+                    //         .await
+                    //         .map_err(|_| ())?;
+                    // }
                     Ok(())
                 })
             }

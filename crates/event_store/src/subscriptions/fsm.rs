@@ -70,6 +70,7 @@ impl<S: Storage> SubscriptionFSM<S> {
 
     pub async fn notify_events(&mut self, events: Vec<RecordedEvent>) {
         if let Some(subscriber) = &self.data.subscriber {
+            let events = events.into_iter().map(|event| Arc::new(event)).collect();
             let _ = subscriber
                 .recipient
                 .send(SubscriptionNotification::Events(events))
@@ -254,7 +255,7 @@ impl<S: Storage> SubscriptionFSM<S> {
 
         events.sort_by_key(|e| e.event_number);
 
-        self.data.queue.extend(events);
+        self.data.queue.extend(events.into_iter().map(|event| Arc::new(event)).collect::<Vec<Arc<RecordedEvent>>>());
         self.data.last_received = last_received;
     }
 

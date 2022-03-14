@@ -162,10 +162,11 @@ impl Backend for InMemoryBackend {
 
             let notifier = self.notifier.clone();
 
+            let stream_uuid = stream_uuid.to_string();
             Box::pin(async move {
                 let ids = events.iter().map(|e| e.event_uuid).collect();
                 if let Some(n) = notifier {
-                    let _ = n.send(EventBusMessage::Events(events));
+                    let _ = n.send(EventBusMessage::Events(stream_uuid, events));
                 }
 
                 Ok(ids)

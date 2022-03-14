@@ -6,6 +6,7 @@ use actix::Recipient;
 use event_store_core::storage::Storage;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use std::sync::RwLock;
 use uuid::Uuid;
 
 mod error;
@@ -96,7 +97,7 @@ impl<S: Storage> Subscriptions<S> {
         Ok(subscription)
     }
 
-    pub fn notify_subscribers(events: Vec<RecordedEvent>) {
-        SubscriptionsSupervisor::<S>::notify_subscribers(events);
+    pub fn notify_subscribers(stream_uuid: &str, events: Vec<RecordedEvent>) {
+        SubscriptionsSupervisor::<S>::notify_subscribers(stream_uuid, events);
     }
 }

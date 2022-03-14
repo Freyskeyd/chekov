@@ -55,8 +55,8 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
     fn handle(&mut self, item: Result<EventBusMessage, EventBusError>, _ctx: &mut Context<Self>) {
         if let Ok(message) = item {
             match message {
-                EventBusMessage::Events(events) => {
-                    Subscriptions::<S>::notify_subscribers(events);
+                EventBusMessage::Events(stream_uuid, events) => {
+                    Subscriptions::<S>::notify_subscribers(&stream_uuid, events);
                 }
                 EventBusMessage::Notification(notification) => {
                     trace!(
@@ -70,7 +70,7 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         .storage
                         .backend()
                         .read_stream(
-                            stream_uuid,
+                            stream_uuid.clone(),
                             notification.first_stream_version as usize,
                             (notification.last_stream_version - notification.first_stream_version
                                 + 1) as usize,
@@ -78,7 +78,7 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         )
                         .in_current_span()
                         .map(move |res| match res {
-                            Ok(events) => Subscriptions::<S>::notify_subscribers(events),
+                            Ok(events) => Subscriptions::<S>::notify_subscribers(&stream_uuid.clone(), events),
                             Err(_) => todo!(),
                         });
 

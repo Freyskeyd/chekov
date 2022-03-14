@@ -113,18 +113,20 @@ impl<S: Storage> Handler<Notify> for Subscription<S> {
 
     fn handle(&mut self, msg: Notify, _ctx: &mut Self::Context) -> Self::Result {
         debug!(
-            "{} attempting to notify subscriber ",
-            self.subscription_name
+            "{} attempting to notify subscriber {:#?}",
+            self.subscription_name,
+            msg
         );
 
         let fsm = self.subscription.clone();
         let fut = async move {
-            fsm.lock().await.notify_events(msg.0).await;
+            fsm.lock().await.notify_events(msg.1).await;
         };
 
         Box::pin(fut)
     }
 }
+
 impl<S: Storage> Supervised for Subscription<S> {}
 
 impl<S: Storage> Subscription<S> {

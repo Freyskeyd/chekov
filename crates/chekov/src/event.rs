@@ -3,7 +3,8 @@ use crate::error::{ApplyError, HandleError};
 use event_store::prelude::RecordedEvent;
 use futures::future::BoxFuture;
 use std::any::TypeId;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 
 pub(crate) mod handler;
 
@@ -27,3 +28,4 @@ pub trait EventApplier<E: Event> {
 pub trait Handler<E: crate::event::Event> {
     fn handle(&mut self, event: &E) -> BoxFuture<Result<(), HandleError>>;
 }
+
