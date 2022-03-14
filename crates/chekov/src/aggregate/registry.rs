@@ -71,7 +71,7 @@ impl<C: Command, A: Application> ::actix::Handler<Dispatch<C, A>>
                         }
                         Err(e) => {
                             debug!("Error: {:?}", e);
-                            Err(CommandExecutorError::Any)
+                            Err(e)
                         }
                     })
                     .and_then(move |addr, actor, _ctx| {

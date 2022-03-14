@@ -5,6 +5,7 @@ use actix::Message;
 use actix::Recipient;
 use event_store_core::storage::Storage;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use uuid::Uuid;
 
 mod error;
@@ -75,7 +76,7 @@ impl Default for StartFrom {
 #[derive(Debug, Message)]
 #[rtype(result = "Result<(), ()>")]
 pub enum SubscriptionNotification {
-    Events(Vec<RecordedEvent>),
+    Events(Vec<Arc<RecordedEvent>>),
     Subscribed,
 }
 

@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 use crate::{event::RecordedEvent, EventStore};
 
@@ -16,7 +16,7 @@ pub struct SubscriptionState<S: Storage> {
     pub(crate) last_received: i64,
     pub(crate) last_sent: i64,
     pub(crate) last_ack: i64,
-    pub(crate) queue: VecDeque<RecordedEvent>,
+    pub(crate) queue: VecDeque<Arc<RecordedEvent>>,
     pub(crate) transient: bool,
     pub(crate) in_flight_event_numbers: Vec<i64>,
 }

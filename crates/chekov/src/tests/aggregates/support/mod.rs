@@ -2,6 +2,7 @@ use crate as chekov;
 use crate::prelude::*;
 use event_store::prelude::InMemoryStorage;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use uuid::Uuid;
 
 #[derive(Default)]
@@ -9,6 +10,12 @@ pub(crate) struct MyApplication {}
 
 impl Application for MyApplication {
     type Storage = InMemoryStorage;
+}
+
+#[derive(Debug, Error)]
+pub(crate) enum AggregateError {
+    #[error("Invalid command received")]
+    InvalidCommandError,
 }
 
 #[derive(Clone, Aggregate, Default, Debug)]
@@ -26,7 +33,9 @@ impl CommandExecutor<ValidCommand> for ExampleAggregate {
 
 impl CommandExecutor<InvalidCommand> for ExampleAggregate {
     fn execute(_cmd: InvalidCommand, _: &Self) -> ExecutionResult<InvalidEvent> {
-        ExecutionResult::Err(CommandExecutorError::Any)
+        ExecutionResult::Err(CommandExecutorError::ExecutionError(Box::new(
+            AggregateError::InvalidCommandError,
+        )))
     }
 }
 

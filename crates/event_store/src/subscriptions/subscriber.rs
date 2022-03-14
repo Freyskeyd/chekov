@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 use actix::prelude::*;
 
@@ -9,7 +9,7 @@ use super::SubscriptionNotification;
 #[derive(Debug)]
 pub struct Subscriber {
     pub recipient: Recipient<SubscriptionNotification>,
-    pub(crate) in_flight: VecDeque<RecordedEvent>,
+    pub(crate) in_flight: VecDeque<Arc<RecordedEvent>>,
     last_sent: i64,
 }
 
@@ -31,7 +31,7 @@ impl Subscriber {
             .await
     }
 
-    pub(crate) fn track_in_flight(&mut self, event: RecordedEvent) {
+    pub(crate) fn track_in_flight(&mut self, event: Arc<RecordedEvent>) {
         self.last_sent = event.event_number;
         self.in_flight.push_front(event);
     }

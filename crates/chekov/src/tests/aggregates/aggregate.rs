@@ -157,19 +157,20 @@ async fn can_execute_a_command() {
     };
     let id = Uuid::new_v4();
 
-    assert_eq!(
-        Ok(vec![MyEvent { id }]),
-        AggregateInstance::execute(
-            instance.create_mutable_state(),
-            Dispatch::<_, MyApplication> {
-                storage: PhantomData,
-                command: ValidCommand(id),
-                metadatas: CommandMetadatas::default(),
-            },
-        )
-        .await
-        .map(|(v, _)| v)
-    );
+    let result: Result<_, CommandExecutorError> = AggregateInstance::execute(
+        instance.create_mutable_state(),
+        Dispatch::<_, MyApplication> {
+            storage: PhantomData,
+            command: ValidCommand(id),
+            metadatas: CommandMetadatas::default(),
+        },
+    )
+    .await
+    .map(|(value, _)| value);
+
+    let expected = vec![MyEvent { id: id }];
+
+    assert!(matches!(result, Ok(events) if events == expected));
 }
 
 #[allow(dead_code)]
