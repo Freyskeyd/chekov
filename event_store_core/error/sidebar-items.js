@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["EventStoreError",""]]});
+initSidebarItems({"enum":[["EventStoreError",""]],"type":[["BoxDynError",""]]});
