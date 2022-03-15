@@ -68,9 +68,8 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
-    pub async fn notify_events(&mut self, events: Vec<RecordedEvent>) {
+    pub async fn notify_events(&mut self, events: Arc<Vec<Arc<RecordedEvent>>>) {
         if let Some(subscriber) = &self.data.subscriber {
-            let events = events.into_iter().map(|event| Arc::new(event)).collect();
             let _ = subscriber
                 .recipient
                 .send(SubscriptionNotification::Events(events))

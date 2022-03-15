@@ -77,7 +77,7 @@ impl Default for StartFrom {
 #[derive(Debug, Message)]
 #[rtype(result = "Result<(), ()>")]
 pub enum SubscriptionNotification {
-    Events(Vec<Arc<RecordedEvent>>),
+    Events(Arc<Vec<Arc<RecordedEvent>>>),
     Subscribed,
 }
 

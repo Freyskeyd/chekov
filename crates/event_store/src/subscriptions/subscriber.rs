@@ -44,7 +44,7 @@ impl Subscriber {
         // TODO: How to handle notification failure ?
         let _ = self
             .recipient
-            .send(SubscriptionNotification::Events(events))
+            .send(SubscriptionNotification::Events(Arc::new(events)))
             .await;
     }
 }

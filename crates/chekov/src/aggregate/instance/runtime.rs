@@ -100,7 +100,7 @@ impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<
     fn handle(&mut self, msg: SubscriptionNotification, _: &mut Self::Context) -> Self::Result {
         match msg {
             SubscriptionNotification::Events(events) => {
-                for event in events {
+                for event in events.as_ref() {
                     let _ = self.apply_recorded_event(&event);
                 }
             }
