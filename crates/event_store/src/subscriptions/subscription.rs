@@ -7,7 +7,7 @@ use crate::EventStore;
 use super::{
     error::SubscriptionError,
     fsm::{InternalFSMState, SubscriptionFSM},
-    supervisor::{Down, GoingDown, Notify, Started, SubscriptionsSupervisor, NotifySubscribers},
+    supervisor::{Down, GoingDown, Notify, NotifySubscribers, Started, SubscriptionsSupervisor},
 };
 use super::{SubscriptionNotification, SubscriptionOptions};
 use actix::prelude::*;
@@ -111,11 +111,12 @@ impl<S: Storage> Handler<CatchUp> for Subscription<S> {
 impl<S: Storage> Handler<NotifySubscribers> for Subscription<S> {
     type Result = ResponseFuture<()>;
 
-    fn handle(&mut self, NotifySubscribers(_stream_uuid, events): NotifySubscribers, _ctx: &mut Self::Context) -> Self::Result {
-        debug!(
-            "{} attempting to notify subscriber",
-            self.subscription_name
-        );
+    fn handle(
+        &mut self,
+        NotifySubscribers(_stream_uuid, events): NotifySubscribers,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
+        debug!("{} attempting to notify subscriber", self.subscription_name);
 
         let fsm = self.subscription.clone();
         let fut = async move {

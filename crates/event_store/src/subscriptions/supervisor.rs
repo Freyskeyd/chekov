@@ -54,12 +54,18 @@ pub struct NotifySubscribers(pub(crate) String, pub(crate) Arc<Vec<Arc<RecordedE
 impl<S: Storage> Handler<Notify> for SubscriptionsSupervisor<S> {
     type Result = ();
 
-    fn handle(&mut self, Notify(stream_uuid, events): Notify, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(
+        &mut self,
+        Notify(stream_uuid, events): Notify,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
         if let Some(subscriptions) = self.subscriptions.get(&stream_uuid) {
-            let events: Arc<Vec<Arc<RecordedEvent>>> = Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
+            let events: Arc<Vec<Arc<RecordedEvent>>> =
+                Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
 
-            subscriptions.iter()
-            .for_each(|sub| sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone())));
+            subscriptions.iter().for_each(|sub| {
+                sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()))
+            });
         }
     }
 }
@@ -74,7 +80,10 @@ impl<S: Storage> Handler<CreateSubscription<S>> for SubscriptionsSupervisor<S> {
     fn handle(&mut self, msg: CreateSubscription<S>, ctx: &mut Self::Context) -> Self::Result {
         let addr = Subscription::start_with_options(&msg.0, ctx.address(), msg.1);
 
-        self.subscriptions.entry(msg.0.stream_uuid).or_default().push(addr.clone());
+        self.subscriptions
+            .entry(msg.0.stream_uuid)
+            .or_default()
+            .push(addr.clone());
 
         MessageResult(addr)
     }

@@ -221,8 +221,7 @@ impl<S: Storage> SubscriptionFSM<S> {
             "Executing notify_subscribers for {}",
             self.data.subscription_name
         );
-        while let Some(to_notify) = self.data.queue.pop_front()
-        {
+        while let Some(to_notify) = self.data.queue.pop_front() {
             let event_number = to_notify.event_number;
             if let Some(subscriber) = self.data.subscriber.as_mut() {
                 subscriber.track_in_flight(to_notify);
@@ -254,7 +253,12 @@ impl<S: Storage> SubscriptionFSM<S> {
 
         events.sort_by_key(|e| e.event_number);
 
-        self.data.queue.extend(events.into_iter().map(|event| Arc::new(event)).collect::<Vec<Arc<RecordedEvent>>>());
+        self.data.queue.extend(
+            events
+                .into_iter()
+                .map(|event| Arc::new(event))
+                .collect::<Vec<Arc<RecordedEvent>>>(),
+        );
         self.data.last_received = last_received;
     }
 

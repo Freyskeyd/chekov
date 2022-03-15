@@ -28,4 +28,3 @@ pub trait EventApplier<E: Event> {
 pub trait Handler<E: crate::event::Event> {
     fn handle(&mut self, event: &E) -> BoxFuture<Result<(), HandleError>>;
 }
-

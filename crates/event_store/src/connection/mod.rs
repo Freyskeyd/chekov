@@ -78,7 +78,9 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         )
                         .in_current_span()
                         .map(move |res| match res {
-                            Ok(events) => Subscriptions::<S>::notify_subscribers(&stream_uuid.clone(), events),
+                            Ok(events) => {
+                                Subscriptions::<S>::notify_subscribers(&stream_uuid.clone(), events)
+                            }
                             Err(_) => todo!(),
                         });
 
