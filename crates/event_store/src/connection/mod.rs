@@ -11,6 +11,7 @@ use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::Storage;
 use futures::{FutureExt, TryFutureExt};
 use std::str::FromStr;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::trace;
 use tracing::Instrument;
@@ -56,6 +57,8 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(stream_uuid, events) => {
+                    let events =
+                        Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
                     Subscriptions::<S>::notify_subscribers(&stream_uuid, events);
                 }
                 EventBusMessage::Notification(notification) => {
@@ -79,6 +82,9 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         .in_current_span()
                         .map(move |res| match res {
                             Ok(events) => {
+                                let events = Arc::new(
+                                    events.into_iter().map(|event| Arc::new(event)).collect(),
+                                );
                                 Subscriptions::<S>::notify_subscribers(&stream_uuid.clone(), events)
                             }
                             Err(_) => todo!(),

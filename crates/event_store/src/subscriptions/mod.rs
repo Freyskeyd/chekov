@@ -4,9 +4,9 @@ use actix::Addr;
 use actix::Message;
 use actix::Recipient;
 use event_store_core::storage::Storage;
+use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::sync::Arc;
-use std::sync::RwLock;
 use uuid::Uuid;
 
 mod error;
@@ -78,6 +78,7 @@ impl Default for StartFrom {
 #[rtype(result = "Result<(), ()>")]
 pub enum SubscriptionNotification {
     Events(Arc<Vec<Arc<RecordedEvent>>>),
+    OwnedEvents(Cow<'static, Arc<Vec<Arc<RecordedEvent>>>>),
     Subscribed,
 }
 
@@ -97,7 +98,7 @@ impl<S: Storage> Subscriptions<S> {
         Ok(subscription)
     }
 
-    pub fn notify_subscribers(stream_uuid: &str, events: Vec<RecordedEvent>) {
+    pub fn notify_subscribers(stream_uuid: &str, events: Arc<Vec<Arc<RecordedEvent>>>) {
         SubscriptionsSupervisor::<S>::notify_subscribers(stream_uuid, events);
     }
 }

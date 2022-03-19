@@ -38,14 +38,14 @@ impl<S: Storage> SubscriptionsSupervisor<S> {
         }
     }
 
-    pub fn notify_subscribers(stream_uuid: &str, events: Vec<RecordedEvent>) {
+    pub fn notify_subscribers(stream_uuid: &str, events: Arc<Vec<Arc<RecordedEvent>>>) {
         Self::from_registry().do_send(Notify(stream_uuid.into(), events));
     }
 }
 
 #[derive(Debug, Message, Clone)]
 #[rtype(result = "()")]
-pub struct Notify(pub(crate) String, pub(crate) Vec<RecordedEvent>);
+pub struct Notify(pub(crate) String, pub(crate) Arc<Vec<Arc<RecordedEvent>>>);
 
 #[derive(Debug, Message, Clone)]
 #[rtype(result = "()")]
@@ -60,9 +60,6 @@ impl<S: Storage> Handler<Notify> for SubscriptionsSupervisor<S> {
         _ctx: &mut Self::Context,
     ) -> Self::Result {
         if let Some(subscriptions) = self.subscriptions.get(&stream_uuid) {
-            let events: Arc<Vec<Arc<RecordedEvent>>> =
-                Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
-
             subscriptions.iter().for_each(|sub| {
                 sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()))
             });

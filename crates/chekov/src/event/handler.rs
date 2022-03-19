@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
@@ -127,10 +125,24 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
     fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
         match msg {
-            SubscriptionNotification::Events(events) => {
-                let mut handler = self.handler.clone();
-                let events = events;
+            SubscriptionNotification::OwnedEvents(_events) => {
+                // let handler = self.handler.clone();
+                // let events = events;
 
+                Box::pin(async move {
+                    // for event in events {
+                    //     // TODO: Deal with handle error
+                    //     EventHandler::handle_recorded_event(&mut handler, Arc::into_raw(event).clone())
+                    //         .await
+                    //         .map_err(|_| ())?;
+                    // }
+                    Ok(())
+                })
+            }
+            SubscriptionNotification::Events(_events) => {
+                // let handler = self.handler.clone();
+                // let events = events;
+                //
                 Box::pin(async move {
                     // for event in events {
                     //     // TODO: Deal with handle error

@@ -7,7 +7,7 @@ use crate::EventStore;
 use super::{
     error::SubscriptionError,
     fsm::{InternalFSMState, SubscriptionFSM},
-    supervisor::{Down, GoingDown, Notify, NotifySubscribers, Started, SubscriptionsSupervisor},
+    supervisor::{Down, GoingDown, NotifySubscribers, Started, SubscriptionsSupervisor},
 };
 use super::{SubscriptionNotification, SubscriptionOptions};
 use actix::prelude::*;
