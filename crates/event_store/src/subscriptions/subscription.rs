@@ -19,7 +19,7 @@ struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
 
 #[derive(Debug, Message)]
 #[rtype("()")]
-struct CatchUp;
+pub(crate) struct CatchUp;
 
 #[derive(Debug)]
 pub struct Subscription<S: Storage> {

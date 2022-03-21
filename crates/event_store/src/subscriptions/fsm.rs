@@ -127,6 +127,8 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
+    /// Request catchup when receiving unexpected futurs events notifications
+    /// Meaning that we need to catchup if we expect event N but received event N+X
     #[tracing::instrument(skip(self))]
     pub async fn catch_up(&mut self) {
         debug!("Executing catch_up for {}", self.data.subscription_name);
