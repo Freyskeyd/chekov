@@ -96,7 +96,7 @@
         <span class="comment">// TODO: How to handle notification failure ?</span>
         <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>
             .<span class="ident">recipient</span>
-            .<span class="ident">send</span>(<span class="ident">SubscriptionNotification::Events</span>(<span class="ident">events</span>))
+            .<span class="ident">send</span>(<span class="ident">SubscriptionNotification::Events</span>(<span class="ident">Arc::new</span>(<span class="ident">events</span>)))
             .<span class="kw">await</span>;
     }
 }

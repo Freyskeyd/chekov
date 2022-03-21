@@ -300,6 +300,14 @@
 <span id="298">298</span>
 <span id="299">299</span>
 <span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
@@ -313,6 +321,7 @@
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">tracing::Instrument</span>;
@@ -358,6 +367,8 @@
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">message</span>) <span class="op">=</span> <span class="ident">item</span> {
             <span class="kw">match</span> <span class="ident">message</span> {
                 <span class="ident">EventBusMessage::Events</span>(<span class="ident">stream_uuid</span>, <span class="ident">events</span>) =&gt; {
+                    <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span>
+                        <span class="ident">Arc::new</span>(<span class="ident">events</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">Arc::new</span>(<span class="ident">event</span>)).<span class="ident">collect</span>());
                     <span class="ident">Subscriptions</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::notify_subscribers</span>(<span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>, <span class="ident">events</span>);
                 }
                 <span class="ident">EventBusMessage::Notification</span>(<span class="ident">notification</span>) =&gt; {
@@ -380,7 +391,12 @@
                         )
                         .<span class="ident">in_current_span</span>()
                         .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">res</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">res</span> {
-                            <span class="prelude-val">Ok</span>(<span class="ident">events</span>) =&gt; <span class="ident">Subscriptions</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::notify_subscribers</span>(<span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>.<span class="ident">clone</span>(), <span class="ident">events</span>),
+                            <span class="prelude-val">Ok</span>(<span class="ident">events</span>) =&gt; {
+                                <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="ident">Arc::new</span>(
+                                    <span class="ident">events</span>.<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">event</span><span class="op">|</span> <span class="ident">Arc::new</span>(<span class="ident">event</span>)).<span class="ident">collect</span>(),
+                                );
+                                <span class="ident">Subscriptions</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::notify_subscribers</span>(<span class="kw-2">&amp;</span><span class="ident">stream_uuid</span>.<span class="ident">clone</span>(), <span class="ident">events</span>)
+                            }
                             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(),
                         });
 
