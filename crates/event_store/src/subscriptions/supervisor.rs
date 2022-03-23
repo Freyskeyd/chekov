@@ -56,14 +56,12 @@ impl<S: Storage> Handler<Notify> for SubscriptionsSupervisor<S> {
 
     fn handle(
         &mut self,
-        Notify(stream_uuid, _events): Notify,
+        Notify(stream_uuid, events): Notify,
         _ctx: &mut Self::Context,
     ) -> Self::Result {
         if let Some(subscriptions) = self.subscriptions.get(&stream_uuid) {
             subscriptions.iter().for_each(|sub| {
-                sub.do_send(CatchUp)
-                // TODO: FIXING NOTIFY for stream
-                // sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()))
+                sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()))
             });
         }
     }

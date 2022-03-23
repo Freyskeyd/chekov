@@ -4,7 +4,7 @@ use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
 use actix::prelude::*;
-use event_store::prelude::{StartFrom, SubscriptionNotification};
+use event_store::prelude::{StartFrom, SubscriptionNotification, SubscriptionOptions};
 use tracing::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {
@@ -64,11 +64,12 @@ pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {
 #[doc(hidden)]
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
-pub struct Subscribe(
-    pub String,
-    pub Recipient<ResolveAndApplyMany>,
-    pub Recipient<SubscriptionNotification>,
-);
+pub struct Subscribe {
+    pub stream: String,
+    pub resolver: Recipient<ResolveAndApplyMany>,
+    pub recipient: Recipient<SubscriptionNotification>,
+    pub transient: bool
+}
 
 /// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {

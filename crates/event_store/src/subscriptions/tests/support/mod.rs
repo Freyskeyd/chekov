@@ -1,9 +1,12 @@
 use std::{collections::VecDeque, sync::Arc};
 
-use actix::{Actor, Context, Handler, ResponseFuture};
+use actix::{Actor, Context, Handler, ResponseFuture, Addr};
+use event_store_core::{storage::Storage, versions::ExpectedVersion, event::Event, error::EventStoreError};
+use event_store_storage_inmemory::InMemoryStorage;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
-use crate::subscriptions::SubscriptionNotification;
+use crate::{subscriptions::SubscriptionNotification, EventStore};
 
 pub(crate) mod event;
 pub(crate) mod subscriber;
@@ -31,3 +34,38 @@ impl Handler<SubscriptionNotification> for InnerSub {
         })
     }
 }
+
+pub(crate) struct EventStoreHelper<T: Storage>{
+    event_store: Addr<EventStore<T>>
+}
+
+impl<T: Storage> EventStoreHelper<T> {
+    pub(crate) async fn new(storage: T) -> Self {
+        let event_store = EventStore::builder()
+            .storage(storage)
+            .build()
+            .await
+            .unwrap()
+            .start();
+
+        Self {
+            event_store
+        }
+    }
+
+    pub(crate) async fn append<E: Event>(&self, identity: &Uuid, version: ExpectedVersion, events: &[&E]) -> Result<Vec<Uuid>, EventStoreError> {
+        crate::append()
+            .to(identity)
+            .unwrap()
+            .expected_version(version)
+            .events(events)
+            .unwrap()
+            .execute(self.get_addr())
+            .await
+    }
+
+    pub(crate) fn get_addr(&self) -> Addr<EventStore<T>> {
+        self.event_store.clone()
+    }
+}
+

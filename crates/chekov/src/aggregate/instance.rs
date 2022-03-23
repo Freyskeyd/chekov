@@ -65,7 +65,12 @@ impl<A: Aggregate> AggregateInstance<A> {
             let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
             let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
             let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-            broker.do_send(Subscribe(identity, recipient, recipient_sub));
+            broker.do_send(Subscribe{
+                stream: identity,
+                resolver: recipient,
+                recipient: recipient_sub,
+                transient: true
+            });
 
             instance
         });

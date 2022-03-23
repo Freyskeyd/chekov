@@ -84,11 +84,11 @@ impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
     type Result = ResponseFuture<()>;
 
     fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
-        let stream_uuid = subscription.0.to_string();
-        let subscription_name = format!("subscription-{}", subscription.0);
-        let recipient = subscription.2.clone();
+        let stream_uuid = subscription.stream.to_string();
+        let subscription_name = format!("subscription-{}", subscription.stream);
+        let recipient = subscription.recipient.clone();
 
-        self.add_sub(&subscription.0, subscription.1);
+        self.add_sub(&subscription.stream, subscription.resolver);
 
         Box::pin(async {
             let addr = EventStore::<A>::get_addr().await.unwrap();
