@@ -261,9 +261,8 @@ impl Appender {
             .collect();
 
         trace!(
-            parent: &self.span,
             "Transformed {} event(s) into appendable events",
-            events.len(),
+            events.len()
         );
 
         let res = event_store
@@ -275,10 +274,13 @@ impl Appender {
             })
             .await?;
 
-        trace!(parent: &self.span, "{}", match res {
-            Ok(_) => "Successfully executed",
-            Err(_) => "Unsuccessfully executed",
-        });
+        trace!(
+            "{}",
+            match res {
+                Ok(_) => "Successfully executed",
+                Err(_) => "Unsuccessfully executed",
+            }
+        );
 
         res
     }

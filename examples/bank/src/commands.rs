@@ -57,7 +57,9 @@ impl chekov::command::Handler<OpenAccount, Account> for AccountValidator {
     ) -> BoxFuture<'static, Result<Vec<AccountOpened>, CommandExecutorError>> {
         async move {
             if state.status != AccountStatus::Initialized {
-                Err(CommandExecutorError::Any)
+                Err(CommandExecutorError::ExecutionError(Box::new(
+                    AccountError::UnableToCreate,
+                )))
             } else {
                 Account::execute(command, &state)
             }

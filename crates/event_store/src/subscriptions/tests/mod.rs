@@ -1,12 +1,13 @@
+use self::support::subscriber::SubscriberFactory;
+
 use super::{StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions};
 use crate::{
-    core::event::Event, event::RecordedEvent, prelude::ExpectedVersion, EventStore, InMemoryStorage,
+    prelude::ExpectedVersion, subscriptions::tests::support::event::MyEvent, EventStore,
+    InMemoryStorage,
 };
-use actix::{Actor, Context, Handler, ResponseFuture};
+use actix::Actor;
 use serde_json::json;
-use std::{collections::VecDeque, convert::TryFrom, sync::Arc};
 use test_log::test;
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 macro_rules! pluck {
@@ -15,55 +16,14 @@ macro_rules! pluck {
     };
 }
 
+mod support;
+mod pub_sub;
 mod transient_fsm;
 
 struct TestContext {}
 
 fn before_all() -> TestContext {
     TestContext {}
-}
-
-pub(crate) struct InnerSub {
-    pub(crate) reference: Arc<Mutex<VecDeque<SubscriptionNotification>>>,
-}
-
-impl Actor for InnerSub {
-    type Context = Context<Self>;
-}
-
-#[derive(serde::Serialize)]
-pub(crate) struct MyEvent {}
-impl Event for MyEvent {
-    fn event_type(&self) -> &'static str {
-        "MyEvent"
-    }
-
-    fn all_event_types() -> Vec<&'static str> {
-        vec!["MyEvent"]
-    }
-}
-
-impl TryFrom<RecordedEvent> for MyEvent {
-    type Error = ();
-
-    fn try_from(_: RecordedEvent) -> Result<Self, Self::Error> {
-        Ok(MyEvent {})
-    }
-}
-
-impl Handler<SubscriptionNotification> for InnerSub {
-    type Result = ResponseFuture<Result<(), ()>>;
-
-    fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
-        let aquire = Arc::clone(&self.reference);
-
-        Box::pin(async move {
-            let mut mutex = aquire.lock().await;
-            mutex.push_back(msg);
-
-            Ok(())
-        })
-    }
 }
 
 #[test(actix::test)]
@@ -76,13 +36,8 @@ async fn should_receive_subscribed_message_once_subscribed() {
 
     let addr_es = es.start();
 
-    let tracker: Arc<Mutex<VecDeque<SubscriptionNotification>>> =
-        Arc::new(Mutex::new(VecDeque::new()));
+    let (tracker, addr) = SubscriberFactory::setup();
 
-    let addr = InnerSub {
-        reference: Arc::clone(&tracker),
-    }
-    .start();
     let mut opts = SubscriptionOptions::default();
 
     opts.transient = true;
@@ -104,13 +59,7 @@ async fn should_subscribe_to_single_stream_from_origin() {
 
     let addr_es = es.start();
 
-    let tracker: Arc<Mutex<VecDeque<SubscriptionNotification>>> =
-        Arc::new(Mutex::new(VecDeque::new()));
-
-    let addr = InnerSub {
-        reference: Arc::clone(&tracker),
-    }
-    .start();
+    let (tracker, addr) = SubscriberFactory::setup();
 
     let identity = Uuid::new_v4();
     Subscriptions::subscribe_to_stream(
@@ -164,13 +113,7 @@ async fn should_subscribe_to_single_stream_from_given_stream_version_should_only
 
     let addr_es = es.start();
 
-    let tracker: Arc<Mutex<VecDeque<SubscriptionNotification>>> =
-        Arc::new(Mutex::new(VecDeque::new()));
-
-    let addr = InnerSub {
-        reference: Arc::clone(&tracker),
-    }
-    .start();
+    let (tracker, addr) = SubscriberFactory::setup();
 
     let identity = Uuid::new_v4();
     let _ = crate::append()

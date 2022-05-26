@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::{self};
 
 use chekov::error::HandleError;
 use chekov::prelude::*;
@@ -35,6 +37,26 @@ pub struct Item {
     price: i64,
 }
 
+#[derive(Debug)]
+pub enum OrderError {
+    AlreadyCreated,
+    CantBeCanceled,
+    CantAddCard,
+    ValidationError,
+}
+
+impl fmt::Display for OrderError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            OrderError::AlreadyCreated => write!(f, "Order is already created"),
+            OrderError::CantBeCanceled => write!(f, "Order can't be canceled"),
+            OrderError::CantAddCard => write!(f, "Can't add the card to this order"),
+            OrderError::ValidationError => write!(f, "Can't validate this order"),
+        }
+    }
+}
+impl Error for OrderError {}
+
 #[derive(Default, Debug, Clone, chekov::Aggregate, Serialize)]
 #[aggregate(identity = "order")]
 pub struct Order {
@@ -48,7 +70,9 @@ pub struct Order {
 impl CommandExecutor<CreateOrder> for Order {
     fn execute(cmd: CreateOrder, state: &Self) -> ExecutionResult<OrderCreated> {
         if state.status != OrderStatus::Unknown {
-            return Err(CommandExecutorError::Any);
+            return Err(CommandExecutorError::ExecutionError(Box::new(
+                OrderError::AlreadyCreated,
+            )));
         }
 
         Ok(vec![OrderCreated {
@@ -66,9 +90,9 @@ impl CommandExecutor<CancelOrder> for Order {
                 account_id: state.account_id.unwrap(),
                 total_price: state.total_price,
             }]),
-            OrderStatus::Unknown | OrderStatus::Canceled | OrderStatus::Paid => {
-                Err(CommandExecutorError::Any)
-            }
+            OrderStatus::Unknown | OrderStatus::Canceled | OrderStatus::Paid => Err(
+                CommandExecutorError::ExecutionError(Box::new(OrderError::CantBeCanceled)),
+            ),
         }
     }
 }
@@ -84,7 +108,9 @@ impl CommandExecutor<ValidateOrder> for Order {
             }]);
         }
 
-        Err(CommandExecutorError::Any)
+        Err(CommandExecutorError::ExecutionError(Box::new(
+            OrderError::ValidationError,
+        )))
     }
 }
 
@@ -103,7 +129,9 @@ impl CommandExecutor<AddGiftCardToOrder> for Order {
             }]);
         }
 
-        Err(CommandExecutorError::Any)
+        Err(CommandExecutorError::ExecutionError(Box::new(
+            OrderError::CantAddCard,
+        )))
     }
 }
 

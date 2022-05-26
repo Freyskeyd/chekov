@@ -2,8 +2,6 @@ use thiserror::Error;
 
 use crate::backend::error::BackendError;
 
-pub trait InternalStorageError: std::error::Error + 'static + Send + Sync {}
-
 #[derive(Error, Debug)]
 pub enum StorageError {
     #[error("The stream doesn't exists")]

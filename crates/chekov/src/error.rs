@@ -1,36 +1,55 @@
-use event_store::prelude::EventStoreError;
+use event_store::{core::error::BoxDynError, prelude::EventStoreError};
+use thiserror::Error;
+use tokio::time::error::Elapsed;
 
 /// Error returns by a CommandExecutor
-#[derive(serde::Serialize, PartialEq, Debug)]
+#[derive(Error, Debug)]
 pub enum CommandExecutorError {
-    ApplyError,
-    Any,
+    #[error(transparent)]
+    ApplyError(ApplyError),
+    #[error("Internal router error")]
+    InternalRouterError,
+    #[error(transparent)]
+    ExecutionError(BoxDynError),
+    #[error(transparent)]
+    EventStoreError(EventStoreError),
+    #[error("Command execution timedout {0}")]
+    Timedout(Elapsed),
 }
 
 impl std::convert::From<actix::MailboxError> for CommandExecutorError {
     fn from(_: actix::MailboxError) -> Self {
-        Self::Any
+        Self::InternalRouterError
     }
 }
 
 impl std::convert::From<EventStoreError> for CommandExecutorError {
-    fn from(_: EventStoreError) -> Self {
-        Self::Any
+    fn from(error: EventStoreError) -> Self {
+        Self::EventStoreError(error)
     }
 }
 
 impl std::convert::From<ApplyError> for CommandExecutorError {
-    fn from(_: ApplyError) -> Self {
-        Self::ApplyError
+    fn from(error: ApplyError) -> Self {
+        Self::ApplyError(error)
+    }
+}
+
+impl From<Elapsed> for CommandExecutorError {
+    fn from(error: Elapsed) -> Self {
+        Self::Timedout(error)
     }
 }
 
 /// Error returns by a failling EventApplier
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ApplyError {
+    #[error("Unknown")]
     Any,
 }
 
+#[derive(Error, Debug)]
 pub enum HandleError {
+    #[error("Unknown")]
     Any,
 }

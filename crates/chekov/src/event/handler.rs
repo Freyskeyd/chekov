@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
@@ -62,11 +64,12 @@ pub trait EventHandler: Clone + Sized + std::marker::Unpin + 'static {
 #[doc(hidden)]
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
-pub struct Subscribe(
-    pub String,
-    pub Recipient<ResolveAndApplyMany>,
-    pub Recipient<SubscriptionNotification>,
-);
+pub struct Subscribe {
+    pub stream: String,
+    pub resolver: Recipient<ResolveAndApplyMany>,
+    pub recipient: Recipient<SubscriptionNotification>,
+    pub transient: bool,
+}
 
 /// Deals with the lifetime of a particular EventHandler
 pub struct EventHandlerInstance<A: Application, E: EventHandler> {
@@ -95,7 +98,7 @@ impl<A: Application, E: EventHandler> actix::Actor for EventHandlerInstance<A, E
 
     fn started(&mut self, ctx: &mut Self::Context) {
         let opts = event_store::prelude::SubscriptionOptions {
-            stream_uuid: self._name.to_owned(),
+            stream_uuid: "$all".to_owned(),
             subscription_name: self._name.to_owned(),
             start_from: StartFrom::Origin,
             transient: false,
@@ -125,14 +128,42 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
     #[tracing::instrument(name = "EventHandlerInstance", skip(self, msg, _ctx))]
     fn handle(&mut self, msg: SubscriptionNotification, _ctx: &mut Self::Context) -> Self::Result {
         match msg {
-            SubscriptionNotification::Events(events) => {
+            SubscriptionNotification::OwnedEvents(_events) => {
+                // let handler = self.handler.clone();
+                // let events = events;
+
+                Box::pin(async move {
+                    // for event in events {
+                    //     // TODO: Deal with handle error
+                    //     EventHandler::handle_recorded_event(&mut handler, Arc::into_raw(event).clone())
+                    //         .await
+                    //         .map_err(|_| ())?;
+                    // }
+                    Ok(())
+                })
+            }
+
+            SubscriptionNotification::PubSubEvents(stream, events) => {
                 let mut handler = self.handler.clone();
-                let events = events;
 
                 Box::pin(async move {
                     for event in events {
+                        // TODO: Remove clonning to prevent data duplication
+                        EventHandler::handle_recorded_event(&mut handler, event.as_ref().clone())
+                            .await;
+                    }
+                    Ok(())
+                })
+            }
+
+            SubscriptionNotification::Events(events) => {
+                let mut handler = self.handler.clone();
+                let events = events;
+                Box::pin(async move {
+                    for event in events.iter() {
                         // TODO: Deal with handle error
-                        EventHandler::handle_recorded_event(&mut handler, event)
+                        // TODO: Remove clonning to prevent data duplication
+                        EventHandler::handle_recorded_event(&mut handler, event.as_ref().clone())
                             .await
                             .map_err(|_| ())?;
                     }

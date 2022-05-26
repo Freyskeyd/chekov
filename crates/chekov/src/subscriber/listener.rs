@@ -1,14 +1,15 @@
 use super::EventNotification;
 use crate::{Application, SubscriberManager};
 use actix::ActorContext;
-use actix::SystemService;
 use actix::{Actor, Addr, AsyncContext, Context};
 use sqlx::postgres::PgNotification;
 use std::convert::TryFrom;
+use std::marker::PhantomData;
 use tracing::trace;
 
 pub struct Listener<A: Application> {
     _phantom: std::marker::PhantomData<A>,
+    pub manager: Addr<SubscriberManager<A>>,
     pub listening: String,
 }
 
@@ -22,16 +23,8 @@ impl<A: Application> actix::Actor for Listener<A> {
 }
 
 impl<A: Application> Listener<A> {
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            _phantom: std::marker::PhantomData,
-            listening: String::new(),
-        }
-    }
-
-    #[tracing::instrument(name = "Listener", skip(url), fields(app = %A::get_name()))]
-    pub async fn setup(url: String) -> Result<Addr<Self>, ()> {
+    #[tracing::instrument(name = "Listener", skip(url, manager), fields(app = %A::get_name()))]
+    pub async fn setup(url: String, manager: Addr<SubscriberManager<A>>) -> Result<Addr<Self>, ()> {
         let mut listener = sqlx::postgres::PgListener::connect(&url).await.unwrap();
         listener.listen("events").await.unwrap();
         trace!("Starting listener with {}", url);
@@ -39,7 +32,9 @@ impl<A: Application> Listener<A> {
         Ok(Listener::create(move |ctx| {
             ctx.add_stream(listener.into_stream());
 
-            Listener::new()
+            Listener {
+                _phantom: PhantomData, manager, listening: url
+            }
         }))
     }
 }
@@ -48,7 +43,7 @@ impl<A: Application> actix::StreamHandler<Result<PgNotification, sqlx::Error>> f
     fn handle(&mut self, item: Result<PgNotification, sqlx::Error>, _ctx: &mut Self::Context) {
         if let Ok(m) = item {
             if let Ok(event) = EventNotification::try_from(m.payload()) {
-                SubscriberManager::<A>::from_registry().do_send(event);
+                self.manager.do_send(event);
             }
         }
     }

@@ -7,7 +7,7 @@ use crate::EventStore;
 use super::{
     error::SubscriptionError,
     fsm::{InternalFSMState, SubscriptionFSM},
-    supervisor::{Down, GoingDown, Notify, Started, SubscriptionsSupervisor},
+    supervisor::{Down, GoingDown, NotifySubscribers, Started, SubscriptionsSupervisor},
 };
 use super::{SubscriptionNotification, SubscriptionOptions};
 use actix::prelude::*;
@@ -19,7 +19,7 @@ struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
 
 #[derive(Debug, Message)]
 #[rtype("()")]
-struct CatchUp;
+pub(crate) struct CatchUp;
 
 #[derive(Debug)]
 pub struct Subscription<S: Storage> {
@@ -108,23 +108,25 @@ impl<S: Storage> Handler<CatchUp> for Subscription<S> {
     }
 }
 
-impl<S: Storage> Handler<Notify> for Subscription<S> {
+impl<S: Storage> Handler<NotifySubscribers> for Subscription<S> {
     type Result = ResponseFuture<()>;
 
-    fn handle(&mut self, msg: Notify, _ctx: &mut Self::Context) -> Self::Result {
-        debug!(
-            "{} attempting to notify subscriber ",
-            self.subscription_name
-        );
+    fn handle(
+        &mut self,
+        NotifySubscribers(_stream_uuid, events): NotifySubscribers,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
+        debug!("{} attempting to notify subscriber", self.subscription_name);
 
         let fsm = self.subscription.clone();
         let fut = async move {
-            fsm.lock().await.notify_events(msg.0).await;
+            fsm.lock().await.notify_events(events).await;
         };
 
         Box::pin(fut)
     }
 }
+
 impl<S: Storage> Supervised for Subscription<S> {}
 
 impl<S: Storage> Subscription<S> {

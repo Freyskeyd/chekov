@@ -5,6 +5,7 @@ use actix_web::body::BoxBody;
 use actix_web::post;
 use actix_web::web;
 use actix_web::{HttpRequest, HttpResponse, Responder};
+use serde_json::json;
 use uuid::Uuid;
 
 impl Responder for Account {
@@ -27,7 +28,7 @@ pub async fn create_account(account: web::Json<OpenAccountPayload>) -> impl Resp
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res.first()),
-        Err(e) => HttpResponse::Ok().json(e),
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 
@@ -40,7 +41,7 @@ pub async fn create_gift_card(gift_card: web::Json<CreateGiftCardPayload>) -> im
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res.first()),
-        Err(e) => HttpResponse::Ok().json(e),
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 
@@ -56,7 +57,7 @@ pub async fn create_order(params: web::Path<Uuid>) -> impl Responder {
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res.first()),
-        Err(e) => HttpResponse::Ok().json(e),
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 
@@ -78,7 +79,7 @@ pub async fn add_order_item(
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res.first()),
-        Err(e) => HttpResponse::Ok().json(e),
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 

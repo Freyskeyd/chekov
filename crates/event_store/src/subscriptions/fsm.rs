@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 use crate::event::RecordedEvent;
 use crate::prelude::ReadVersion;
@@ -67,7 +68,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
-    pub async fn notify_events(&mut self, events: Vec<RecordedEvent>) {
+    pub async fn notify_events(&mut self, events: Arc<Vec<Arc<RecordedEvent>>>) {
         if let Some(subscriber) = &self.data.subscriber {
             let _ = subscriber
                 .recipient
@@ -126,6 +127,8 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
+    /// Request catchup when receiving unexpected futurs events notifications
+    /// Meaning that we need to catchup if we expect event N but received event N+X
     #[tracing::instrument(skip(self))]
     pub async fn catch_up(&mut self) {
         debug!("Executing catch_up for {}", self.data.subscription_name);
@@ -220,8 +223,8 @@ impl<S: Storage> SubscriptionFSM<S> {
             "Executing notify_subscribers for {}",
             self.data.subscription_name
         );
-        while let Some(to_notify @ RecordedEvent { event_number, .. }) = self.data.queue.pop_front()
-        {
+        while let Some(to_notify) = self.data.queue.pop_front() {
+            let event_number = to_notify.event_number;
             if let Some(subscriber) = self.data.subscriber.as_mut() {
                 subscriber.track_in_flight(to_notify);
 
@@ -252,7 +255,12 @@ impl<S: Storage> SubscriptionFSM<S> {
 
         events.sort_by_key(|e| e.event_number);
 
-        self.data.queue.extend(events);
+        self.data.queue.extend(
+            events
+                .into_iter()
+                .map(|event| Arc::new(event))
+                .collect::<Vec<Arc<RecordedEvent>>>(),
+        );
         self.data.last_received = last_received;
     }
 

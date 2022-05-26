@@ -28,7 +28,7 @@ impl std::convert::From<UnsavedEventError> for EventStoreError {
     }
 }
 
-type BoxDynError = Box<dyn std::error::Error + 'static + Send + Sync>;
+pub type BoxDynError = Box<dyn std::error::Error + 'static + Send + Sync>;
 
 #[cfg(feature = "actix-rt")]
 impl From<actix::MailboxError> for EventStoreError {

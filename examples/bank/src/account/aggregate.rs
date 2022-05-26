@@ -1,6 +1,23 @@
+use std::{error::Error, fmt};
+
 use super::*;
 
 use chekov::event::EventApplier;
+
+#[derive(Debug)]
+pub enum AccountError {
+    UnableToCreate,
+}
+
+impl fmt::Display for AccountError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AccountError::UnableToCreate => write!(f, "Can't open account"),
+        }
+    }
+}
+
+impl Error for AccountError {}
 
 impl CommandExecutor<DeleteAccount> for Account {
     fn execute(cmd: DeleteAccount, _: &Self) -> Result<Vec<AccountDeleted>, CommandExecutorError> {
@@ -17,7 +34,9 @@ impl CommandExecutor<OpenAccount> for Account {
                 account_id: cmd.account_id,
                 name: cmd.name,
             }]),
-            _ => Err(CommandExecutorError::Any),
+            _ => Err(CommandExecutorError::ExecutionError(Box::new(
+                AccountError::UnableToCreate,
+            ))),
         }
     }
 }

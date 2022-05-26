@@ -49,8 +49,8 @@ impl<A: Aggregate> AggregateInstance<A> {
         if let Ok(events) = events {
             for event in events {
                 trace!("Applying {} event ({})", event.event_uuid, event.event_type);
-                if instance.apply_recorded_event(event).is_err() {
-                    return Err(CommandExecutorError::Any);
+                if let Err(e) = instance.apply_recorded_event(&event) {
+                    return Err(CommandExecutorError::ApplyError(e));
                 }
 
                 instance.current_version += 1;
@@ -65,7 +65,12 @@ impl<A: Aggregate> AggregateInstance<A> {
             let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
             let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
             let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-            broker.do_send(Subscribe(identity, recipient, recipient_sub));
+            broker.do_send(Subscribe{
+                stream: identity,
+                resolver: recipient,
+                recipient: recipient_sub,
+                transient: true
+            });
 
             instance
         });
@@ -99,9 +104,10 @@ impl<A: Aggregate> AggregateInstance<A> {
         state.apply(event)
     }
 
-    fn apply_recorded_event(&mut self, event: RecordedEvent) -> Result<(), ApplyError> {
+    fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
         if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
-            return (resolver)(&mut self.inner, event);
+            // TODO: Remove clone
+            return (resolver)(&mut self.inner, event.clone());
         }
 
         Ok(())
@@ -161,7 +167,7 @@ impl<A: Aggregate> AggregateInstance<A> {
     {
         Self::apply_many(&mut state, &events)?;
         let ev: Vec<&_> = events.iter().collect();
-        match crate::event_store::EventStore::<APP>::with_appender(
+        crate::event_store::EventStore::<APP>::with_appender(
             event_store::prelude::Appender::with_correlation_id(correlation_id)
                 .events(&ev[..])?
                 .to(&stream_id)?
@@ -170,18 +176,14 @@ impl<A: Aggregate> AggregateInstance<A> {
                 )),
         )
         // TODO deal with mailbox error
-        .await
-        {
-            Ok(Ok(_)) => {
-                let new_version = current_version + events.len() as i64;
-                Ok(CommandExecutionResult {
-                    events,
-                    new_version,
-                    state,
-                })
-            }
-            _ => Err(CommandExecutorError::Any),
-        }
+        .await??;
+
+        let new_version = current_version + events.len() as i64;
+        Ok(CommandExecutionResult {
+            events,
+            new_version,
+            state,
+        })
     }
 
     async fn execute_and_apply<C: Command, APP: Application>(
@@ -197,18 +199,8 @@ impl<A: Aggregate> AggregateInstance<A> {
         let correlation_id = command.metadatas.correlation_id;
         let stream_id = command.command.identifier();
 
-        match Self::execute(state, command).await {
-            Ok((events, state)) => {
-                Self::persist_events::<_, APP>(
-                    events,
-                    state,
-                    correlation_id,
-                    stream_id,
-                    current_version,
-                )
-                .await
-            }
-            Err(_) => Err(CommandExecutorError::Any),
-        }
+        let (events, state) = Self::execute(state, command).await?;
+        Self::persist_events::<_, APP>(events, state, correlation_id, stream_id, current_version)
+            .await
     }
 }

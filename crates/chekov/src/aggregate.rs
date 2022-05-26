@@ -78,7 +78,7 @@
 //!                 account_id: cmd.account_id,
 //!                 name: cmd.name,
 //!             }]),
-//!             _ => Err(CommandExecutorError::Any),
+//!             _ => Err(CommandExecutorError::InternalRouterError),
 //!         }
 //!     }
 //! }

@@ -40,15 +40,15 @@ where
         Box::pin(
             tokio::time::timeout(Duration::from_secs(5), fut)
                 .map(|res| match res {
-                    Ok(r) => r.map(|events| (events, state)),
-                    Err(e) => {
-                        tracing::error!("First : {:?}", e);
-                        Err(CommandExecutorError::Any)
+                    Ok(response) => response.map(|events| (events, state)),
+                    Err(error) => {
+                        tracing::error!("First : {:?}", error);
+                        Err(error.into())
                     }
                 })
-                .map_err(|a| {
-                    tracing::error!("{:?}", a);
-                    CommandExecutorError::Any
+                .map_err(|error| {
+                    tracing::error!("{:?}", error);
+                    error
                 }),
         )
     }

@@ -61,12 +61,13 @@ impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
     #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
     fn handle(&mut self, msg: StartListening, ctx: &mut Self::Context) -> Self::Result {
         let listener_url = self.listener_url.clone();
+        let addr = ctx.address();
         ctx.wait(
             async {
                 if let Some(listener_url) = listener_url {
                     trace!("Start listener with {}", listener_url);
 
-                    Some(Listener::setup(listener_url).await.unwrap())
+                    Some(Listener::setup(listener_url, addr).await.unwrap())
                 } else {
                     None
                 }
@@ -84,11 +85,11 @@ impl<A: Application> Handler<Subscribe> for SubscriberManager<A> {
     type Result = ResponseFuture<()>;
 
     fn handle(&mut self, subscription: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
-        let stream_uuid = subscription.0.to_string();
-        let subscription_name = format!("subscription-{}", subscription.0);
-        let recipient = subscription.2.clone();
+        let stream_uuid = subscription.stream.to_string();
+        let subscription_name = format!("subscription-{}", subscription.stream);
+        let recipient = subscription.recipient.clone();
 
-        self.add_sub(&subscription.0, subscription.1);
+        self.add_sub(&subscription.stream, subscription.resolver);
 
         Box::pin(async {
             let addr = EventStore::<A>::get_addr().await.unwrap();

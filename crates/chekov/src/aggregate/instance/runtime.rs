@@ -78,7 +78,7 @@ impl<A: Aggregate> ActixHandler<ResolveAndApply> for AggregateInstance<A> {
     type Result = Result<(), ()>;
 
     fn handle(&mut self, msg: ResolveAndApply, _: &mut Self::Context) -> Self::Result {
-        self.apply_recorded_event(msg.0).map_err(|_| ())
+        self.apply_recorded_event(&msg.0).map_err(|_| ())
     }
 }
 
@@ -87,7 +87,7 @@ impl<A: Aggregate> ActixHandler<ResolveAndApplyMany> for AggregateInstance<A> {
 
     fn handle(&mut self, msg: ResolveAndApplyMany, _: &mut Self::Context) -> Self::Result {
         for event in msg.0 {
-            let _ = self.apply_recorded_event(event);
+            let _ = self.apply_recorded_event(&event);
         }
 
         Ok(())
@@ -100,10 +100,22 @@ impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<
     fn handle(&mut self, msg: SubscriptionNotification, _: &mut Self::Context) -> Self::Result {
         match msg {
             SubscriptionNotification::Events(events) => {
-                for event in events {
+                for event in events.as_ref() {
+                    let _ = self.apply_recorded_event(&event);
+                }
+            }
+            SubscriptionNotification::OwnedEvents(events) => {
+                for event in events.iter() {
                     let _ = self.apply_recorded_event(event);
                 }
             }
+
+            SubscriptionNotification::PubSubEvents(_stream, events) => {
+                for event in events {
+                    let _ = self.apply_recorded_event(&event);
+                }
+            }
+
             SubscriptionNotification::Subscribed => {}
         }
 

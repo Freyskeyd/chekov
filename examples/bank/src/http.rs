@@ -5,6 +5,7 @@ use actix_web::body::BoxBody;
 use actix_web::web;
 use actix_web::{delete, get, post, put};
 use actix_web::{HttpRequest, HttpResponse, Responder};
+use serde_json::json;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -37,7 +38,7 @@ pub async fn find(_id: web::Path<Uuid>) -> impl Responder {
 pub async fn create(account: web::Json<OpenAccount>) -> impl Responder {
     match Router::<DefaultApp>::dispatch(account.into_inner(), CommandMetadatas::default()).await {
         Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
-        Err(e) => HttpResponse::Ok().json(e),            // <- send response
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 
@@ -56,7 +57,7 @@ pub async fn update(
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res.first()), // <- send response
-        Err(e) => HttpResponse::Ok().json(e),            // <- send response
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
 
@@ -71,6 +72,6 @@ pub async fn delete(id: web::Path<uuid::Uuid>) -> impl Responder {
     .await
     {
         Ok(res) => HttpResponse::Ok().json(res),
-        Err(e) => HttpResponse::Ok().json(e),
+        Err(e) => HttpResponse::Ok().json(json!({ "error": e.to_string() })),
     }
 }
