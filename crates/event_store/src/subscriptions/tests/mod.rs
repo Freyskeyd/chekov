@@ -16,8 +16,8 @@ macro_rules! pluck {
     };
 }
 
-mod support;
 mod pub_sub;
+mod support;
 mod transient_fsm;
 
 struct TestContext {}
@@ -88,9 +88,12 @@ async fn should_subscribe_to_single_stream_from_origin() {
     assert!(matches!(x, Some(SubscriptionNotification::Subscribed)));
 
     let x = tracker.lock().await.pop_front();
-    assert!(matches!(x, Some(SubscriptionNotification::Events(_))));
+    assert!(matches!(
+        x,
+        Some(SubscriptionNotification::PubSubEvents(_, _))
+    ));
 
-    if let Some(SubscriptionNotification::Events(events)) = x {
+    if let Some(SubscriptionNotification::PubSubEvents(_, ref events)) = x {
         assert_eq!(pluck!(events, event_number), [1]);
         assert_eq!(pluck!(events, stream_uuid), [identity.to_string()]);
         assert_eq!(pluck!(events, stream_version), [Some(1)]);

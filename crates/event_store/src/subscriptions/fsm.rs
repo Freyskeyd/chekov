@@ -6,6 +6,7 @@ use crate::prelude::ReadVersion;
 use crate::storage::reader::Reader;
 use crate::EventStore;
 
+use super::pub_sub::PubSub;
 use super::subscriber::Subscriber;
 use super::SubscriptionNotification;
 use super::{state::SubscriptionState, SubscriptionOptions};
@@ -147,7 +148,9 @@ impl<S: Storage> SubscriptionFSM<S> {
 
     #[tracing::instrument(skip(self))]
     async fn subscribe_to_events(&mut self) -> Result<(), ()> {
-        // PubSub::subscribe
+        if let Some(ref subscriber) = self.data.subscriber {
+            PubSub::subscribe(subscriber.recipient.clone(), self.data.stream_uuid.clone()).await;
+        }
         Ok(())
     }
 

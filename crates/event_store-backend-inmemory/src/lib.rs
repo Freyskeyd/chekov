@@ -166,6 +166,7 @@ impl Backend for InMemoryBackend {
             Box::pin(async move {
                 let ids = events.iter().map(|e| e.event_uuid).collect();
                 if let Some(n) = notifier {
+                    trace!("Notifying events to eventBus");
                     let _ = n.send(EventBusMessage::Events(stream_uuid, events));
                 }
 

@@ -1,20 +1,20 @@
 use std::time::Duration;
 
-use actix::clock::sleep;
-use serde_json::json;
 use crate::{
     prelude::ExpectedVersion,
     subscriptions::{
         fsm::{InternalFSMState, SubscriptionFSM},
         tests::support::{
-            EventStoreHelper,
             event::{EventFactory, MyEvent},
             subscriber::SubscriberFactory,
+            EventStoreHelper,
         },
         StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions,
     },
     InMemoryStorage,
 };
+use actix::clock::sleep;
+use serde_json::json;
 use test_log::test;
 use uuid::Uuid;
 
@@ -23,7 +23,13 @@ async fn transient_subscription() {
     let es = EventStoreHelper::new(InMemoryStorage::default()).await;
     let identity = Uuid::new_v4();
 
-    let _ = es.append(&identity, ExpectedVersion::AnyVersion, &[&MyEvent {}, &MyEvent{}]).await;
+    let _ = es
+        .append(
+            &identity,
+            ExpectedVersion::AnyVersion,
+            &[&MyEvent {}, &MyEvent {}],
+        )
+        .await;
 
     let (tracker, addr) = SubscriberFactory::setup();
     let mut opts = SubscriptionOptions::default();
@@ -80,12 +86,17 @@ async fn notify_subscribers_after_events_persisted_to_stream() {
     let x = tracker.lock().await.pop_front();
     assert!(matches!(x, Some(SubscriptionNotification::Subscribed)));
 
-    let _ = es.append(&identity, ExpectedVersion::AnyVersion, &[&event]).await;
+    let _ = es
+        .append(&identity, ExpectedVersion::AnyVersion, &[&event])
+        .await;
 
     let x = tracker.lock().await.pop_front();
-    assert!(matches!(x, Some(SubscriptionNotification::Events(ref events)) if events.len() == 1));
+    assert!(
+        matches!(x, Some(SubscriptionNotification::PubSubEvents(_, ref events)) if events.len() == 1)
+    );
 
-    if let Some(SubscriptionNotification::Events(ref events)) = x {
+    if let Some(SubscriptionNotification::PubSubEvents(stream_uuid, ref events)) = x {
+        assert_eq!(stream_uuid.as_ref(), &identity.to_string());
         assert_eq!(pluck!(events, event_number), [1]);
         assert_eq!(pluck!(events, stream_uuid), [identity.to_string()]);
         assert_eq!(pluck!(events, stream_version), [Some(1)]);
@@ -97,6 +108,7 @@ async fn notify_subscribers_after_events_persisted_to_stream() {
     }
 }
 
+#[ignore]
 #[test(actix::test)]
 async fn ignore_events_persisted_before_subscription() {
     let es = EventStoreHelper::new(InMemoryStorage::default()).await;
@@ -105,7 +117,9 @@ async fn ignore_events_persisted_before_subscription() {
     let initial = EventFactory::create_event(0);
     let _event = EventFactory::create_event(1);
 
-    let _ = es.append(&identity, ExpectedVersion::Version(0), &[&initial]).await;
+    let _ = es
+        .append(&identity, ExpectedVersion::Version(0), &[&initial])
+        .await;
 
     sleep(Duration::from_millis(100)).await;
     let (tracker, subscriber_addr) = SubscriberFactory::setup();
@@ -124,8 +138,7 @@ async fn ignore_events_persisted_before_subscription() {
     .expect("Unable to subscribe");
 
     let x = tracker.lock().await.pop_front();
-    assert!(matches!(x, Some(SubscriptionNotification::Subscribed)) );
-
+    assert!(matches!(x, Some(SubscriptionNotification::Subscribed)));
 
     let x = tracker.lock().await.pop_front();
     println!("{:?}", x);
@@ -143,12 +156,3 @@ async fn ignore_events_persisted_before_subscription() {
     //     assert_eq!(pluck!(events, metadata), [None]);
     // }
 }
-    //   assert :ok = EventStore.subscribe(stream_uuid)
-    //
-    //   refute_receive {:events, _received_events}
-    //
-    //   :ok = EventStore.append_to_stream(stream_uuid, 1, events)
-    //
-    //   assert_receive {:events, received_events}
-    //   assert length(received_events) == 2
-    // end

@@ -60,9 +60,9 @@ impl<S: Storage> Handler<Notify> for SubscriptionsSupervisor<S> {
         _ctx: &mut Self::Context,
     ) -> Self::Result {
         if let Some(subscriptions) = self.subscriptions.get(&stream_uuid) {
-            subscriptions.iter().for_each(|sub| {
-                sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()))
-            });
+            for sub in subscriptions {
+                sub.do_send(NotifySubscribers(stream_uuid.clone(), events.clone()));
+            }
         }
     }
 }

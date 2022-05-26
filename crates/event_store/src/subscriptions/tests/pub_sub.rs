@@ -20,6 +20,7 @@ use test_log::test;
 use uuid::Uuid;
 
 #[test(actix::test)]
+#[ignore]
 async fn ignore_events_persisted_before_subscription() {
     let es = EventStoreHelper::new(InMemoryStorage::default()).await;
     let identity = Uuid::new_v4();

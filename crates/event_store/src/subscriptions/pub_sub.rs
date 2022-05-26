@@ -6,6 +6,7 @@ use std::{
 
 use actix::{Actor, Context, Handler, Message, Recipient, Supervised, SystemService};
 use event_store_core::event::RecordedEvent;
+use tracing::trace;
 
 use super::SubscriptionNotification;
 
@@ -53,6 +54,7 @@ impl Handler<PubSubNotification> for PubSub {
     type Result = ();
 
     fn handle(&mut self, msg: PubSubNotification, ctx: &mut Self::Context) -> Self::Result {
+        trace!("Received PubSubNotification");
         // When receiving a PubSub notification
         // We need to:
         //  - check if someone is listening for the stream OR if there is any $all listener

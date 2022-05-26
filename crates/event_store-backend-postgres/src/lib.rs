@@ -101,10 +101,10 @@ impl Backend for PostgresBackend {
         Box::pin(
             async move {
                 let mut conn = pool
-                    .map_err(|error| PostgresBackendError::PoolAcquisitionError(error))
+                    .map_err(PostgresBackendError::PoolAcquisitionError)
                     .await?;
                 let stream = sql::stream_info(&mut conn, &stream_uuid)
-                    .map_err(|error| PostgresBackendError::SQLError(error))
+                    .map_err(PostgresBackendError::SQLError)
                     .await?;
 
                 match sql::read_stream(&mut conn, stream.stream_id, version, limit).await {
@@ -145,7 +145,7 @@ impl Backend for PostgresBackend {
         Box::pin(
             async move {
                 let mut conn = pool
-                    .map_err(|error| PostgresBackendError::PoolAcquisitionError(error))
+                    .map_err(PostgresBackendError::PoolAcquisitionError)
                     .await?;
 
                 let events = sql::insert_events(&mut conn, &stream_uuid, &events)

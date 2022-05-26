@@ -25,6 +25,7 @@ impl Subscriber {
             last_sent: 0,
         }
     }
+
     pub(crate) async fn notify_subscribed(&self) -> Result<Result<(), ()>, MailboxError> {
         self.recipient
             .send(SubscriptionNotification::Subscribed)

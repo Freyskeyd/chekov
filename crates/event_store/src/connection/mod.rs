@@ -60,12 +60,20 @@ impl<S: Storage> Actor for Connection<S> {
 
 impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Connection<S> {
     fn handle(&mut self, item: Result<EventBusMessage, EventBusError>, _ctx: &mut Context<Self>) {
+        trace!("Received Message on event bus");
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(stream_uuid, events) => {
-                    // let events =
-                    //     Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
-                    // Subscriptions::<S>::notify_subscribers(&stream_uuid, events);
+                    trace!("spawning future to pubsub");
+
+                    tokio::spawn(
+                        self.pub_sub
+                            .send(PubSubNotification {
+                                stream: stream_uuid,
+                                events,
+                            })
+                            .in_current_span(),
+                    );
                 }
                 EventBusMessage::Notification(notification) => {
                     trace!(
