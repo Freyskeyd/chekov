@@ -109,6 +109,13 @@ impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<
                     let _ = self.apply_recorded_event(event);
                 }
             }
+
+            SubscriptionNotification::PubSubEvents(_stream, events) => {
+                for event in events {
+                    let _ = self.apply_recorded_event(&event);
+                }
+            }
+
             SubscriptionNotification::Subscribed => {}
         }
 

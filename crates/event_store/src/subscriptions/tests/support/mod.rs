@@ -2,7 +2,6 @@ use std::{collections::VecDeque, sync::Arc};
 
 use actix::{Actor, Context, Handler, ResponseFuture, Addr};
 use event_store_core::{storage::Storage, versions::ExpectedVersion, event::Event, error::EventStoreError};
-use event_store_storage_inmemory::InMemoryStorage;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 

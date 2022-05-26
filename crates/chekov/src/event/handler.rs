@@ -4,7 +4,7 @@ use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
 use actix::prelude::*;
-use event_store::prelude::{StartFrom, SubscriptionNotification, SubscriptionOptions};
+use event_store::prelude::{StartFrom, SubscriptionNotification};
 use tracing::trace;
 
 pub struct EventHandlerBuilder<E: EventHandler> {
@@ -68,7 +68,7 @@ pub struct Subscribe {
     pub stream: String,
     pub resolver: Recipient<ResolveAndApplyMany>,
     pub recipient: Recipient<SubscriptionNotification>,
-    pub transient: bool
+    pub transient: bool,
 }
 
 /// Deals with the lifetime of a particular EventHandler
@@ -142,18 +142,30 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
                     Ok(())
                 })
             }
+
+            SubscriptionNotification::PubSubEvents(stream, events) => {
+                let mut handler = self.handler.clone();
+
+                Box::pin(async move {
+                    for event in events {
+                        // TODO: Remove clonning to prevent data duplication
+                        EventHandler::handle_recorded_event(&mut handler, event.as_ref().clone())
+                            .await;
+                    }
+                    Ok(())
+                })
+            }
+
             SubscriptionNotification::Events(events) => {
                 let mut handler = self.handler.clone();
                 let events = events;
                 Box::pin(async move {
                     for event in events.iter() {
                         // TODO: Deal with handle error
-                        EventHandler::handle_recorded_event(
-                            &mut handler,
-                            Arc::try_unwrap(event.clone()).unwrap(),
-                        )
-                        .await
-                        .map_err(|_| ())?;
+                        // TODO: Remove clonning to prevent data duplication
+                        EventHandler::handle_recorded_event(&mut handler, event.as_ref().clone())
+                            .await
+                            .map_err(|_| ())?;
                     }
                     Ok(())
                 })

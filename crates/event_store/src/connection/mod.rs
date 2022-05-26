@@ -1,8 +1,9 @@
 use crate::core::event::RecordedEvent;
 use crate::core::stream::Stream;
+use crate::subscriptions::pub_sub::{PubSub, PubSubNotification};
 use crate::subscriptions::Subscriptions;
 use crate::EventStoreError;
-use actix::{Actor, AsyncContext, Context, Handler, ResponseFuture};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, SystemService};
 use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
 use event_store_core::backend::Backend;
@@ -10,6 +11,7 @@ use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::Storage;
 use futures::{FutureExt, TryFutureExt};
+use std::borrow::Cow;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -31,11 +33,15 @@ pub struct OpenNotificationChannel {
 #[derive(Debug)]
 pub struct Connection<S: Storage> {
     storage: S,
+    pub_sub: Addr<PubSub>,
 }
 
 impl<S: Storage> Connection<S> {
     pub fn make(storage: S) -> Self {
-        Self { storage }
+        Self {
+            storage,
+            pub_sub: PubSub::from_registry(),
+        }
     }
 }
 
@@ -57,9 +63,9 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
         if let Ok(message) = item {
             match message {
                 EventBusMessage::Events(stream_uuid, events) => {
-                    let events =
-                        Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
-                    Subscriptions::<S>::notify_subscribers(&stream_uuid, events);
+                    // let events =
+                    //     Arc::new(events.into_iter().map(|event| Arc::new(event)).collect());
+                    // Subscriptions::<S>::notify_subscribers(&stream_uuid, events);
                 }
                 EventBusMessage::Notification(notification) => {
                     trace!(
@@ -67,13 +73,15 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         notification.stream_uuid
                     );
 
-                    let stream_uuid = notification.stream_uuid.clone();
+                    let stream_uuid = notification.stream_uuid;
                     let correlation_id = Uuid::new_v4();
+                    let pub_sub = self.pub_sub.clone();
+
                     let fut = self
                         .storage
                         .backend()
                         .read_stream(
-                            stream_uuid.clone(),
+                            stream_uuid.to_string(),
                             notification.first_stream_version as usize,
                             (notification.last_stream_version - notification.first_stream_version
                                 + 1) as usize,
@@ -81,12 +89,10 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                         )
                         .in_current_span()
                         .map(move |res| match res {
-                            Ok(events) => {
-                                let events = Arc::new(
-                                    events.into_iter().map(|event| Arc::new(event)).collect(),
-                                );
-                                Subscriptions::<S>::notify_subscribers(&stream_uuid.clone(), events)
-                            }
+                            Ok(events) => pub_sub.send(PubSubNotification {
+                                stream: stream_uuid,
+                                events,
+                            }),
                             Err(_) => todo!(),
                         });
 
@@ -223,8 +229,8 @@ mod test {
         }
     }
 
-    #[test]
-    fn connection_can_be_created() {
+    #[actix::test]
+    async fn connection_can_be_created() {
         let storage = InMemoryStorage::default();
         let _conn: Connection<InMemoryStorage> = Connection::make(storage);
     }

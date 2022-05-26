@@ -61,12 +61,13 @@ impl<A: Application> Handler<StartListening> for SubscriberManager<A> {
     #[tracing::instrument(name = "SubscriberManager", skip(self, ctx), fields(app = %A::get_name()))]
     fn handle(&mut self, msg: StartListening, ctx: &mut Self::Context) -> Self::Result {
         let listener_url = self.listener_url.clone();
+        let addr = ctx.address();
         ctx.wait(
             async {
                 if let Some(listener_url) = listener_url {
                     trace!("Start listener with {}", listener_url);
 
-                    Some(Listener::setup(listener_url).await.unwrap())
+                    Some(Listener::setup(listener_url, addr).await.unwrap())
                 } else {
                     None
                 }

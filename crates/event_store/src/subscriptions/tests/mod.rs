@@ -17,6 +17,7 @@ macro_rules! pluck {
 }
 
 mod support;
+mod pub_sub;
 mod transient_fsm;
 
 struct TestContext {}

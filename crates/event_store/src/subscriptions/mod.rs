@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 mod error;
 mod fsm;
+pub(crate) mod pub_sub;
 mod state;
 mod subscriber;
 mod subscription;
@@ -20,6 +21,7 @@ mod supervisor;
 mod tests;
 
 use self::error::SubscriptionError;
+
 pub use self::subscription::Subscription;
 pub use supervisor::SubscriptionsSupervisor;
 
@@ -79,6 +81,7 @@ impl Default for StartFrom {
 pub enum SubscriptionNotification {
     Events(Arc<Vec<Arc<RecordedEvent>>>),
     OwnedEvents(Cow<'static, Arc<Vec<Arc<RecordedEvent>>>>),
+    PubSubEvents(Arc<String>, Vec<Arc<RecordedEvent>>),
     Subscribed,
 }
 
