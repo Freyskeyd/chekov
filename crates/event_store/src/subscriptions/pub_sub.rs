@@ -25,7 +25,7 @@ impl Supervised for PubSub {}
 impl PubSub {
     pub async fn subscribe(recipient: Recipient<SubscriptionNotification>, stream: String) {
         Self::from_registry()
-            .send(Register(recipient, stream))
+            .send(Subscribe(recipient, stream))
             .await
             .unwrap()
     }
@@ -33,7 +33,7 @@ impl PubSub {
 
 #[derive(Message)]
 #[rtype("()")]
-struct Register(Recipient<SubscriptionNotification>, String);
+struct Subscribe(Recipient<SubscriptionNotification>, String);
 
 #[derive(Message)]
 #[rtype("()")]
@@ -42,10 +42,10 @@ pub(crate) struct PubSubNotification {
     pub(crate) events: Vec<RecordedEvent>,
 }
 
-impl Handler<Register> for PubSub {
+impl Handler<Subscribe> for PubSub {
     type Result = ();
 
-    fn handle(&mut self, msg: Register, _ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
         self.listeners.entry(msg.1).or_default().push(msg.0);
     }
 }
@@ -80,7 +80,13 @@ impl Handler<PubSubNotification> for PubSub {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::subscriptions::tests::support::{
+        event::EventFactory, subscriber::SubscriberFactory, EventStoreHelper,
+    };
+    use event_store_core::versions::ExpectedVersion;
+    use event_store_storage_inmemory::InMemoryStorage;
     use test_log::test;
+    use uuid::Uuid;
 
     #[test(actix::test)]
     async fn should_handle_a_notification() {
@@ -92,5 +98,35 @@ mod tests {
         let result = PubSub::from_registry().send(notification).await;
 
         assert!(matches!(result, Ok(())));
+    }
+
+    #[test(actix::test)]
+    async fn should_only_notify_subscribers() {
+        let (tracker, subscriber_addr) = SubscriberFactory::setup();
+        let (tracker_2, _) = SubscriberFactory::setup();
+        let identity = Uuid::new_v4();
+
+        PubSub::subscribe(subscriber_addr.recipient(), identity.to_string()).await;
+
+        let es = EventStoreHelper::new(InMemoryStorage::default()).await;
+        let initial = EventFactory::create_event(0);
+
+        let _ = es
+            .append(&identity, ExpectedVersion::Version(0), &[&initial])
+            .await;
+
+        let notif_1 = tracker.lock().await.pop_front();
+        assert!(
+            matches!(notif_1, Some(SubscriptionNotification::PubSubEvents(ref stream, ref events)) if !events.is_empty() && stream.as_ref() == &identity.to_string()),
+            "expected SubscriptionNotification::Subscribed received: {:?}",
+            notif_1
+        );
+
+        let notif_2 = tracker_2.lock().await.pop_front();
+        assert!(
+            matches!(notif_2, None),
+            "expected no notifications received: {:?}",
+            notif_2
+        );
     }
 }
