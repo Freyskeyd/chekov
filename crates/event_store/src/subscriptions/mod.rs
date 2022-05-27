@@ -26,7 +26,7 @@ pub use self::subscription::Subscription;
 pub use supervisor::SubscriptionsSupervisor;
 
 ///
-/// Subscribe to a stream start a subscription in the superviseur
+/// Subscribe to a stream start a subscription in the supervisor
 ///   The supervisor starts a subscription actor
 ///     The subscription actor create a new FSM
 ///   The subscription actor receive a Connect message
