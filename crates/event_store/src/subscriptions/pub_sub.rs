@@ -118,7 +118,7 @@ mod tests {
         let notif_1 = tracker.lock().await.pop_front();
         assert!(
             matches!(notif_1, Some(SubscriptionNotification::PubSubEvents(ref stream, ref events)) if !events.is_empty() && stream.as_ref() == &identity.to_string()),
-            "expected SubscriptionNotification::Subscribed received: {:?}",
+            "expected SubscriptionNotification::PubSubEvents received: {:?}",
             notif_1
         );
 
@@ -126,6 +126,41 @@ mod tests {
         assert!(
             matches!(notif_2, None),
             "expected no notifications received: {:?}",
+            notif_2
+        );
+    }
+
+    #[test(actix::test)]
+    async fn ignore_events_persisted_before_subscription() {
+        let es = EventStoreHelper::new(InMemoryStorage::default()).await;
+        let identity = Uuid::new_v4();
+
+        let initial = EventFactory::create_event(0);
+        let event = EventFactory::create_event(1);
+
+        let _ = es
+            .append(&identity, ExpectedVersion::Version(0), &[&initial])
+            .await;
+
+        let (tracker, subscriber_addr) = SubscriberFactory::setup();
+
+        PubSub::subscribe(subscriber_addr.recipient(), identity.to_string()).await;
+
+        let notif_1 = tracker.lock().await.pop_front();
+        assert!(
+            matches!(notif_1, None),
+            "expected no notifications received: {:?}",
+            notif_1
+        );
+
+        let _ = es
+            .append(&identity, ExpectedVersion::Version(1), &[&event])
+            .await;
+
+        let notif_2 = tracker.lock().await.pop_front();
+        assert!(
+            matches!(notif_2, Some(SubscriptionNotification::PubSubEvents(ref stream, ref events)) if !events.is_empty() && stream.as_ref() == &identity.to_string()),
+            "expected SubscriptionNotification::PubSubEvents received: {:?}",
             notif_2
         );
     }
