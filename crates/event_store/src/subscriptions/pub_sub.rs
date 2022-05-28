@@ -1,3 +1,4 @@
+// TODO: PubSubNotification needs to be filterable by subscribtion (need to store a closure (RecordedEvent -> boolean))
 use std::{
     borrow::{Borrow, Cow},
     collections::HashMap,
@@ -60,12 +61,23 @@ impl Handler<PubSubNotification> for PubSub {
         //  - check if someone is listening for the stream OR if there is any $all listener
         //  - convert the Vec<RecordedEvent> into a Vec<Arc<RecordedEvent>>
         //  - Send Async notification to every $all / stream listeners
-        let _has_listeners = self.listeners.contains_key::<str>(msg.stream.borrow());
 
         let stream: Arc<String> = Arc::new(msg.stream);
         let v: Vec<Arc<RecordedEvent>> = msg.events.into_iter().map(Into::into).collect();
 
         if let Some(listeners) = self.listeners.get::<str>(&stream) {
+            listeners.iter().for_each(|listener| {
+                // FIX: Deal with failure
+                let _ = listener.try_send(SubscriptionNotification::PubSubEvents(
+                    stream.clone(),
+                    v.clone(),
+                ));
+            });
+        }
+
+        // TODO: Group the two loops
+        // WARNING: Listeners subscribing both to stream_id and $all will receive events 2times
+        if let Some(listeners) = self.listeners.get::<str>("$all") {
             listeners.iter().for_each(|listener| {
                 // FIX: Deal with failure
                 let _ = listener.try_send(SubscriptionNotification::PubSubEvents(

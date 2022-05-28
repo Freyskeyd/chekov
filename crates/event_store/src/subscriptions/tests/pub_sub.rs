@@ -85,3 +85,73 @@ async fn ignore_events_persisted_before_subscription() {
         notif_2
     );
 }
+
+#[test(actix::test)]
+async fn notify_subscribers_after_event_persisted_to_stream() {
+    let es = EventStoreHelper::new(InMemoryStorage::default()).await;
+    let identity = Uuid::new_v4();
+
+    let initial = EventFactory::create_event(0);
+
+    let (tracker, subscriber_addr) = SubscriberFactory::setup();
+
+    PubSub::subscribe(subscriber_addr.recipient(), identity.to_string()).await;
+
+    let _ = es
+        .append(&identity, ExpectedVersion::Version(0), &[&initial])
+        .await;
+
+    let notif_1 = tracker.lock().await.pop_front();
+    assert!(
+        matches!(notif_1, Some(SubscriptionNotification::PubSubEvents(ref stream, ref events)) if !events.is_empty() && stream.as_ref() == &identity.to_string()),
+        "expected SubscriptionNotification::PubSubEvents received: {:?}",
+        notif_1
+    );
+}
+
+#[test(actix::test)]
+async fn ignore_events_persisted_to_another_stream() {
+    let es = EventStoreHelper::new(InMemoryStorage::default()).await;
+    let identity = Uuid::new_v4();
+    let other_stream = Uuid::new_v4();
+
+    let initial = EventFactory::create_event(0);
+
+    let (tracker, subscriber_addr) = SubscriberFactory::setup();
+
+    PubSub::subscribe(subscriber_addr.recipient(), identity.to_string()).await;
+
+    let _ = es
+        .append(&other_stream, ExpectedVersion::Version(0), &[&initial])
+        .await;
+
+    let notif_1 = tracker.lock().await.pop_front();
+    assert!(
+        matches!(notif_1, None),
+        "expected no notifications received: {:?}",
+        notif_1
+    );
+}
+
+#[test(actix::test)]
+async fn notify_all_stream_subscribers_after_events_persisted_to_any_stream() {
+    let es = EventStoreHelper::new(InMemoryStorage::default()).await;
+    let identity = Uuid::new_v4();
+
+    let initial = EventFactory::create_event(0);
+
+    let (tracker, subscriber_addr) = SubscriberFactory::setup();
+
+    PubSub::subscribe(subscriber_addr.recipient(), "$all".to_string()).await;
+
+    let _ = es
+        .append(&identity, ExpectedVersion::Version(0), &[&initial])
+        .await;
+
+    let notif_1 = tracker.lock().await.pop_front();
+    assert!(
+        matches!(notif_1, Some(SubscriptionNotification::PubSubEvents(ref stream, ref events)) if !events.is_empty() && stream.as_ref() == &identity.to_string()),
+        "expected SubscriptionNotification::PubSubEvents received: {:?}",
+        notif_1
+    );
+}
