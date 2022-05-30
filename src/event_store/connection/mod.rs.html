@@ -322,13 +322,9 @@
 <span id="317">317</span>
 <span id="318">318</span>
 <span id="319">319</span>
-<span id="320">320</span>
-<span id="321">321</span>
-<span id="322">322</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::event::RecordedEvent</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::stream::Stream</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::pub_sub</span>::{<span class="ident">PubSub</span>, <span class="ident">PubSubNotification</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::subscriptions::Subscriptions</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::EventStoreError</span>;
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Addr</span>, <span class="ident">AsyncContext</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">ResponseFuture</span>, <span class="ident">SystemService</span>};
 <span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">ActorFutureExt</span>, <span class="ident">Message</span>};
@@ -338,9 +334,7 @@
 <span class="kw">use</span> <span class="ident">event_store_core::event_bus::EventBusMessage</span>;
 <span class="kw">use</span> <span class="ident">event_store_core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
-<span class="kw">use</span> <span class="ident">std::borrow::Cow</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
-<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio::sync::mpsc</span>;
 <span class="kw">use</span> <span class="ident">tracing::trace</span>;
 <span class="kw">use</span> <span class="ident">tracing::Instrument</span>;

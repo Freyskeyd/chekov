@@ -93,18 +93,33 @@
 <span id="88">88</span>
 <span id="89">89</span>
 <span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
 </pre><pre class="rust"><code><span class="comment">// TODO: PubSubNotification needs to be filterable by subscribtion (need to store a closure (RecordedEvent -&gt; boolean))</span>
-<span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">borrow</span>::{<span class="ident">Borrow</span>, <span class="ident">Cow</span>},
-    <span class="ident">collections::HashMap</span>,
-    <span class="ident">sync::Arc</span>,
-};
-
-<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">Message</span>, <span class="ident">Recipient</span>, <span class="ident">Supervised</span>, <span class="ident">SystemService</span>};
-<span class="kw">use</span> <span class="ident">event_store_core::event::RecordedEvent</span>;
-<span class="kw">use</span> <span class="ident">tracing::trace</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">sync::Arc</span>};
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SubscriptionNotification</span>;
+<span class="kw">use</span> <span class="ident">actix</span>::{<span class="ident">Actor</span>, <span class="ident">Context</span>, <span class="ident">Handler</span>, <span class="ident">MailboxError</span>, <span class="ident">Message</span>, <span class="ident">Recipient</span>, <span class="ident">Supervised</span>, <span class="ident">SystemService</span>};
+<span class="kw">use</span> <span class="ident">event_store_core::event::RecordedEvent</span>;
+<span class="kw">use</span> <span class="ident">tracing::trace</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PubSub</span> {
@@ -125,11 +140,21 @@
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>()
     }
+
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">has_subscriber_for</span>(<span class="ident">stream</span>: <span class="ident">String</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">MailboxError</span><span class="op">&gt;</span> {
+        <span class="ident"><span class="self">Self</span>::from_registry</span>()
+            .<span class="ident">send</span>(<span class="ident">GetSubscriberCountForStream</span>(<span class="ident">stream</span>))
+            .<span class="kw">await</span>
+    }
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Subscribe</span>(<span class="ident">Recipient</span><span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>, <span class="ident">String</span>);
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;usize&quot;</span>)]</span>
+<span class="kw">struct</span> <span class="ident">GetSubscriberCountForStream</span>(<span class="ident">String</span>);
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;()&quot;</span>)]</span>
@@ -146,10 +171,25 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">GetSubscriberCountForStream</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PubSub</span> {
+    <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> <span class="ident">usize</span>;
+
+    <span class="kw">fn</span> <span class="ident">handle</span>(
+        <span class="kw-2">&amp;mut</span> <span class="self">self</span>,
+        <span class="ident">msg</span>: <span class="ident">GetSubscriberCountForStream</span>,
+        <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>,
+    ) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
+        <span class="self">self</span>.<span class="ident">listeners</span>
+            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">msg</span>.<span class="number">0</span>)
+            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">listeners</span><span class="op">|</span> <span class="ident">listeners</span>.<span class="ident">len</span>())
+            .<span class="ident">unwrap_or</span>(<span class="number">0</span>)
+    }
+}
+
 <span class="kw">impl</span> <span class="ident">Handler</span><span class="op">&lt;</span><span class="ident">PubSubNotification</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PubSub</span> {
     <span class="kw">type</span> <span class="prelude-ty">Result</span> <span class="op">=</span> ();
 
-    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">PubSubNotification</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
+    <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">msg</span>: <span class="ident">PubSubNotification</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident"><span class="self">Self</span>::Result</span> {
         <span class="macro">trace!</span>(<span class="string">&quot;Received PubSubNotification&quot;</span>);
         <span class="comment">// When receiving a PubSub notification</span>
         <span class="comment">// We need to:</span>
