@@ -1,15 +1,10 @@
 // TODO: PubSubNotification needs to be filterable by subscribtion (need to store a closure (RecordedEvent -> boolean))
-use std::{
-    borrow::{Borrow, Cow},
-    collections::HashMap,
-    sync::Arc,
-};
-
-use actix::{Actor, Context, Handler, Message, Recipient, Supervised, SystemService};
-use event_store_core::event::RecordedEvent;
-use tracing::trace;
+use std::{collections::HashMap, sync::Arc};
 
 use super::SubscriptionNotification;
+use actix::{Actor, Context, Handler, MailboxError, Message, Recipient, Supervised, SystemService};
+use event_store_core::event::RecordedEvent;
+use tracing::trace;
 
 #[derive(Default, Debug)]
 pub struct PubSub {
@@ -30,11 +25,21 @@ impl PubSub {
             .await
             .unwrap()
     }
+
+    pub async fn has_subscriber_for(stream: String) -> Result<usize, MailboxError> {
+        Self::from_registry()
+            .send(GetSubscriberCountForStream(stream))
+            .await
+    }
 }
 
 #[derive(Message)]
 #[rtype("()")]
 struct Subscribe(Recipient<SubscriptionNotification>, String);
+
+#[derive(Message)]
+#[rtype("usize")]
+struct GetSubscriberCountForStream(String);
 
 #[derive(Message)]
 #[rtype("()")]
@@ -48,6 +53,21 @@ impl Handler<Subscribe> for PubSub {
 
     fn handle(&mut self, msg: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
         self.listeners.entry(msg.1).or_default().push(msg.0);
+    }
+}
+
+impl Handler<GetSubscriberCountForStream> for PubSub {
+    type Result = usize;
+
+    fn handle(
+        &mut self,
+        msg: GetSubscriberCountForStream,
+        _ctx: &mut Self::Context,
+    ) -> Self::Result {
+        self.listeners
+            .get(&msg.0)
+            .map(|listeners| listeners.len())
+            .unwrap_or(0)
     }
 }
 
