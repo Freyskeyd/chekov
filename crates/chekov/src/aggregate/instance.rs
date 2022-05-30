@@ -49,6 +49,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         let mut instance = AggregateInstance::<A>::default();
 
         instance.identity = identity.clone();
+
         if let Ok(events) = events {
             for event in events {
                 trace!("Applying {} event ({})", event.event_uuid, event.event_type);
@@ -61,18 +62,17 @@ impl<A: Aggregate> AggregateInstance<A> {
         }
 
         trace!("AggregateInstance applied past events");
-
         // subscribe to events
-        let addr = AggregateInstance::create(move |ctx| {
-            instance.inner.on_start::<APP>(&identity, ctx);
-            // let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
-            // let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
-            let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-
-            ctx.wait(PubSub::subscribe(recipient_sub, identity).into_actor(&instance));
-
+        let addr = AggregateInstance::create(|ctx| {
+            instance.inner.on_start::<APP>(&instance.identity, ctx);
             instance
         });
+
+        let recipient_sub = addr.clone().recipient::<SubscriptionNotification>();
+
+        trace!("AggregateInstance creating transient PubSub to events");
+        PubSub::subscribe(recipient_sub, identity).await;
+        trace!("AggregateInstance created transient PubSub to events");
 
         Ok(addr)
     }

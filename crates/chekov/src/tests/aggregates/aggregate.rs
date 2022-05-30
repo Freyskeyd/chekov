@@ -6,6 +6,7 @@ use crate::message::Dispatch;
 use crate::prelude::*;
 use actix::Addr;
 use event_store::prelude::Appender;
+use event_store::PubSub;
 use std::marker::PhantomData;
 use test_log::test;
 use uuid::Uuid;
@@ -176,6 +177,22 @@ async fn can_execute_a_command() {
     let expected = vec![MyEvent { id: id }];
 
     assert!(matches!(result, Ok(events) if events == expected));
+}
+
+#[test(actix::test)]
+async fn aggregate_should_starts_a_pubsub_subscription() {
+    let identity = Uuid::new_v4();
+    let _ = start_context(&identity).await;
+
+    assert_eq!(
+        1,
+        PubSub::has_subscriber_for(identity.to_string())
+            .await
+            .expect(&format!(
+                "Failed to fetch the subscriber list for the stream {}",
+                identity
+            ))
+    );
 }
 
 #[allow(dead_code)]
