@@ -70,6 +70,16 @@ impl<A: Aggregate> AggregateInstance<A> {
 
         let recipient_sub = addr.clone().recipient::<SubscriptionNotification>();
 
+        // TODO: We must handle how an aggregate starts in a FS like machine.
+        // NOTE: For now it's ok to subscribe `after` the AggregateInstance is created because the
+        // only way to interact with the aggregate is through the addr which isn't return until we
+        // finished the setup.
+        // WARNING: But we must be careful when dealing with concurrency process, The PubSub is
+        // directly connected to the EventBus and can therefore push Events/Notification to the
+        // AggregateInstance at anytime when subscribed (which can occur before the addr is
+        // returned)
+        // An option could be to reduce the mailbox size to 0 or using any other way to prevent the
+        // aggregate to consume messages before it is fully setted up.
         trace!("AggregateInstance creating transient PubSub to events");
         PubSub::subscribe(recipient_sub, identity).await;
         trace!("AggregateInstance created transient PubSub to events");
