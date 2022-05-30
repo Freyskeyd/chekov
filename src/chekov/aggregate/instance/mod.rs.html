@@ -208,6 +208,16 @@
 <span id="203">203</span>
 <span id="204">204</span>
 <span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="self">self</span>::internal::CommandExecutionResult</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::resolver::EventResolverRegistry</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::command</span>::{<span class="ident">Command</span>, <span class="ident">Handler</span>, <span class="ident">NoHandler</span>};
@@ -280,6 +290,16 @@
 
         <span class="kw">let</span> <span class="ident">recipient_sub</span> <span class="op">=</span> <span class="ident">addr</span>.<span class="ident">clone</span>().<span class="ident">recipient</span>::<span class="op">&lt;</span><span class="ident">SubscriptionNotification</span><span class="op">&gt;</span>();
 
+        <span class="comment">// TODO: We must handle how an aggregate starts in a FS like machine.</span>
+        <span class="comment">// NOTE: For now it&#39;s ok to subscribe `after` the AggregateInstance is created because the</span>
+        <span class="comment">// only way to interact with the aggregate is through the addr which isn&#39;t return until we</span>
+        <span class="comment">// finished the setup.</span>
+        <span class="comment">// WARNING: But we must be careful when dealing with concurrency process, The PubSub is</span>
+        <span class="comment">// directly connected to the EventBus and can therefore push Events/Notification to the</span>
+        <span class="comment">// AggregateInstance at anytime when subscribed (which can occur before the addr is</span>
+        <span class="comment">// returned)</span>
+        <span class="comment">// An option could be to reduce the mailbox size to 0 or using any other way to prevent the</span>
+        <span class="comment">// aggregate to consume messages before it is fully setted up.</span>
         <span class="macro">trace!</span>(<span class="string">&quot;AggregateInstance creating transient PubSub to events&quot;</span>);
         <span class="ident">PubSub::subscribe</span>(<span class="ident">recipient_sub</span>, <span class="ident">identity</span>).<span class="kw">await</span>;
         <span class="macro">trace!</span>(<span class="string">&quot;AggregateInstance created transient PubSub to events&quot;</span>);
