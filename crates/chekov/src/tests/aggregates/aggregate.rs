@@ -93,6 +93,7 @@ fn can_apply_event() {
     let instance = AggregateInstance {
         inner: ExampleAggregate::default(),
         current_version: 1,
+        identity: String::new(),
         resolver: ExampleAggregate::get_event_resolver(),
     };
 
@@ -110,6 +111,7 @@ async fn can_recover_from_fail_execution() -> Result<(), Box<dyn std::error::Err
         inner: ExampleAggregate::default(),
         current_version: 1,
         resolver: ExampleAggregate::get_event_resolver(),
+        identity: String::new(),
     };
 
     let result = AggregateInstance::execute(
@@ -144,6 +146,7 @@ fn can_duplicate_state() {
         inner: ExampleAggregate::default(),
         current_version: 0,
         resolver: ExampleAggregate::get_event_resolver(),
+        identity: String::new(),
     };
 
     let _: ExampleAggregate = instance.create_mutable_state();
@@ -155,6 +158,7 @@ async fn can_execute_a_command() {
         inner: ExampleAggregate::default(),
         current_version: 0,
         resolver: ExampleAggregate::get_event_resolver(),
+        identity: String::new(),
     };
     let id = Uuid::new_v4();
 

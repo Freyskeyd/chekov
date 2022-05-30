@@ -22,6 +22,7 @@ mod runtime;
 pub struct AggregateInstance<A: Aggregate> {
     pub(crate) inner: A,
     pub(crate) current_version: i64,
+    pub(crate) identity: String,
     pub(crate) resolver: &'static EventResolverRegistry<A>,
 }
 
@@ -30,6 +31,7 @@ impl<A: Aggregate> Default for AggregateInstance<A> {
         Self {
             inner: A::default(),
             current_version: 0,
+            identity: String::new(),
             resolver: A::get_event_resolver(),
         }
     }
@@ -46,6 +48,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         trace!("AggregateInstance received {:?}", events);
         let mut instance = AggregateInstance::<A>::default();
 
+        instance.identity = identity.clone();
         if let Ok(events) = events {
             for event in events {
                 trace!("Applying {} event ({})", event.event_uuid, event.event_type);
