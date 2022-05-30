@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::message::ResolveAndApplyMany;
 use crate::Application;
 use crate::{error::HandleError, event_store::EventStore};
@@ -143,14 +141,17 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
                 })
             }
 
-            SubscriptionNotification::PubSubEvents(stream, events) => {
+            SubscriptionNotification::PubSubEvents(_, events) => {
                 let mut handler = self.handler.clone();
 
                 Box::pin(async move {
                     for event in events {
                         // TODO: Remove clonning to prevent data duplication
-                        EventHandler::handle_recorded_event(&mut handler, event.as_ref().clone())
-                            .await;
+                        let _ = EventHandler::handle_recorded_event(
+                            &mut handler,
+                            event.as_ref().clone(),
+                        )
+                        .await;
                     }
                     Ok(())
                 })

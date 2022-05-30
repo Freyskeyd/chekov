@@ -1,9 +1,8 @@
 use self::internal::CommandExecutionResult;
 use super::resolver::EventResolverRegistry;
 use crate::command::{Command, Handler, NoHandler};
-use crate::event::handler::Subscribe;
 use crate::event::Event;
-use crate::message::{DispatchWithState, ResolveAndApplyMany};
+use crate::message::DispatchWithState;
 use crate::prelude::ApplyError;
 use crate::{command::CommandExecutor, error::CommandExecutorError};
 use crate::{message::Dispatch, prelude::EventApplier};

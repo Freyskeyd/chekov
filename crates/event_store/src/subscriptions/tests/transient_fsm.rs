@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{
     prelude::ExpectedVersion,
     subscriptions::{
@@ -13,7 +11,6 @@ use crate::{
     },
     InMemoryStorage,
 };
-use actix::clock::sleep;
 use serde_json::json;
 use test_log::test;
 use uuid::Uuid;

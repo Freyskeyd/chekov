@@ -1,7 +1,6 @@
 use crate::core::event::RecordedEvent;
 use crate::core::stream::Stream;
 use crate::subscriptions::pub_sub::{PubSub, PubSubNotification};
-use crate::subscriptions::Subscriptions;
 use crate::EventStoreError;
 use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, SystemService};
 use actix::{ActorFutureExt, Message};
@@ -11,9 +10,7 @@ use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::Storage;
 use futures::{FutureExt, TryFutureExt};
-use std::borrow::Cow;
 use std::str::FromStr;
-use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::trace;
 use tracing::Instrument;

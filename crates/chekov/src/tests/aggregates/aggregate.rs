@@ -7,13 +7,14 @@ use crate::prelude::*;
 use actix::Addr;
 use event_store::prelude::Appender;
 use std::marker::PhantomData;
+use test_log::test;
 use uuid::Uuid;
 
-#[actix::test]
+#[test(actix::test)]
 async fn should_be_able_to_start() -> Result<(), Box<dyn std::error::Error>> {
     let identifier = Uuid::new_v4();
     start_application().await;
-    let instance = start_aggregate(identifier).await;
+    let instance = start_aggregate(&identifier).await;
 
     assert_aggregate_version!(instance, 0);
 
@@ -45,7 +46,7 @@ async fn should_rebuild_his_state_from_previously_append_events(
     )
     .await;
 
-    let instance = start_aggregate(identifier).await;
+    let instance = start_aggregate(&identifier).await;
 
     assert_aggregate_version!(instance, 1);
 
@@ -148,7 +149,7 @@ fn can_duplicate_state() {
     let _: ExampleAggregate = instance.create_mutable_state();
 }
 
-#[actix::test]
+#[test(actix::test)]
 async fn can_execute_a_command() {
     let instance = AggregateInstance {
         inner: ExampleAggregate::default(),
@@ -174,7 +175,7 @@ async fn can_execute_a_command() {
 }
 
 #[allow(dead_code)]
-async fn start_context(identity: Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
+async fn start_context(identity: &Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
     start_application().await;
     start_aggregate(identity).await
 }
@@ -186,7 +187,7 @@ async fn start_application() {
         .await;
 }
 
-async fn start_aggregate(identity: Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
+async fn start_aggregate(identity: &Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
     let correlation_id = Uuid::new_v4();
 
     AggregateInstance::<ExampleAggregate>::new::<MyApplication>(
