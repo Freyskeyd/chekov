@@ -169,6 +169,7 @@ pub use crate::event_store::EventStore;
 pub use event::Event;
 pub use event_store_core::versions;
 use storage::{appender::Appender, reader::Reader};
+pub use subscriptions::pub_sub::PubSub;
 use versions::ExpectedVersion;
 use versions::ReadVersion;
 

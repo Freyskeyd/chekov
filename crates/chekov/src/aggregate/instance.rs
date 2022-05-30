@@ -11,6 +11,7 @@ use crate::{Aggregate, Application};
 use actix::prelude::*;
 use actix::Addr;
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
+use event_store::PubSub;
 use tracing::trace;
 use uuid::Uuid;
 
@@ -62,15 +63,11 @@ impl<A: Aggregate> AggregateInstance<A> {
         // subscribe to events
         let addr = AggregateInstance::create(move |ctx| {
             instance.inner.on_start::<APP>(&identity, ctx);
-            let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
-            let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
+            // let broker = crate::subscriber::SubscriberManager::<APP>::from_registry();
+            // let recipient = ctx.address().recipient::<ResolveAndApplyMany>();
             let recipient_sub = ctx.address().recipient::<SubscriptionNotification>();
-            broker.do_send(Subscribe{
-                stream: identity,
-                resolver: recipient,
-                recipient: recipient_sub,
-                transient: true
-            });
+
+            ctx.wait(PubSub::subscribe(recipient_sub, identity).into_actor(&instance));
 
             instance
         });

@@ -54,7 +54,7 @@ impl Handler<Subscribe> for PubSub {
 impl Handler<PubSubNotification> for PubSub {
     type Result = ();
 
-    fn handle(&mut self, msg: PubSubNotification, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: PubSubNotification, _ctx: &mut Self::Context) -> Self::Result {
         trace!("Received PubSubNotification");
         // When receiving a PubSub notification
         // We need to:
