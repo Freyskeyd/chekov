@@ -8,7 +8,19 @@
 <span id="3">3</span>
 <span id="4">4</span>
 <span id="5">5</span>
-</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">A</span><span class="op">&gt;</span> {
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
+
+<span class="kw">use</span> <span class="ident">actix::Message</span>;
+
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">aggregate::StaticState</span>, <span class="ident">Aggregate</span>};
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CommandExecutionResult</span><span class="op">&lt;</span><span class="ident">E</span>, <span class="ident">A</span><span class="op">&gt;</span> {
     <span class="kw">pub</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">new_version</span>: <span class="ident">i64</span>,
     <span class="kw">pub</span> <span class="ident">state</span>: <span class="ident">A</span>,
