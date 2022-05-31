@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
+mod helpers;
+pub(crate) use helpers::*;
+
 #[derive(Default)]
 pub(crate) struct MyApplication {}
 
@@ -18,11 +21,11 @@ pub(crate) enum AggregateError {
     InvalidCommandError,
 }
 
-#[derive(Clone, Aggregate, Default, Debug)]
+#[derive(Clone, Aggregate, Default, Debug, PartialEq)]
 #[aggregate(identity = "example")]
 pub(crate) struct ExampleAggregate {
-    items: Vec<i64>,
-    last_index: usize,
+    pub(crate) items: Vec<i64>,
+    pub(crate) last_index: usize,
 }
 
 impl CommandExecutor<ValidCommand> for ExampleAggregate {
@@ -135,13 +138,28 @@ pub(crate) struct InvalidEvent {
 
 #[macro_export]
 macro_rules! assert_aggregate_version {
-    ($instance: ident, $number: expr) => {
+    ($instance: expr, $number: expr) => {
         let value = $instance.send(crate::message::AggregateVersion).await?;
 
         assert_eq!(
             value, $number,
             "Aggregate versions doesn't match => current: {}, expected: {}",
             value, $number
+        );
+    };
+}
+
+#[macro_export]
+macro_rules! assert_aggregate_state {
+    ($instance: expr, $expected: expr) => {
+        let value = $instance
+            .send(crate::message::AggregateState(std::marker::PhantomData))
+            .await?;
+
+        assert_eq!(
+            value, $expected,
+            "Aggregate state doesn't match => current: {:#?}, expected: {:#?}",
+            value, $expected
         );
     };
 }

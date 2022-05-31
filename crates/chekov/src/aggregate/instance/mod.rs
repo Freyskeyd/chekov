@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use self::internal::CommandExecutionResult;
 use super::resolver::EventResolverRegistry;
 use crate::command::{Command, Handler, NoHandler};
@@ -56,8 +58,6 @@ impl<A: Aggregate> AggregateInstance<A> {
                 if let Err(e) = instance.apply_recorded_event(&event) {
                     return Err(CommandExecutorError::ApplyError(e));
                 }
-
-                instance.current_version += 1;
             }
         }
 
@@ -116,7 +116,9 @@ impl<A: Aggregate> AggregateInstance<A> {
     fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
         if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
             // TODO: Remove clone
-            return (resolver)(&mut self.inner, event.clone());
+            (resolver)(&mut self.inner, event.clone())?;
+
+            self.current_version = self.current_version + 1;
         }
 
         Ok(())

@@ -80,6 +80,10 @@ pub(crate) struct ExecuteStreamInfo(pub(crate) String);
 #[rtype("i64")]
 pub(crate) struct AggregateVersion;
 
+#[derive(Message)]
+#[rtype("A")]
+pub(crate) struct AggregateState<A: Aggregate>(pub(crate) PhantomData<A>);
+
 #[derive(Message, Debug)]
 #[rtype("()")]
 pub(crate) struct StartListening;

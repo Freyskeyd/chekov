@@ -1,7 +1,7 @@
 use crate::aggregate::instance::internal::CommandExecutionResult;
 use crate::command::{Command, Handler};
 use crate::error::CommandExecutorError;
-use crate::message::Dispatch;
+use crate::message::{AggregateState, Dispatch};
 use crate::message::{AggregateVersion, ResolveAndApply, ResolveAndApplyMany};
 use crate::{Aggregate, Application};
 use actix::prelude::*;
@@ -120,5 +120,13 @@ impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<
         }
 
         Box::pin(async { Ok(()) }.into_actor(self))
+    }
+}
+
+impl<A: Aggregate> ActixHandler<AggregateState<A>> for AggregateInstance<A> {
+    type Result = MessageResult<AggregateState<A>>;
+
+    fn handle(&mut self, _msg: AggregateState<A>, _ctx: &mut Self::Context) -> Self::Result {
+        MessageResult(self.inner.clone())
     }
 }
