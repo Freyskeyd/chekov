@@ -114,14 +114,22 @@ impl<A: Aggregate> AggregateInstance<A> {
     }
 
     fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
-        if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
-            // TODO: Remove clone
-            (resolver)(&mut self.inner, event.clone())?;
+        match event.stream_version {
+            // TODO: Replace Any by some more descriptive errors
+            None if self.current_version != 0 => return Err(ApplyError::Any),
+            // TODO: Replace Any by some more descriptive errors
+            Some(version) if (self.current_version + 1) != version => return Err(ApplyError::Any),
+            _ => {
+                if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
+                    // TODO: Remove clone
+                    (resolver)(&mut self.inner, event.clone())?;
 
-            self.current_version = self.current_version + 1;
+                    self.current_version = self.current_version + 1;
+                }
+
+                Ok(())
+            }
         }
-
-        Ok(())
     }
 
     pub(crate) async fn execute_command<APP: Application, C: Command<Executor = A>>(

@@ -70,6 +70,17 @@ async fn should_ignore_already_seen_events() -> Result<(), Box<dyn std::error::E
         }
     );
 
+    addr.send(ResolveAndApply(event.clone())).await?;
+
+    assert_aggregate_version!(&addr, 1);
+    assert_aggregate_state!(
+        &addr,
+        ExampleAggregate {
+            items: vec![1],
+            last_index: 0
+        }
+    );
+
     addr.send(ResolveAndApply(event)).await?;
 
     assert_aggregate_version!(&addr, 1);
