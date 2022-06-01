@@ -115,6 +115,7 @@ impl<A: Aggregate> AggregateInstance<A> {
 
     fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
         match event.stream_version {
+            Some(version) if self.current_version + 1 > version => return Ok(()),
             // TODO: Replace Any by some more descriptive errors
             None if self.current_version != 0 => return Err(ApplyError::Any),
             // TODO: Replace Any by some more descriptive errors
