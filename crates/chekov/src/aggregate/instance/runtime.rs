@@ -77,8 +77,8 @@ where
 impl<A: Aggregate> ActixHandler<ResolveAndApply> for AggregateInstance<A> {
     type Result = Result<(), ()>;
 
-    fn handle(&mut self, msg: ResolveAndApply, _: &mut Self::Context) -> Self::Result {
-        self.apply_recorded_event(&msg.0).map_err(|_| ())
+    fn handle(&mut self, msg: ResolveAndApply, ctx: &mut Self::Context) -> Self::Result {
+        self.apply_recorded_event(&msg.0).map_err(|_| ctx.stop())
     }
 }
 

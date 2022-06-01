@@ -132,23 +132,37 @@ async fn should_ignore_already_seen_events() -> Result<(), Box<dyn std::error::E
 }
 
 #[test(actix::test)]
-async fn should_stop_aggregate_process_when_unexpected_event_received() {
-    // pid = Registration.whereis_name(DefaultApp, {DefaultApp, BankAccount, account_number})
-    // ref = Process.monitor(pid)
-    //
-    // events =
-    //   EventStore.stream_forward(DefaultApp, account_number)
-    //   |> Enum.to_list()
-    //   |> Enum.map(fn recorded_event ->
-    //     # specify invalid stream version
-    //     %EventStore.RecordedEvent{
-    //       recorded_event
-    //       | stream_version: 999
-    //     }
-    //   end)
-    //
-    // # send invalid events, should stop the aggregate process
-    // send(pid, {:events, events})
-    //
-    // assert_receive {:DOWN, ^ref, :process, _, :unexpected_event_received}
+async fn should_stop_aggregate_process_when_unexpected_event_received(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let identity = Uuid::new_v4();
+    let addr = start_context(&identity).await;
+
+    let base = ItemAppended(1);
+    let event = RecordedEvent {
+        event_number: 999,
+        event_uuid: Uuid::new_v4(),
+        stream_uuid: identity.to_string(),
+        stream_version: Some(999),
+        causation_id: None,
+        correlation_id: None,
+        event_type: base.event_type().to_string(),
+        data: serde_json::to_value(base).unwrap(),
+        metadata: None,
+        created_at: chrono::offset::Utc::now(),
+    };
+
+    assert_aggregate_version!(&addr, 0);
+    assert_aggregate_state!(
+        &addr,
+        ExampleAggregate {
+            items: vec![],
+            last_index: 0
+        }
+    );
+
+    assert!(addr.send(ResolveAndApply(event.clone())).await?.is_err());
+
+    assert!(!addr.connected());
+
+    Ok(())
 }
