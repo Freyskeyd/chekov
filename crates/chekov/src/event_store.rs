@@ -1,5 +1,5 @@
 use crate::application::Application;
-use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetAddr};
+use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetEventStoreAddr};
 pub use ::event_store::prelude::Event;
 pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, Handler, MailboxError, ResponseFuture, SystemService};
@@ -42,20 +42,20 @@ where
 
     pub async fn get_addr() -> Result<Addr<event_store::EventStore<A::Storage>>, MailboxError> {
         Self::from_registry()
-            .send(GetAddr {
+            .send(GetEventStoreAddr {
                 _phantom: PhantomData,
             })
             .await
     }
 }
 
-impl<A> Handler<GetAddr<A::Storage>> for EventStore<A>
+impl<A> Handler<GetEventStoreAddr<A::Storage>> for EventStore<A>
 where
     A: Application,
 {
     type Result = Addr<event_store::EventStore<A::Storage>>;
 
-    fn handle(&mut self, _: GetAddr<A::Storage>, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _: GetEventStoreAddr<A::Storage>, _: &mut Self::Context) -> Self::Result {
         self.addr.clone()
     }
 }

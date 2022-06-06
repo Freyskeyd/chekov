@@ -90,6 +90,6 @@ pub(crate) struct StartListening;
 
 #[derive(Message)]
 #[rtype("Addr<event_store::EventStore<S>>")]
-pub(crate) struct GetAddr<S: Storage> {
+pub(crate) struct GetEventStoreAddr<S: Storage> {
     pub(crate) _phantom: PhantomData<S>,
 }
