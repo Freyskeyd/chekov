@@ -102,6 +102,15 @@ pub(crate) struct GetAggregateAddr<A: Aggregate> {
 }
 
 #[derive(Message)]
+#[rtype("Result<Addr<crate::aggregate::AggregateInstance<A>>, ()>")]
+pub(crate) struct StartAggregate<A: Aggregate, APP: Application> {
+    pub(crate) identifier: String,
+    pub(crate) correlation_id: Option<Uuid>,
+    pub(crate) _aggregate: PhantomData<A>,
+    pub(crate) _application: PhantomData<APP>,
+}
+
+#[derive(Message)]
 #[rtype("Result<(), ()>")]
 pub(crate) struct ShutdownAggregate {
     pub(crate) identifier: String,

@@ -1,7 +1,10 @@
 use actix::Addr;
 use uuid::Uuid;
 
-use crate::{aggregate::AggregateInstance, Application};
+use crate::{
+    aggregate::{AggregateInstance, AggregateInstanceRegistry},
+    Application,
+};
 
 use super::{ExampleAggregate, MyApplication};
 
@@ -21,9 +24,9 @@ pub(crate) async fn start_application() {
 pub(crate) async fn start_aggregate(identity: &Uuid) -> Addr<AggregateInstance<ExampleAggregate>> {
     let correlation_id = Uuid::new_v4();
 
-    AggregateInstance::<ExampleAggregate>::new::<MyApplication>(
+    AggregateInstanceRegistry::<ExampleAggregate>::start_aggregate::<MyApplication>(
         identity.to_string(),
-        correlation_id,
+        Some(correlation_id),
     )
     .await
     .unwrap()

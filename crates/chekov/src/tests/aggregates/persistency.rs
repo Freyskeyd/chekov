@@ -80,6 +80,7 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let identifier = Uuid::new_v4();
     start_application().await;
+    let addr = start_aggregate(&identifier).await;
 
     let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
         AppendItem(10, identifier.clone()),
@@ -101,7 +102,11 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
     )
     .await;
 
+    assert!(res.is_ok(), "Aggregate couldn't be shutdown");
+    assert!(!addr.connected());
+
     let addr_after = start_aggregate(&identifier).await;
+
     assert_aggregate_version!(&addr_after, 10);
     assert_aggregate_state!(
         &addr_after,

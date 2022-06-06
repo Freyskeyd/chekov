@@ -1,9 +1,14 @@
+use std::marker::PhantomData;
+
 use crate::command::{CommandExecutor, CommandMetadatas};
-use crate::message::{GetAggregateAddr, ShutdownAggregate};
+use crate::message::{GetAggregateAddr, ShutdownAggregate, StartAggregate};
 use crate::Application;
 use crate::{aggregate::AggregateInstance, Aggregate, Command, CommandExecutorError, Dispatch};
 use actix::registry::SystemService;
-use actix::{ActorFutureExt, ActorTryFutureExt, Addr, Handler, WrapFuture};
+use actix::{
+    ActorFutureExt, ActorTryFutureExt, Addr, Handler, Message, MessageResult, ResponseActFuture,
+    WrapFuture,
+};
 use tracing::Instrument;
 use tracing::{debug, trace};
 use uuid::Uuid;
@@ -60,7 +65,37 @@ impl<A: Aggregate> AggregateInstanceRegistry<A> {
             .await?
     }
 
-    pub async fn shutdown_aggregate<APP: Application>(identifier: String) -> Result<(), ()> {
+    pub(crate) async fn start_aggregate<APP: Application>(
+        identifier: String,
+        correlation_id: Option<Uuid>,
+    ) -> Result<Addr<AggregateInstance<A>>, ()> {
+        trace!(
+            "AggregateInstanceRegistry {:?} is asked to start {}",
+            std::any::type_name::<Self>(),
+            identifier
+        );
+        Self::from_registry()
+            .send(StartAggregate::<A, APP> {
+                _aggregate: PhantomData,
+                _application: PhantomData,
+                identifier,
+                correlation_id,
+            })
+            .await
+            .map_err(|_| ())?
+    }
+
+    async fn do_start_aggregate<APP: Application>(
+        identifier: String,
+        correlation_id: Option<Uuid>,
+    ) -> Result<Addr<AggregateInstance<A>>, ()> {
+        // TODO: Change error to a better one
+        AggregateInstance::<A>::new::<APP>(identifier, correlation_id.unwrap_or_default())
+            .await
+            .map_err(|_| ())
+    }
+
+    pub(crate) async fn shutdown_aggregate<APP: Application>(identifier: String) -> Result<(), ()> {
         trace!(
             "AggregateInstanceRegistry {:?} is asked to shutdown {}",
             std::any::type_name::<Self>(),
@@ -89,6 +124,39 @@ impl<A: Aggregate> Handler<ShutdownAggregate> for AggregateInstanceRegistry<A> {
             ))
         } else {
             Box::pin(async { Ok(()) }.into_actor(self))
+        }
+    }
+}
+
+impl<A: Aggregate, APP: Application> Handler<StartAggregate<A, APP>>
+    for AggregateInstanceRegistry<A>
+{
+    type Result = ResponseActFuture<Self, Result<Addr<AggregateInstance<A>>, ()>>;
+
+    fn handle(&mut self, msg: StartAggregate<A, APP>, ctx: &mut Self::Context) -> Self::Result {
+        trace!(
+            "AggregateInstance {:?} is asked to start {}",
+            std::any::type_name::<Self>(),
+            msg.identifier
+        );
+
+        if let Some(addr) = self.registry.get(&msg.identifier).cloned() {
+            Box::pin(async move { Ok(addr) }.into_actor(self))
+        } else {
+            // TODO: Avoid alloc?
+            let identifier = msg.identifier.clone();
+
+            Box::pin(
+                Self::do_start_aggregate::<APP>(msg.identifier, msg.correlation_id)
+                    .into_actor(self)
+                    .map(|result, actor, _ctx| {
+                        if let Ok(ref addr) = result {
+                            actor.registry.insert(identifier, addr.clone());
+                        }
+
+                        result
+                    }),
+            )
         }
     }
 }

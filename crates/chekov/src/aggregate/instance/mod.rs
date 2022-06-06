@@ -21,6 +21,7 @@ mod internal;
 mod runtime;
 
 /// Deals with the lifetime of a particular aggregate
+// TODO: Only one aggregate per app, need to add generic APP
 pub struct AggregateInstance<A: Aggregate> {
     pub(crate) inner: A,
     pub(crate) current_version: i64,

@@ -33,7 +33,9 @@ impl<A: Application> Listener<A> {
             ctx.add_stream(listener.into_stream());
 
             Listener {
-                _phantom: PhantomData, manager, listening: url
+                _phantom: PhantomData,
+                manager,
+                listening: url,
             }
         }))
     }
