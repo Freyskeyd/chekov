@@ -44,7 +44,11 @@ impl CommandExecutor<InvalidCommand> for ExampleAggregate {
 
 impl CommandExecutor<AppendItem> for ExampleAggregate {
     fn execute(cmd: AppendItem, _: &Self) -> ExecutionResult<ItemAppended> {
-        ExecutionResult::Ok(vec![ItemAppended(cmd.0)])
+        let mut events = vec![];
+        for i in 1..=cmd.0 {
+            events.push(ItemAppended(i));
+        }
+        ExecutionResult::Ok(events)
     }
 }
 

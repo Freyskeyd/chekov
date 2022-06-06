@@ -1,7 +1,7 @@
 use crate::aggregate::instance::internal::CommandExecutionResult;
 use crate::command::{Command, Handler};
 use crate::error::CommandExecutorError;
-use crate::message::{AggregateState, Dispatch};
+use crate::message::{AggregateState, Dispatch, ShutdownAggregate};
 use crate::message::{AggregateVersion, ResolveAndApply, ResolveAndApplyMany};
 use crate::{Aggregate, Application};
 use actix::prelude::*;
@@ -28,6 +28,12 @@ impl<A: Aggregate> Actor for AggregateInstance<A> {
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         trace!("Aggregate {:?} stopped", std::any::type_name::<Self>());
+    }
+
+    fn stopping(&mut self, ctx: &mut Self::Context) -> actix::Running {
+        trace!("Aggregate {:?} stopping", std::any::type_name::<Self>());
+
+        actix::Running::Stop
     }
 }
 
@@ -128,5 +134,18 @@ impl<A: Aggregate> ActixHandler<AggregateState<A>> for AggregateInstance<A> {
 
     fn handle(&mut self, _msg: AggregateState<A>, _ctx: &mut Self::Context) -> Self::Result {
         MessageResult(self.inner.clone())
+    }
+}
+
+impl<A: Aggregate> ActixHandler<ShutdownAggregate> for AggregateInstance<A> {
+    type Result = MessageResult<ShutdownAggregate>;
+
+    fn handle(&mut self, _msg: ShutdownAggregate, ctx: &mut Self::Context) -> Self::Result {
+        trace!(
+            "AggregateInstance {:?} is asked to shutdown",
+            std::any::type_name::<Self>()
+        );
+        ctx.stop();
+        MessageResult(Ok(()))
     }
 }

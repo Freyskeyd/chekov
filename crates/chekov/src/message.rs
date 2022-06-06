@@ -93,3 +93,16 @@ pub(crate) struct StartListening;
 pub(crate) struct GetEventStoreAddr<S: Storage> {
     pub(crate) _phantom: PhantomData<S>,
 }
+
+#[derive(Message)]
+#[rtype("Option<Addr<crate::aggregate::AggregateInstance<A>>>")]
+pub(crate) struct GetAggregateAddr<A: Aggregate> {
+    pub(crate) identifier: String,
+    pub(crate) _phantom: PhantomData<A>,
+}
+
+#[derive(Message)]
+#[rtype("Result<(), ()>")]
+pub(crate) struct ShutdownAggregate {
+    pub(crate) identifier: String,
+}
