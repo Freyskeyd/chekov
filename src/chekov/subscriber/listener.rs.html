@@ -57,6 +57,8 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::EventNotification</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Application</span>, <span class="ident">SubscriberManager</span>};
 <span class="kw">use</span> <span class="ident">actix::ActorContext</span>;
@@ -92,7 +94,9 @@
             <span class="ident">ctx</span>.<span class="ident">add_stream</span>(<span class="ident">listener</span>.<span class="ident">into_stream</span>());
 
             <span class="ident">Listener</span> {
-                <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>, <span class="ident">manager</span>, <span class="ident">listening</span>: <span class="ident">url</span>
+                <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+                <span class="ident">manager</span>,
+                <span class="ident">listening</span>: <span class="ident">url</span>,
             }
         }))
     }

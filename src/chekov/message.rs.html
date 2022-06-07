@@ -98,6 +98,28 @@
 <span id="93">93</span>
 <span id="94">94</span>
 <span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Application</span>;
@@ -190,8 +212,30 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Addr&lt;event_store::EventStore&lt;S&gt;&gt;&quot;</span>)]</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">GetAddr</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">GetEventStoreAddr</span><span class="op">&lt;</span><span class="ident">S</span>: <span class="ident">Storage</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Option&lt;Addr&lt;crate::aggregate::AggregateInstance&lt;A&gt;&gt;&gt;&quot;</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">GetAggregateAddr</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">identifier</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;Addr&lt;crate::aggregate::AggregateInstance&lt;A&gt;&gt;, ()&gt;&quot;</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">StartAggregate</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span>, <span class="ident">APP</span>: <span class="ident">Application</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">identifier</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">correlation_id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Uuid</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_aggregate</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">_application</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">APP</span><span class="op">&gt;</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;(), ()&gt;&quot;</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ShutdownAggregate</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">identifier</span>: <span class="ident">String</span>,
 }
 </code></pre></div>
 </section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="chekov" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>

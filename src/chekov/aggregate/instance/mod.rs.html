@@ -229,6 +229,7 @@
 <span id="224">224</span>
 <span id="225">225</span>
 <span id="226">226</span>
+<span id="227">227</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="self">self</span>::internal::CommandExecutionResult</span>;
@@ -252,6 +253,7 @@
 <span class="kw">mod</span> <span class="ident">runtime</span>;
 
 <span class="doccomment">/// Deals with the lifetime of a particular aggregate</span>
+<span class="comment">// TODO: Only one aggregate per app, need to add generic APP</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AggregateInstance</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Aggregate</span><span class="op">&gt;</span> {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">inner</span>: <span class="ident">A</span>,
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">current_version</span>: <span class="ident">i64</span>,
