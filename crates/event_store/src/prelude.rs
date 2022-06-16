@@ -1,3 +1,4 @@
+pub use crate::connection::StreamForward;
 pub use crate::connection::StreamInfo;
 
 pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};

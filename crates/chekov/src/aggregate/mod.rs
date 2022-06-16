@@ -98,8 +98,7 @@
 mod instance;
 mod registry;
 
-use crate::{prelude::ApplyError, Application, Command, CommandHandler};
-use actix::SystemService;
+use crate::{prelude::ApplyError, Application};
 use event_store::prelude::RecordedEvent;
 
 #[doc(hidden)]

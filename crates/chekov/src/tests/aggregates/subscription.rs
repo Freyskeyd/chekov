@@ -1,7 +1,4 @@
-use crate::{
-    aggregate::AggregateInstance, assert_aggregate_state, assert_aggregate_version,
-    message::ResolveAndApply, Aggregate,
-};
+use crate::{assert_aggregate_state, assert_aggregate_version, message::ResolveAndApply};
 
 use super::support::*;
 use event_store::{prelude::RecordedEvent, Event, PubSub};
@@ -70,7 +67,7 @@ async fn should_ignore_already_seen_events() -> Result<(), Box<dyn std::error::E
         }
     );
 
-    addr.send(ResolveAndApply(event.clone())).await?;
+    let _ = addr.send(ResolveAndApply(event.clone())).await?;
 
     assert_aggregate_version!(&addr, 1);
     assert_aggregate_state!(
@@ -81,7 +78,7 @@ async fn should_ignore_already_seen_events() -> Result<(), Box<dyn std::error::E
         }
     );
 
-    addr.send(ResolveAndApply(event.clone())).await?;
+    let _ = addr.send(ResolveAndApply(event.clone())).await?;
 
     assert_aggregate_version!(&addr, 1);
     assert_aggregate_state!(

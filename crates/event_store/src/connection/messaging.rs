@@ -13,6 +13,19 @@ pub struct StreamInfo {
 }
 
 #[derive(Message)]
+#[rtype(result = "Result<StreamForwardResult, EventStoreError>")]
+pub struct StreamForward {
+    pub correlation_id: Uuid,
+    pub stream_uuid: String,
+}
+
+pub struct StreamForwardResult {
+    pub stream: std::pin::Pin<
+        Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, EventStoreError>> + Send>,
+    >,
+}
+
+#[derive(Message)]
 #[rtype(result = "Result<Stream, EventStoreError>")]
 pub struct CreateStream {
     pub(crate) correlation_id: Uuid,

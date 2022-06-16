@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use self::internal::CommandExecutionResult;
 use super::resolver::EventResolverRegistry;
 use crate::command::{Command, Handler, NoHandler};
@@ -13,6 +11,7 @@ use actix::prelude::*;
 use actix::Addr;
 use event_store::prelude::{EventStoreError, ReadVersion, RecordedEvent, SubscriptionNotification};
 use event_store::PubSub;
+use futures::TryStreamExt;
 use tracing::trace;
 use uuid::Uuid;
 
@@ -46,21 +45,13 @@ impl<A: Aggregate> AggregateInstance<A> {
         correlation_id: Uuid,
     ) -> Result<Addr<Self>, CommandExecutorError> {
         // Populate aggregate state
-        let events = Self::fetch_existing_state::<APP>(identity.to_owned(), correlation_id).await;
 
-        trace!("AggregateInstance received {:?}", events);
-        let mut instance = AggregateInstance::<A>::default();
-
-        instance.identity = identity.clone();
-
-        if let Ok(events) = events {
-            for event in events {
-                trace!("Applying {} event ({})", event.event_uuid, event.event_type);
-                if let Err(e) = instance.apply_recorded_event(&event) {
-                    return Err(CommandExecutorError::ApplyError(e));
-                }
-            }
-        }
+        let mut instance = Self::populate_state::<APP>(
+            AggregateInstance::<A>::default(),
+            &identity,
+            correlation_id,
+        )
+        .await?;
 
         trace!("AggregateInstance applied past events");
         // subscribe to events
@@ -92,6 +83,31 @@ impl<A: Aggregate> AggregateInstance<A> {
         self.inner.clone()
     }
 
+    async fn populate_state<APP: Application>(
+        mut instance: Self,
+        identity: &str,
+        _correlation_id: Uuid,
+    ) -> Result<Self, CommandExecutorError> {
+        instance.identity = identity.to_string();
+
+        let mut events =
+            crate::event_store::EventStore::<APP>::stream_forward(instance.identity.clone())
+                .await??;
+
+        while let Ok(Some(events)) = events.try_next().await {
+            trace!("AggregateInstance received {:?}", events);
+            for event in events {
+                trace!("Applying {} event ({})", event.event_uuid, event.event_type);
+                if let Err(e) = instance.apply_recorded_event(&event) {
+                    return Err(CommandExecutorError::ApplyError(e));
+                }
+            }
+        }
+
+        Ok(instance)
+    }
+
+    #[allow(dead_code)]
     pub(crate) async fn fetch_existing_state<APP: Application>(
         stream_id: String,
         correlation_id: Uuid,

@@ -1,12 +1,15 @@
 use crate::application::Application;
-use crate::message::{ExecuteAppender, ExecuteReader, ExecuteStreamInfo, GetEventStoreAddr};
+use crate::message::{
+    ExecuteAppender, ExecuteReader, ExecuteStreamForward, ExecuteStreamInfo, GetEventStoreAddr,
+};
 pub use ::event_store::prelude::Event;
 pub use ::event_store::prelude::RecordedEvent;
 use actix::{Addr, Context, Handler, MailboxError, ResponseFuture, SystemService};
-use event_store::prelude::EventStoreError;
 use event_store::prelude::Stream;
+use event_store::prelude::{EventStoreError, StreamForward};
 use futures::TryFutureExt;
 use std::marker::PhantomData;
+use std::pin::Pin;
 use uuid::Uuid;
 
 pub use event_store::prelude::PostgresEventBus;
@@ -25,10 +28,27 @@ where
     ) -> Result<Result<Vec<Uuid>, EventStoreError>, MailboxError> {
         Self::from_registry().send(ExecuteAppender(appender)).await
     }
+
     pub async fn with_reader(
         reader: event_store::prelude::Reader,
     ) -> Result<Result<Vec<RecordedEvent>, EventStoreError>, MailboxError> {
         Self::from_registry().send(ExecuteReader(reader)).await
+    }
+
+    pub async fn stream_forward(
+        stream_uuid: String,
+    ) -> Result<
+        Result<
+            Pin<
+                Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, EventStoreError>> + Send>,
+            >,
+            EventStoreError,
+        >,
+        MailboxError,
+    > {
+        Self::from_registry()
+            .send(ExecuteStreamForward(stream_uuid))
+            .await
     }
 
     #[allow(dead_code)]
@@ -57,6 +77,35 @@ where
 
     fn handle(&mut self, _: GetEventStoreAddr<A::Storage>, _: &mut Self::Context) -> Self::Result {
         self.addr.clone()
+    }
+}
+
+impl<A> Handler<ExecuteStreamForward> for EventStore<A>
+where
+    A: Application,
+{
+    type Result = ResponseFuture<
+        Result<
+            Pin<
+                Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, EventStoreError>> + Send>,
+            >,
+            EventStoreError,
+        >,
+    >;
+
+    fn handle(&mut self, reader: ExecuteStreamForward, _: &mut Self::Context) -> Self::Result {
+        let addr = self.addr.clone();
+        Box::pin(async move {
+            let stream = addr
+                .send(StreamForward {
+                    correlation_id: Uuid::new_v4(),
+                    stream_uuid: reader.0,
+                })
+                .await?
+                .map(|res| res.stream);
+
+            stream
+        })
     }
 }
 

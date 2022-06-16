@@ -16,3 +16,13 @@ log = "0.4.14"
 tracing = "0.1.28"
 tracing-futures = "0.2.5"
 futures = "0.3.17"
+async-stream = "0.3"
+
+[dev-dependencies]
+test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
+test-span = "0.1.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+] }
+

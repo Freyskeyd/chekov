@@ -1,5 +1,5 @@
 use crate::{
-    connection::{CreateStream, StreamInfo},
+    connection::{CreateStream, StreamForward, StreamForwardResult, StreamInfo},
     core::stream::Stream,
     event::RecordedEvent,
     prelude::EventStoreError,
@@ -75,7 +75,6 @@ impl<S: Storage> Handler<CreateStream> for EventStore<S> {
 
 impl<S: Storage> Handler<appender::AppendToStreamRequest> for EventStore<S> {
     type Result = ResponseFuture<Result<Vec<Uuid>, EventStoreError>>;
-
     #[tracing::instrument(name = "EventStore::AppendToStream", skip(self, request, _ctx), fields(correlation_id = %request.correlation_id))]
     fn handle(
         &mut self,
@@ -85,5 +84,13 @@ impl<S: Storage> Handler<appender::AppendToStreamRequest> for EventStore<S> {
         Box::pin(
             Self::append(self.connection.clone(), request).instrument(tracing::Span::current()),
         )
+    }
+}
+
+impl<S: Storage> Handler<StreamForward> for EventStore<S> {
+    type Result = ResponseFuture<Result<StreamForwardResult, EventStoreError>>;
+
+    fn handle(&mut self, request: StreamForward, _ctx: &mut Self::Context) -> Self::Result {
+        Box::pin(Self::stream_forward(self.connection.clone(), request))
     }
 }

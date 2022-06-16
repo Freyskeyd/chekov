@@ -47,7 +47,7 @@ pub trait Backend {
 
     fn append_to_stream(
         &mut self,
-        stream_uud: &str,
+        stream_uuid: &str,
         events: &[UnsavedEvent],
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Uuid>, StorageError>> + Send>>;
@@ -55,7 +55,7 @@ pub trait Backend {
     // async fn read_stream(
     fn read_stream(
         &self,
-        stream_uud: String,
+        stream_uuid: String,
         version: usize,
         limit: usize,
         correlation_id: Uuid,
@@ -66,4 +66,13 @@ pub trait Backend {
         stream_uuid: String,
         correlation_id: Uuid,
     ) -> std::pin::Pin<Box<dyn Future<Output = Result<Stream, StorageError>> + Send>>;
+
+    fn stream_forward(
+        &self,
+        stream_uuid: String,
+        batch_size: usize,
+        correlation_id: Uuid,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, StorageError>> + Send>,
+    >;
 }

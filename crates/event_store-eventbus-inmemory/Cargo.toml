@@ -23,4 +23,11 @@ async-stream = "0.3"
 
 event_store-core = { version = "0.1.0", path = "../event_store-core" }
 
+[dev-dependencies]
+test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
+test-span = "0.1.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+] }
 

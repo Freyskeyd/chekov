@@ -1,11 +1,8 @@
 use super::support::*;
 use crate::event_store::EventStore;
-use crate::message::{AggregateVersion, Dispatch};
 use crate::prelude::*;
 use crate::{assert_aggregate_state, assert_aggregate_version};
 use event_store::prelude::Reader;
-use std::marker::PhantomData;
-use std::time::Duration;
 use test_log::test;
 use uuid::Uuid;
 
@@ -122,11 +119,38 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
 #[test(actix::test)]
 async fn should_reload_persisted_events_in_batches_when_restarting_aggregate_process(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    Ok(())
-}
+    let identifier = Uuid::new_v4();
+    start_application().await;
+    let addr = start_aggregate(&identifier).await;
 
-#[test(actix::test)]
-async fn should_prefix_stream_uuid_with_aggregate_identity_prefix(
-) -> Result<(), Box<dyn std::error::Error>> {
+    let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
+        AppendItem(300, identifier.clone()),
+    )
+    .await;
+
+    assert!(result.is_ok());
+
+    let events = result.unwrap();
+    assert!(events.len() == 300);
+
+    let res = AggregateInstanceRegistry::<ExampleAggregate>::shutdown_aggregate::<MyApplication>(
+        identifier.to_string(),
+    )
+    .await;
+
+    assert!(res.is_ok(), "Aggregate couldn't be shutdown");
+    assert!(!addr.connected());
+
+    let addr_after = start_aggregate(&identifier).await;
+
+    assert_aggregate_version!(&addr_after, 300);
+    assert_aggregate_state!(
+        &addr_after,
+        ExampleAggregate {
+            items: (1..=300).collect(),
+            last_index: 299
+        }
+    );
+
     Ok(())
 }

@@ -1,6 +1,8 @@
 use super::{EventStore, EventStoreBuilder};
 use crate::{
-    connection::{Append, Connection, CreateStream, Read, StreamInfo},
+    connection::{
+        Append, Connection, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo,
+    },
     core::stream::Stream,
     event::RecordedEvent,
     prelude::EventStoreError,
@@ -67,6 +69,13 @@ impl<S: Storage> EventStore<S> {
         connection: Addr<Connection<S>>,
         request: CreateStream,
     ) -> Result<Stream, EventStoreError> {
+        connection.send(request).await?
+    }
+
+    pub(crate) async fn stream_forward(
+        connection: Addr<Connection<S>>,
+        request: StreamForward,
+    ) -> Result<StreamForwardResult, EventStoreError> {
         connection.send(request).await?
     }
 

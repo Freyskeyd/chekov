@@ -3,7 +3,7 @@ use event_store_core::backend::Backend;
 use event_store_core::event::{RecordedEvent, UnsavedEvent};
 use event_store_core::storage::StorageError;
 use event_store_core::stream::Stream;
-use futures::{Future, TryFutureExt};
+use futures::{Future, StreamExt, TryFutureExt, TryStreamExt};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tracing::Instrument;
@@ -186,5 +186,23 @@ impl Backend for PostgresBackend {
             }
             .instrument(tracing::Span::current()),
         )
+    }
+
+    fn stream_forward(
+        &self,
+        stream_uuid: String,
+        batch_size: usize,
+        _correlation_id: Uuid,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, StorageError>> + Send>,
+    > {
+        let pool = self.pool.try_acquire().unwrap();
+
+        sql::stream_forward(pool, stream_uuid, batch_size as i8)
+            .map_err(|error| match error {
+                sqlx::Error::RowNotFound => StorageError::StreamDoesntExists,
+                error => PostgresBackendError::SQLError(error).into(),
+            })
+            .boxed()
     }
 }

@@ -5,10 +5,7 @@ use crate::message::{GetAggregateAddr, ShutdownAggregate, StartAggregate};
 use crate::Application;
 use crate::{aggregate::AggregateInstance, Aggregate, Command, CommandExecutorError, Dispatch};
 use actix::registry::SystemService;
-use actix::{
-    ActorFutureExt, ActorTryFutureExt, Addr, Handler, Message, MessageResult, ResponseActFuture,
-    WrapFuture,
-};
+use actix::{ActorFutureExt, ActorTryFutureExt, Addr, Handler, ResponseActFuture, WrapFuture};
 use tracing::Instrument;
 use tracing::{debug, trace};
 use uuid::Uuid;
@@ -38,7 +35,7 @@ impl<A: Aggregate> ::actix::Actor for AggregateInstanceRegistry<A> {
         );
     }
 
-    fn stopping(&mut self, ctx: &mut Self::Context) -> actix::Running {
+    fn stopping(&mut self, _ctx: &mut Self::Context) -> actix::Running {
         trace!(
             "AggregateInstanceRegistry {:?} stopping",
             std::any::type_name::<Self>()
@@ -133,7 +130,7 @@ impl<A: Aggregate, APP: Application> Handler<StartAggregate<A, APP>>
 {
     type Result = ResponseActFuture<Self, Result<Addr<AggregateInstance<A>>, ()>>;
 
-    fn handle(&mut self, msg: StartAggregate<A, APP>, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: StartAggregate<A, APP>, _ctx: &mut Self::Context) -> Self::Result {
         trace!(
             "AggregateInstance {:?} is asked to start {}",
             std::any::type_name::<Self>(),

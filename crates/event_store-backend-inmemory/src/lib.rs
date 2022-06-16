@@ -1,6 +1,7 @@
 // TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved
 #![allow(unused_braces)]
 
+use async_stream::try_stream;
 use chrono::Utc;
 use event_store_core::backend::Backend;
 use event_store_core::event::RecordedEvent;
@@ -10,6 +11,7 @@ use event_store_core::storage::StorageError;
 use event_store_core::stream::Stream;
 use futures::Future;
 use futures::FutureExt;
+use futures::StreamExt;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
 use tracing::{debug, trace};
@@ -191,11 +193,55 @@ impl Backend for InMemoryBackend {
 
         Box::pin(async move { res })
     }
+
+    fn stream_forward(
+        &self,
+        stream_uuid: String,
+        batch_size: usize,
+        _correlation_id: Uuid,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, StorageError>> + Send>,
+    > {
+        let result = self
+            .events
+            .get(&stream_uuid)
+            .cloned()
+            .map(|events| {
+                let numbers_of_batch: usize =
+                    (events.len() as f32 / batch_size as f32).ceil() as usize;
+                let collector: Vec<Vec<RecordedEvent>> = vec![vec![]; numbers_of_batch];
+                let (_, events_list) =
+                    events
+                        .into_iter()
+                        .fold((0, collector), |(mut index, mut map), current| {
+                            if map[index].len() == batch_size {
+                                index += 1;
+                            }
+
+                            map[index].push(current);
+
+                            (index, map)
+                        });
+
+                events_list
+            })
+            .ok_or(StorageError::StreamDoesntExists);
+
+        try_stream! {
+            let events_list = result?;
+
+            for events in events_list {
+                yield events;
+            }
+        }
+        .boxed()
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use test_log::test;
 
     #[test]
     fn test_storage_name() {
@@ -205,5 +251,55 @@ mod test {
     #[test]
     fn can_be_instantiate() {
         let _storage = InMemoryBackend::default();
+    }
+
+    #[test(tokio::test)]
+    async fn can_create_a_stream() {
+        let mut storage = InMemoryBackend::default();
+
+        let result = storage
+            .create_stream(
+                Stream {
+                    stream_id: 1,
+                    stream_uuid: Uuid::new_v4().to_string(),
+                    stream_version: 0,
+                    created_at: Utc::now(),
+                    deleted_at: None,
+                },
+                Uuid::new_v4(),
+            )
+            .await;
+
+        match result {
+            Ok(stream) => assert_eq!(1, stream.stream_id),
+            Err(error) => panic!("{}", error),
+        }
+    }
+
+    #[test(tokio::test)]
+    async fn can_read_stream_info() {
+        let mut storage = InMemoryBackend::default();
+
+        let identifier = Uuid::new_v4().to_string();
+        assert!(storage
+            .create_stream(
+                Stream {
+                    stream_id: 1,
+                    stream_uuid: identifier.clone(),
+                    stream_version: 0,
+                    created_at: Utc::now(),
+                    deleted_at: None,
+                },
+                Uuid::new_v4(),
+            )
+            .await
+            .is_ok());
+
+        let result = storage.read_stream_info(identifier, Uuid::new_v4()).await;
+
+        match result {
+            Ok(stream) => assert_eq!(1, stream.stream_id),
+            Err(error) => panic!("{}", error),
+        }
     }
 }

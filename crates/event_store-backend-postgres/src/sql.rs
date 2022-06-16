@@ -1,13 +1,62 @@
+use async_stream::try_stream;
 use event_store_core::event::RecordedEvent;
 use event_store_core::event::UnsavedEvent;
 use event_store_core::stream::Stream;
+use futures::StreamExt;
 use log::trace;
+use sqlx::pool::PoolConnection;
 use sqlx::postgres::PgRow;
+use sqlx::Postgres;
 use sqlx::Row;
 use std::convert::TryInto;
 use uuid::Uuid;
 
 use crate::error::PostgresBackendError;
+
+const STREAM_FORWARD: &'static str = r#"SELECT
+        stream_events.stream_version as event_number,
+        events.event_id as event_uuid,
+        streams.stream_uuid,
+        stream_events.original_stream_version as stream_version,
+        events.event_type::text,
+        events.correlation_id,
+        events.causation_id,
+        events.data::jsonb,
+        events.metadata::text,
+        events.created_at
+    FROM
+	stream_events
+	inner JOIN streams ON streams.stream_id = stream_events.original_stream_id
+	inner JOIN events ON stream_events.event_id = events.event_id
+    WHERE
+	stream_events.stream_uuid = $1 
+	ORDER BY stream_events.stream_version ASC
+        OFFSET $2
+        LIMIT $3;
+         "#;
+
+pub fn stream_forward(
+    mut conn: PoolConnection<Postgres>,
+    stream_uuid: String,
+    batch_size: i8,
+) -> std::pin::Pin<Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, sqlx::Error>> + Send>>
+{
+    try_stream! {
+        let mut offset = 0;
+
+        loop {
+            let q = sqlx::query_as(STREAM_FORWARD);
+            let inner = q.bind(&stream_uuid).bind(offset).bind(batch_size).fetch_all(&mut *conn).await;
+
+            match inner {
+                Ok(events) if events.len() > 0 => yield events,
+                _ => break,
+            }
+
+            offset += batch_size;
+        }
+    }.boxed()
+}
 
 pub async fn read_stream(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,

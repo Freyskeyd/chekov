@@ -69,6 +69,17 @@ pub struct ResolveAndApplyMany(pub Vec<RecordedEvent>);
 pub(crate) struct ExecuteReader(pub(crate) event_store::prelude::Reader);
 
 #[derive(Message)]
+#[rtype(
+    "Result<
+            std::pin::Pin<
+                Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, EventStoreError>> + Send>,
+            >,
+            EventStoreError,
+        >"
+)]
+pub(crate) struct ExecuteStreamForward(pub(crate) String);
+
+#[derive(Message)]
 #[rtype("Result<Vec<Uuid>, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 

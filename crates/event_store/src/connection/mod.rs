@@ -9,7 +9,7 @@ use event_store_core::backend::Backend;
 use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
 use event_store_core::storage::Storage;
-use futures::{FutureExt, TryFutureExt};
+use futures::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
 use std::str::FromStr;
 use tokio::sync::mpsc;
 use tracing::trace;
@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 mod messaging;
 
-pub use messaging::{Append, CreateStream, Read, StreamInfo};
+pub use messaging::{Append, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo};
 
 #[derive(Message)]
 #[rtype("()")]
@@ -184,6 +184,24 @@ impl<S: Storage> Handler<StreamInfo> for Connection<S> {
             .read_stream_info(msg.stream_uuid, msg.correlation_id)
             .map_err(Into::into)
             .boxed()
+    }
+}
+
+impl<S: Storage> Handler<StreamForward> for Connection<S> {
+    type Result = Result<StreamForwardResult, EventStoreError>;
+
+    #[tracing::instrument(name = "Connection::StreanForward", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
+    fn handle(&mut self, msg: StreamForward, _ctx: &mut Context<Self>) -> Self::Result {
+        trace!("Execute StreamForward for {}", msg.stream_uuid);
+
+        Ok(StreamForwardResult {
+            stream: self
+                .storage
+                .backend()
+                .stream_forward(msg.stream_uuid, 100, msg.correlation_id)
+                .map_err(Into::into)
+                .boxed(),
+        })
     }
 }
 

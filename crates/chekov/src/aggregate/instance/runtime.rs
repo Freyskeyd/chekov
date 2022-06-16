@@ -30,7 +30,7 @@ impl<A: Aggregate> Actor for AggregateInstance<A> {
         trace!("Aggregate {:?} stopped", std::any::type_name::<Self>());
     }
 
-    fn stopping(&mut self, ctx: &mut Self::Context) -> actix::Running {
+    fn stopping(&mut self, _ctx: &mut Self::Context) -> actix::Running {
         trace!("Aggregate {:?} stopping", std::any::type_name::<Self>());
 
         actix::Running::Stop
