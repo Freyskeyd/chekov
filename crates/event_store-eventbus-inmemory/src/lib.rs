@@ -29,7 +29,7 @@ impl InMemoryEventBus {
 
     async fn start_listening(
         mut receiver: UnboundedReceiver<EventBusMessage>,
-    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>> {
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>> + Send>> {
         Box::pin(try_stream! {
             while let Some(event) = receiver.recv().await {
                 yield event;

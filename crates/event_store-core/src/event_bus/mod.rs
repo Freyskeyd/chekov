@@ -18,7 +18,11 @@ pub trait EventBus: std::fmt::Debug + Default + Send + std::marker::Unpin + 'sta
 }
 
 pub type BoxedStream = Pin<
-    Box<dyn Future<Output = Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>>>>,
+    Box<
+        dyn Future<
+                Output = Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>> + Send>>,
+            > + Send,
+    >,
 >;
 
 #[derive(Debug, Message)]

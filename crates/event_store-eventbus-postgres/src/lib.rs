@@ -28,7 +28,7 @@ impl PostgresEventBus {
 
     async fn start_listening(
         mut listener: PgListener,
-    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>>>> {
+    ) -> Pin<Box<dyn Stream<Item = Result<EventBusMessage, EventBusError>> + Send>> {
         listener.listen("events").await.unwrap();
 
         listener
