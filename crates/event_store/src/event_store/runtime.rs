@@ -1,5 +1,5 @@
 use crate::{
-    connection::{CreateStream, StreamForward, StreamForwardResult, StreamInfo},
+    connection::{CreateStream, StreamForward, StreamForwardResult, StreamInfo, StreamList},
     core::stream::Stream,
     event::RecordedEvent,
     prelude::EventStoreError,
@@ -92,5 +92,13 @@ impl<S: Storage> Handler<StreamForward> for EventStore<S> {
 
     fn handle(&mut self, request: StreamForward, _ctx: &mut Self::Context) -> Self::Result {
         Box::pin(Self::stream_forward(self.connection.clone(), request))
+    }
+}
+
+impl<S: Storage> Handler<StreamList> for EventStore<S> {
+    type Result = ResponseFuture<Result<Vec<Stream>, EventStoreError>>;
+
+    fn handle(&mut self, request: StreamList, _ctx: &mut Self::Context) -> Self::Result {
+        Box::pin(Self::get_streams(self.connection.clone(), request))
     }
 }

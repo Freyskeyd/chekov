@@ -2,6 +2,7 @@ use super::{EventStore, EventStoreBuilder};
 use crate::{
     connection::{
         Append, Connection, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo,
+        StreamList,
     },
     core::stream::Stream,
     event::RecordedEvent,
@@ -62,6 +63,13 @@ impl<S: Storage> EventStore<S> {
         connection: Addr<Connection<S>>,
         request: StreamInfo,
     ) -> Result<Stream, EventStoreError> {
+        connection.send(request).await?
+    }
+
+    pub(crate) async fn get_streams(
+        connection: Addr<Connection<S>>,
+        request: StreamList,
+    ) -> Result<Vec<Stream>, EventStoreError> {
         connection.send(request).await?
     }
 

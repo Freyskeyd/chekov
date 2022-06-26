@@ -132,7 +132,7 @@ where
 
         SubscriberManager::<A>::from_registry().do_send(StartListening);
 
-        ::actix::SystemRegistry::set(event_store);
+        ::actix::SystemRegistry::set(event_store.clone());
         ::actix::SystemRegistry::set(addr);
         ::actix::SystemRegistry::set(
             InternalApplication::<A> {
@@ -140,5 +140,9 @@ where
             }
             .start(),
         );
+
+        tokio::spawn(async move {
+            chekov_api::Server::start(event_store.into()).await;
+        });
     }
 }

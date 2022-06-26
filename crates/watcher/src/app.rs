@@ -106,6 +106,10 @@ async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
     .await
     .unwrap();
 
+    let mut client = chekov_api::stream::stream_client::StreamClient::connect("http://[::1]:50051")
+        .await
+        .unwrap();
+
     let mut stream = listener.create_stream().await;
     while let Ok(Some(notif)) = stream.try_next().await {
         // Reload state

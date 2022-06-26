@@ -1,5 +1,6 @@
 pub use crate::connection::StreamForward;
 pub use crate::connection::StreamInfo;
+pub use crate::connection::StreamList;
 
 pub use crate::event::{Event, RecordedEvent, RecordedEvents, UnsavedEvent};
 pub use crate::versions::{ExpectedVersion, ReadVersion};

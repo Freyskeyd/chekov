@@ -18,7 +18,9 @@ use uuid::Uuid;
 
 mod messaging;
 
-pub use messaging::{Append, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo};
+pub use messaging::{
+    Append, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo, StreamList,
+};
 
 #[derive(Message)]
 #[rtype("()")]
@@ -175,13 +177,28 @@ impl<S: Storage> Handler<CreateStream> for Connection<S> {
 impl<S: Storage> Handler<StreamInfo> for Connection<S> {
     type Result = ResponseFuture<Result<Stream, EventStoreError>>;
 
-    #[tracing::instrument(name = "Connection::StreanInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
+    #[tracing::instrument(name = "Connection::StreamInfo", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
     fn handle(&mut self, msg: StreamInfo, _ctx: &mut Context<Self>) -> Self::Result {
         trace!("Execute StreamInfo for {}", msg.stream_uuid);
 
         self.storage
             .backend()
             .read_stream_info(msg.stream_uuid, msg.correlation_id)
+            .map_err(Into::into)
+            .boxed()
+    }
+}
+
+impl<S: Storage> Handler<StreamList> for Connection<S> {
+    type Result = ResponseFuture<Result<Vec<Stream>, EventStoreError>>;
+
+    #[tracing::instrument(name = "Connection::StreamList", skip(self, msg, _ctx), fields(backend = %S::storage_name(), correlation_id = %msg.correlation_id))]
+    fn handle(&mut self, msg: StreamList, _ctx: &mut Context<Self>) -> Self::Result {
+        trace!("Execute StreamList");
+
+        self.storage
+            .backend()
+            .list_streams(msg.correlation_id)
             .map_err(Into::into)
             .boxed()
     }

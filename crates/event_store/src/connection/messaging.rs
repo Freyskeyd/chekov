@@ -13,6 +13,12 @@ pub struct StreamInfo {
 }
 
 #[derive(Message)]
+#[rtype(result = "Result<Vec<Stream>, EventStoreError>")]
+pub struct StreamList {
+    pub correlation_id: Uuid,
+}
+
+#[derive(Message)]
 #[rtype(result = "Result<StreamForwardResult, EventStoreError>")]
 pub struct StreamForward {
     pub correlation_id: Uuid,

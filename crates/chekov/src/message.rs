@@ -7,6 +7,7 @@ use crate::command::CommandMetadatas;
 use crate::Aggregate;
 use crate::Event;
 use actix::prelude::*;
+use chekov_api::GetStreamList;
 use event_store::core::storage::Storage;
 use event_store::prelude::*;
 use uuid::Uuid;
@@ -86,6 +87,10 @@ pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 #[derive(Message)]
 #[rtype("Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteStreamInfo(pub(crate) String);
+
+#[derive(Message)]
+#[rtype("Result<Vec<event_store::prelude::Stream>, event_store::prelude::EventStoreError>")]
+pub(crate) struct ExecuteStreamList(pub(crate) GetStreamList);
 
 #[derive(Message)]
 #[rtype("i64")]

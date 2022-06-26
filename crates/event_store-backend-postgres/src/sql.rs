@@ -110,6 +110,18 @@ pub async fn stream_info(
         .await
 }
 
+pub async fn list_streams(
+    conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+) -> Result<Vec<Stream>, sqlx::Error> {
+    #[allow(clippy::used_underscore_binding)]
+    #[allow(clippy::similar_names)]
+    sqlx::query_as::<_, Stream>(
+        "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams",
+    )
+    .fetch_all(conn)
+    .await
+}
+
 pub async fn create_stream(
     pool: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_uuid: &str,

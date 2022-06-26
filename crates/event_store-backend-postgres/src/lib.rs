@@ -205,4 +205,22 @@ impl Backend for PostgresBackend {
             })
             .boxed()
     }
+
+    fn list_streams(
+        &self,
+        correlation_id: Uuid,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Stream>, StorageError>> + Send>> {
+        let mut pool = self.pool.try_acquire().unwrap();
+
+        Box::pin(
+            async move {
+                sql::list_streams(&mut pool)
+                    .map_err(|error| match error {
+                        e => PostgresBackendError::SQLError(e).into(),
+                    })
+                    .await
+            }
+            .instrument(tracing::Span::current()),
+        )
+    }
 }

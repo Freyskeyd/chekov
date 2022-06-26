@@ -75,4 +75,11 @@ pub trait Backend {
     ) -> std::pin::Pin<
         Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, StorageError>> + Send>,
     >;
+
+    fn list_streams(
+        &self,
+        correlation_id: Uuid,
+    ) -> std::pin::Pin<Box<dyn Future<Output = Result<Vec<Stream>, StorageError>> + Send>> {
+        unimplemented!()
+    }
 }

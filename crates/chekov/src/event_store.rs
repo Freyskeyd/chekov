@@ -169,3 +169,21 @@ where
         unimplemented!()
     }
 }
+
+impl<A> Handler<chekov_api::GetStreamList> for EventStore<A>
+where
+    A: Application,
+{
+    type Result = ResponseFuture<Result<Vec<Stream>, EventStoreError>>;
+
+    fn handle(&mut self, _: chekov_api::GetStreamList, ctx: &mut Self::Context) -> Self::Result {
+        let addr = self.addr.clone();
+
+        Box::pin(
+            addr.send(event_store::prelude::StreamList {
+                correlation_id: uuid::Uuid::new_v4(),
+            })
+            .map_ok_or_else(|e| Err(e.into()), |r| r),
+        )
+    }
+}
