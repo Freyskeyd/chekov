@@ -131,6 +131,11 @@
 <span id="126">126</span>
 <span id="127">127</span>
 <span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Application</span>;
@@ -140,6 +145,7 @@
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Aggregate</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Event</span>;
 <span class="kw">use</span> <span class="ident">actix::prelude</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="ident">chekov_api::GetStreamList</span>;
 <span class="kw">use</span> <span class="ident">event_store::core::storage::Storage</span>;
 <span class="kw">use</span> <span class="ident">event_store::prelude</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">uuid::Uuid</span>;
@@ -219,6 +225,10 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;event_store::prelude::Stream, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteStreamInfo</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">String</span>);
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;Vec&lt;event_store::prelude::Stream&gt;, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteStreamList</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">GetStreamList</span>);
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;i64&quot;</span>)]</span>

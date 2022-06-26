@@ -147,6 +147,10 @@
 <span id="142">142</span>
 <span id="143">143</span>
 <span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::handler::EventHandlerBuilder</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::event::EventHandler</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::message::StartListening</span>;
@@ -281,7 +285,7 @@
 
         <span class="ident">SubscriberManager</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span><span class="ident">::from_registry</span>().<span class="ident">do_send</span>(<span class="ident">StartListening</span>);
 
-        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>);
+        <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">event_store</span>.<span class="ident">clone</span>());
         <span class="ident">::actix::SystemRegistry::set</span>(<span class="ident">addr</span>);
         <span class="ident">::actix::SystemRegistry::set</span>(
             <span class="ident">InternalApplication</span>::<span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
@@ -289,6 +293,10 @@
             }
             .<span class="ident">start</span>(),
         );
+
+        <span class="ident">tokio::spawn</span>(<span class="kw">async</span> <span class="kw">move</span> {
+            <span class="ident">chekov_api::Server::start</span>(<span class="ident">event_store</span>.<span class="ident">into</span>()).<span class="kw">await</span>;
+        });
     }
 }
 </code></pre></div>

@@ -124,10 +124,19 @@
 <span id="119">119</span>
 <span id="120">120</span>
 <span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">EventStore</span>, <span class="ident">EventStoreBuilder</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">connection</span>::{
         <span class="ident">Append</span>, <span class="ident">Connection</span>, <span class="ident">CreateStream</span>, <span class="ident">Read</span>, <span class="ident">StreamForward</span>, <span class="ident">StreamForwardResult</span>, <span class="ident">StreamInfo</span>,
+        <span class="ident">StreamList</span>,
     },
     <span class="ident">core::stream::Stream</span>,
     <span class="ident">event::RecordedEvent</span>,
@@ -188,6 +197,13 @@
         <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">request</span>: <span class="ident">StreamInfo</span>,
     ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Stream</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
+        <span class="ident">connection</span>.<span class="ident">send</span>(<span class="ident">request</span>).<span class="kw">await</span><span class="question-mark">?</span>
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_streams</span>(
+        <span class="ident">connection</span>: <span class="ident">Addr</span><span class="op">&lt;</span><span class="ident">Connection</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">request</span>: <span class="ident">StreamList</span>,
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Stream</span><span class="op">&gt;</span>, <span class="ident">EventStoreError</span><span class="op">&gt;</span> {
         <span class="ident">connection</span>.<span class="ident">send</span>(<span class="ident">request</span>).<span class="kw">await</span><span class="question-mark">?</span>
     }
 
