@@ -154,7 +154,6 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
-<span id="152">152</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Aggregates produce events based on commands</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! An `Aggregate` is a simple Rust struct which will hold the state of the `Aggregate`.</span>
@@ -255,8 +254,7 @@
 <span class="kw">mod</span> <span class="ident">instance</span>;
 <span class="kw">mod</span> <span class="ident">registry</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>, <span class="ident">Command</span>, <span class="ident">CommandHandler</span>};
-<span class="kw">use</span> <span class="ident">actix::SystemService</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">prelude::ApplyError</span>, <span class="ident">Application</span>};
 <span class="kw">use</span> <span class="ident">event_store::prelude::RecordedEvent</span>;
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>

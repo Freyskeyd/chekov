@@ -96,7 +96,7 @@
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">start_listening</span>(
         <span class="kw-2">mut</span> <span class="ident">listener</span>: <span class="ident">PgListener</span>,
-    ) -&gt; <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    ) -&gt; <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="ident">listener</span>.<span class="ident">listen</span>(<span class="string">&quot;events&quot;</span>).<span class="kw">await</span>.<span class="ident">unwrap</span>();
 
         <span class="ident">listener</span>

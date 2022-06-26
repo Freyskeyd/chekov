@@ -186,7 +186,7 @@
         <span class="macro">trace!</span>(<span class="string">&quot;Aggregate {:?} stopped&quot;</span>, <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>());
     }
 
-    <span class="kw">fn</span> <span class="ident">stopping</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident">actix::Running</span> {
+    <span class="kw">fn</span> <span class="ident">stopping</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_ctx</span>: <span class="kw-2">&amp;mut</span> <span class="ident"><span class="self">Self</span>::Context</span>) -&gt; <span class="ident">actix::Running</span> {
         <span class="macro">trace!</span>(<span class="string">&quot;Aggregate {:?} stopping&quot;</span>, <span class="ident">std::any::type_name</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>());
 
         <span class="ident">actix::Running::Stop</span>

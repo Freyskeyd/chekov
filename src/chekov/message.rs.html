@@ -120,6 +120,17 @@
 <span id="115">115</span>
 <span id="116">116</span>
 <span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::marker::PhantomData</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Application</span>;
@@ -189,6 +200,17 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;Vec&lt;RecordedEvent&gt;, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteReader</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">event_store::prelude::Reader</span>);
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
+<span class="attribute">#[<span class="ident">rtype</span>(
+    <span class="string">&quot;Result&lt;
+            std::pin::Pin&lt;
+                Box&lt;dyn futures::Stream&lt;Item = Result&lt;Vec&lt;RecordedEvent&gt;, EventStoreError&gt;&gt; + Send&gt;,
+            &gt;,
+            EventStoreError,
+        &gt;&quot;</span>
+)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">ExecuteStreamForward</span>(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">String</span>);
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="string">&quot;Result&lt;Vec&lt;Uuid&gt;, event_store::prelude::EventStoreError&gt;&quot;</span>)]</span>

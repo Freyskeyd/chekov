@@ -10,4 +10,5 @@ sourcesIndex["event_store_eventbus_postgres"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["event_store_storage_inmemory"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["event_store_storage_postgres"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["gift_shop"] = {"name":"","dirs":[{"name":"account","files":["aggregate.rs","projector.rs","repository.rs"]}],"files":["account.rs","commands.rs","events.rs","gift_card.rs","http.rs","main.rs","order.rs"]};
+sourcesIndex["watcher"] = {"name":"","dirs":[{"name":"ui","files":["util.rs"]}],"files":["app.rs","main.rs","ui.rs"]};
 createSourceSidebar();

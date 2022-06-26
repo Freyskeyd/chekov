@@ -103,6 +103,10 @@
 <span id="98">98</span>
 <span id="99">99</span>
 <span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::pin::Pin</span>;
 
 <span class="kw">use</span> <span class="ident">actix::Message</span>;
@@ -123,7 +127,11 @@
 }
 
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BoxedStream</span> <span class="op">=</span> <span class="ident">Pin</span><span class="op">&lt;</span>
-    <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">Box</span><span class="op">&lt;</span>
+        <span class="kw">dyn</span> <span class="ident">Future</span><span class="op">&lt;</span>
+                <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EventBusMessage</span>, <span class="ident">EventBusError</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+            <span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>,
+    <span class="op">&gt;</span>,
 <span class="op">&gt;</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Message</span>)]</span>
