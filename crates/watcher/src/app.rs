@@ -13,13 +13,9 @@ use tui::{
 };
 use uuid::Uuid;
 
-use event_store::{
-    core::{backend::Backend as EventStoreBackend, event_bus::EventBus},
-    prelude::{PostgresBackend, PostgresEventBus, RecordedEvent},
-};
-use futures::TryStreamExt;
+use event_store::prelude::RecordedEvent;
 
-use crate::{ui::ui, Message};
+use crate::{conn, state::State, ui::ui, Message};
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -49,7 +45,8 @@ pub struct App<'a> {
     pub(crate) tabs: TabsState<'a>,
     pub(crate) state: TableState,
     pub(crate) list_state: ListState,
-    pub(crate) items: Vec<String>,
+    pub(crate) events: Vec<String>,
+    pub(crate) streams: Vec<String>,
 }
 
 impl<'a> App<'a> {
@@ -62,13 +59,14 @@ impl<'a> App<'a> {
                 titles: vec!["Events", "Streams"],
                 index: 0,
             },
-            items: vec![],
+            events: vec![],
+            streams: vec![],
         }
     }
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
-                if i >= self.items.len() - 1 {
+                if i >= self.events.len() - 1 {
                     0
                 } else {
                     i + 1
@@ -83,7 +81,7 @@ impl<'a> App<'a> {
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
-                    self.items.len() - 1
+                    self.events.len() - 1
                 } else {
                     i - 1
                 }
@@ -95,61 +93,58 @@ impl<'a> App<'a> {
 }
 
 async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
-    let mut backend =
-        PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store_bank")
-            .await
-            .unwrap();
+    let target = "http://[::1]:50051";
+    let mut conn = conn::Connection::new(target);
+    let mut state = State::default();
 
-    let mut listener = PostgresEventBus::initiate(
-        "postgresql://postgres:postgres@localhost/event_store_bank".to_string(),
-    )
-    .await
-    .unwrap();
-
-    let mut client = chekov_api::stream::stream_client::StreamClient::connect("http://[::1]:50051")
-        .await
-        .unwrap();
-
-    let mut stream = listener.create_stream().await;
-    while let Ok(Some(notif)) = stream.try_next().await {
-        // Reload state
-
-        match notif {
-            event_store::core::event_bus::EventBusMessage::Notification(notification)
-                if notification.stream_uuid == "$all" =>
-            {
-                let stream_uuid = notification.stream_uuid;
-                let correlation_id = Uuid::new_v4();
-
-                if let Ok(events) = backend
-                    .read_stream(
-                        stream_uuid.to_string(),
-                        notification.first_stream_version as usize,
-                        (notification.last_stream_version - notification.first_stream_version + 1)
-                            as usize,
-                        correlation_id,
-                    )
-                    .await
-                {
-                    let e = events
-                        .into_iter()
-                        .map(|event: RecordedEvent| {
-                            format!(
-                                "{event_type}({})",
-                                event.data,
-                                event_type = event.event_type
-                            )
-                        })
-                        .collect();
-
-                    tx.send(Message::Event(e)).expect("Cannot send notif");
-                }
+    loop {
+        tokio::select! {
+            state_update = conn.next_update() => {
+                state.update(state_update);
             }
-            event_store::core::event_bus::EventBusMessage::Notification(_) => {}
-            event_store::core::event_bus::EventBusMessage::Events(stream, events) => todo!(),
-            event_store::core::event_bus::EventBusMessage::Unkown => {}
         }
     }
+
+    // let mut stream = listener.create_stream().await;
+    // while let Ok(Some(notif)) = stream.try_next().await {
+    //     // Reload state
+    //
+    //     match notif {
+    //         event_store::core::event_bus::EventBusMessage::Notification(notification)
+    //             if notification.stream_uuid == "$all" =>
+    //         {
+    //             let stream_uuid = notification.stream_uuid;
+    //             let correlation_id = Uuid::new_v4();
+    //
+    //             if let Ok(events) = backend
+    //                 .read_stream(
+    //                     stream_uuid.to_string(),
+    //                     notification.first_stream_version as usize,
+    //                     (notification.last_stream_version - notification.first_stream_version + 1)
+    //                         as usize,
+    //                     correlation_id,
+    //                 )
+    //                 .await
+    //             {
+    //                 let e = events
+    //                     .into_iter()
+    //                     .map(|event: RecordedEvent| {
+    //                         format!(
+    //                             "{event_type}({})",
+    //                             event.data,
+    //                             event_type = event.event_type
+    //                         )
+    //                     })
+    //                     .collect();
+    //
+    //                 tx.send(Message::Event(e)).expect("Cannot send notif");
+    //             }
+    //         }
+    //         event_store::core::event_bus::EventBusMessage::Notification(_) => {}
+    //         event_store::core::event_bus::EventBusMessage::Events(stream, events) => todo!(),
+    //         event_store::core::event_bus::EventBusMessage::Unkown => {}
+    //     }
+    // }
     Ok(())
 }
 
@@ -160,6 +155,7 @@ pub(crate) async fn run_app<'a, B: Backend>(
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(200);
     let tx_one = tx.clone();
+
     thread::spawn(move || {
         let mut last_tick = Instant::now();
         loop {
@@ -202,7 +198,7 @@ pub(crate) async fn run_app<'a, B: Backend>(
                 return Ok(());
             }
             Ok(Message::Event(mut values)) => {
-                app.items.append(&mut values);
+                app.events.append(&mut values);
                 terminal.draw(|f| ui(f, &mut app))?;
             }
             _ => {}

@@ -8,6 +8,8 @@ use std::io;
 use tui::{backend::CrosstermBackend, Terminal};
 
 mod app;
+mod conn;
+mod state;
 mod ui;
 
 #[tokio::main]

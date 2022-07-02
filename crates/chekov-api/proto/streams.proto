@@ -2,12 +2,13 @@ syntax = "proto3";
 
 package rs.chekov.api.streams;
 
-service Stream {
-  rpc GetStreamList(GetStreamListRequest) returns ( GetStreamListResponse );
-}
+/* service Stream { */
+/*   rpc GetStreamList(GetStreamListRequest) returns ( GetStreamListResponse ); */
+/* } */
+/**/
+/* message GetStreamListRequest {} */
+/* message GetStreamListResponse { */
+/*   repeated string streams = 1; */
+/* } */
 
-message GetStreamListRequest {}
-message GetStreamListResponse {
-  repeated string streams = 1;
-}
-
+message StreamUpdate{}

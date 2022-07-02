@@ -140,9 +140,5 @@ where
             }
             .start(),
         );
-
-        tokio::spawn(async move {
-            chekov_api::Server::start(event_store.into()).await;
-        });
     }
 }

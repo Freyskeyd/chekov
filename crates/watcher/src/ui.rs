@@ -48,19 +48,40 @@ fn draw_main_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 where
     B: Backend,
 {
-    let constraints = vec![Constraint::Percentage(100)];
+    let constraints = vec![Constraint::Percentage(50), Constraint::Percentage(50)];
     let chunks = Layout::default()
         .constraints(constraints)
-        .direction(Direction::Horizontal)
+        .direction(Direction::Vertical)
         .split(area);
     {
         let chunks = Layout::default()
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
             .direction(Direction::Horizontal)
             .split(chunks[0]);
-        let logs = app.items.clone();
 
-        draw_selectable_list(f, app, chunks[0], "Events", &logs, (false, false), None)
+        let events = app.events.clone();
+        let streams = app.streams.clone();
+
+        draw_selectable_list(f, app, chunks[0], "Events", &events, (false, false), None);
+        draw_selectable_list(f, app, chunks[1], "Streams", &streams, (false, false), None);
+    }
+    {
+        let chunks = Layout::default()
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Horizontal)
+            .split(chunks[1]);
+        let logs = app.events.clone();
+
+        draw_selectable_list(f, app, chunks[0], "Aggregates", &logs, (false, false), None);
+        draw_selectable_list(
+            f,
+            app,
+            chunks[1],
+            "EventHandlers",
+            &logs,
+            (false, false),
+            None,
+        );
     }
 }
 

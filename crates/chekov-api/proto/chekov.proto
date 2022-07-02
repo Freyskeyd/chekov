@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package rs.chekov.api.chekov;
+
+import "google/protobuf/timestamp.proto";
+import "aggregates.proto";
+import "events.proto";
+import "streams.proto";
+
+service Chekov {
+  rpc WatchUpdates(WatchUpdateRequest) returns (stream Update);
+}
+
+message WatchUpdateRequest {}
+
+message Update {
+  google.protobuf.Timestamp now = 1;
+
+  streams.StreamUpdate stream_update = 2;
+  aggregates.AggregateUpdate aggregate_update = 3;
+  events.EventUpdate event_update = 4;
+}
