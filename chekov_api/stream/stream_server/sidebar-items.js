@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["StreamServer",""]],"trait":[["Stream","Generated trait containing gRPC methods that should be implemented for use with StreamServer."]]});

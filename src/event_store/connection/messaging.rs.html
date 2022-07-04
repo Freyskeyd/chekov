@@ -58,12 +58,6 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">core::stream::Stream</span>, <span class="ident">event::RecordedEvent</span>, <span class="ident">event::UnsavedEvent</span>, <span class="ident">EventStoreError</span>,
     <span class="ident">ExpectedVersion</span>,
@@ -76,12 +70,6 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StreamInfo</span> {
     <span class="kw">pub</span> <span class="ident">correlation_id</span>: <span class="ident">Uuid</span>,
     <span class="kw">pub</span> <span class="ident">stream_uuid</span>: <span class="ident">String</span>,
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
-<span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;Result&lt;Vec&lt;Stream&gt;, EventStoreError&gt;&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StreamList</span> {
-    <span class="kw">pub</span> <span class="ident">correlation_id</span>: <span class="ident">Uuid</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Message</span>)]</span>
@@ -126,5 +114,5 @@
 <span class="attribute">#[<span class="ident">rtype</span>(<span class="ident">result</span> <span class="op">=</span> <span class="string">&quot;()&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">StartPubSub</span> {}
 </code></pre></div>
-</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="event_store" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0 (fe5b13d68 2022-05-18)" ></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="event_store" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.62.0 (a8314ef7d 2022-06-27)" ></div>
 </body></html>
