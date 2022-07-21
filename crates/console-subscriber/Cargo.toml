@@ -1,0 +1,17 @@
+[package]
+name = "console-subscriber"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "^1.15", features = ["sync", "time", "macros", "tracing"] }
+tokio-stream = "0.1"
+
+tracing = "*"
+tracing-core = "0.1.24"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "registry", "env-filter"] }
+
+tonic = { version = "0.7", features = ["transport"] }
+chekov-api = { version = "0.1", path = "../chekov-api" }

@@ -183,6 +183,8 @@ pub use chekov_macros::CommandHandler;
 pub use chekov_macros::Event;
 pub use chekov_macros::EventHandler;
 
+pub use console_subscriber;
+
 #[doc(hidden)]
 pub use async_trait;
 #[doc(hidden)]

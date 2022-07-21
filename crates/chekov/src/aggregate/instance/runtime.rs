@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::aggregate::instance::internal::CommandExecutionResult;
 use crate::command::{Command, Handler};
 use crate::error::CommandExecutorError;
@@ -11,6 +13,22 @@ use tracing::trace;
 
 use super::AggregateInstance;
 
+enum AggregateStatus {
+    Started,
+    Stopping,
+    Stopped,
+}
+
+impl Display for AggregateStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            AggregateStatus::Started => write!(f, "started"),
+            AggregateStatus::Stopping => write!(f, "stopping"),
+            AggregateStatus::Stopped => write!(f, "stopped"),
+        }
+    }
+}
+
 impl<A: Aggregate> ActixHandler<AggregateVersion> for AggregateInstance<A> {
     type Result = i64;
 
@@ -23,15 +41,30 @@ impl<A: Aggregate> Actor for AggregateInstance<A> {
     type Context = Context<Self>;
 
     fn started(&mut self, _ctx: &mut Self::Context) {
-        trace!("Aggregate {:?} started", std::any::type_name::<Self>());
+        trace!(
+            identity = self.identity,
+            status = AggregateStatus::Started.to_string(),
+            "Aggregate {:?} started",
+            std::any::type_name::<Self>()
+        );
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
-        trace!("Aggregate {:?} stopped", std::any::type_name::<Self>());
+        trace!(
+            identity = self.identity,
+            status = AggregateStatus::Stopped.to_string(),
+            "Aggregate {:?} stopped",
+            std::any::type_name::<Self>()
+        );
     }
 
     fn stopping(&mut self, _ctx: &mut Self::Context) -> actix::Running {
-        trace!("Aggregate {:?} stopping", std::any::type_name::<Self>());
+        trace!(
+            identity = self.identity,
+            status = AggregateStatus::Stopping.to_string(),
+            "Aggregate {:?} stopping",
+            std::any::type_name::<Self>()
+        );
 
         actix::Running::Stop
     }
@@ -45,11 +78,16 @@ where
 
     #[tracing::instrument(
         name = "AggregateInstance",
-        skip(self, _ctx, cmd),
+        skip(self, ctx, cmd),
         fields(correlation_id = %cmd.metadatas.correlation_id, aggregate_id = %cmd.command.identifier(), aggregate_type = %::std::any::type_name::<C::Executor>())
     )]
-    fn handle(&mut self, cmd: Dispatch<C, A>, _ctx: &mut Self::Context) -> Self::Result {
-        trace!("Executing command {}", std::any::type_name::<C>(),);
+    fn handle(&mut self, cmd: Dispatch<C, A>, ctx: &mut Self::Context) -> Self::Result {
+        trace!(
+            identity = self.identity,
+            status = AggregateStatus::Started.to_string(),
+            "Executing command {}",
+            std::any::type_name::<C>(),
+        );
 
         let mutable_state = self.create_mutable_state();
         let current_version = self.current_version;
@@ -142,6 +180,8 @@ impl<A: Aggregate> ActixHandler<ShutdownAggregate> for AggregateInstance<A> {
 
     fn handle(&mut self, _msg: ShutdownAggregate, ctx: &mut Self::Context) -> Self::Result {
         trace!(
+            identity = self.identity,
+            status = AggregateStatus::Started.to_string(),
             "AggregateInstance {:?} is asked to shutdown",
             std::any::type_name::<Self>()
         );

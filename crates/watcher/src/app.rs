@@ -6,6 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::runtime::Handle;
+use tonic::transport::Uri;
 use tui::{
     backend::Backend,
     widgets::{ListState, TableState},
@@ -94,7 +95,8 @@ impl<'a> App<'a> {
 
 async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
     let target = "http://[::1]:50051";
-    let mut conn = conn::Connection::new(target);
+    let uri = Uri::from_static(target);
+    let mut conn = conn::Connection::new(uri);
     let mut state = State::default();
 
     loop {

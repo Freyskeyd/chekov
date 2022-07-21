@@ -8,6 +8,7 @@ pub mod events;
 pub mod streams;
 
 pub use client::chekov_client::ChekovClient;
+pub use client::chekov_server::Chekov as ChekovAPI;
 pub use client::chekov_server::ChekovServer;
 pub use client::Update;
 
@@ -37,24 +38,24 @@ impl StreamServer {
 //     }
 // }
 //
-pub struct Server {}
-impl Server {
-    pub async fn start(
-        _event_store: actix::Recipient<GetStreamList>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let addr = "[::1]:50051".parse()?;
-
-        // let stream = StreamServer::new(event_store);
-
-        println!("Starting gRPC Server...");
-        tonic::transport::Server::builder()
-            // .add_service(streams::stream_server::StreamServer::new(stream))
-            .serve(addr)
-            .await?;
-
-        Ok(())
-    }
-}
+// pub struct Server {}
+// impl Server {
+//     pub async fn start(
+//         _event_store: actix::Recipient<GetStreamList>,
+//     ) -> Result<(), Box<dyn std::error::Error>> {
+//         let addr = "[::1]:50051".parse()?;
+//
+//         // let stream = StreamServer::new(event_store);
+//
+//         println!("Starting gRPC Server...");
+//         tonic::transport::Server::builder()
+//             // .add_service(streams::stream_server::StreamServer::new(stream))
+//             .serve(addr)
+//             .await?;
+//
+//         Ok(())
+//     }
+// }
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<Vec<EventStoreStream>, EventStoreError>")]

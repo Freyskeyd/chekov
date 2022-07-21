@@ -80,9 +80,9 @@ pub mod chekov_client {
             &mut self,
             request: impl tonic::IntoRequest<super::WatchUpdateRequest>,
         ) -> Result<
-                tonic::Response<tonic::codec::Streaming<super::Update>>,
-                tonic::Status,
-            > {
+            tonic::Response<tonic::codec::Streaming<super::Update>>,
+            tonic::Status,
+        > {
             self.inner
                 .ready()
                 .await

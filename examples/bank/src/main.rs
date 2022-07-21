@@ -30,7 +30,9 @@ impl Application for DefaultApp {
 
 #[actix::main]
 async fn main() -> std::io::Result<()> {
-    tracing_subscriber::fmt::init();
+    chekov::console_subscriber::ConsoleLayer::builder()
+        .enable_self_trace(true)
+        .init();
 
     let db_pool = PgPool::connect("postgresql://postgres:postgres@localhost/bank")
         .await

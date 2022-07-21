@@ -1,3 +1,3 @@
 [workspace]
-default-members = ["crates/*"]
+default-members = ["crates/chekov"]
 members = ["crates/*", "examples/*"]
