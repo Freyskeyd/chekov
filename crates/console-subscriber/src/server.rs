@@ -9,10 +9,10 @@ use chekov_api as proto;
 
 #[derive(Debug)]
 pub struct Server {
-    subscribe: mpsc::Sender<Command>,
-    aggregator: Option<Aggregator>,
-    addr: SocketAddr,
-    client_buffer: usize,
+    pub subscribe: mpsc::Sender<Command>,
+    pub aggregator: Option<Aggregator>,
+    pub addr: SocketAddr,
+    pub client_buffer: usize,
 }
 
 impl Server {
@@ -64,7 +64,7 @@ impl proto::ChekovAPI for Server {
         })?;
 
         let (tx, rx) = mpsc::channel(self.client_buffer);
-        permit.send(Command::Update(Watch(tx)));
+        // permit.send(Command::Update(Watch(tx)));
         tracing::debug!("watch started");
 
         let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
