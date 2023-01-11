@@ -14,4 +14,5 @@ tracing-core = "0.1.24"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "registry", "env-filter"] }
 
 tonic = { version = "0.7", features = ["transport"] }
+prost = "*"
 chekov-api = { version = "0.1", path = "../chekov-api" }

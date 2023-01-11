@@ -3,7 +3,7 @@ use tokio::sync::mpsc;
 use chekov_api as proto;
 
 #[derive(Debug)]
-pub(crate) struct Watch<T>(mpsc::Sender<Result<T, tonic::Status>>);
+pub(crate) struct Watch<T>(pub mpsc::Sender<Result<T, tonic::Status>>);
 
 impl<T: Clone> Watch<T> {
     pub(crate) fn update(&self, update: &T) -> bool {

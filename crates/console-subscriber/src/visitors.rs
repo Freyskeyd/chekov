@@ -5,6 +5,7 @@ use tracing_core::Field;
 pub(crate) struct AggregateInstanceData {
     aggregate_id: Option<String>,
     correlation_id: Option<String>,
+    message: Option<String>,
 }
 
 impl AggregateInstanceData {
@@ -23,6 +24,9 @@ impl Visit for AggregateInstanceData {
             }
             "correlation_id" => {
                 self.correlation_id = Some(format!("{:?}", value));
+            }
+            "message" => {
+                self.message = Some(format!("{:?}", value));
             }
             _ => {}
         }

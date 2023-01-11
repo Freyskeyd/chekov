@@ -3,14 +3,17 @@ use tokio::sync::mpsc;
 use tracing::Subscriber;
 use tracing_subscriber::Layer;
 
-use crate::{command::Command, Aggregator};
+use crate::{
+    command::{Command, Watch},
+    Aggregator,
+};
 
 use chekov_api as proto;
 
 #[derive(Debug)]
 pub struct Server {
-    pub subscribe: mpsc::Sender<Command>,
-    pub aggregator: Option<Aggregator>,
+    pub(crate) subscribe: mpsc::Sender<Command>,
+    pub(crate) aggregator: Option<Aggregator>,
     pub addr: SocketAddr,
     pub client_buffer: usize,
 }
@@ -59,17 +62,29 @@ impl proto::ChekovAPI for Server {
             None => tracing::debug!(client.addr = %"<unknown>", "starting a new watch"),
         }
 
+        println!("request: {:?}", request.into_inner());
         let permit = self.subscribe.reserve().await.map_err(|_| {
             tonic::Status::internal("cannot start new watch, aggregation task is not running")
         })?;
 
         let (tx, rx) = mpsc::channel(self.client_buffer);
-        // permit.send(Command::Update(Watch(tx)));
+        permit.send(Command::Update(Watch(tx)));
         tracing::debug!("watch started");
 
         let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
-
-        println!("{:?}", stream);
+        //
+        // let s = proto::streams::StreamUpdate {};
+        //
+        // let ss: Vec<u8> = serialize(&s);
+        //
+        // println!("{:?}", stream);
         Ok(tonic::Response::new(stream))
     }
+}
+
+fn serialize<T>(message: &T) -> Vec<u8>
+where
+    T: prost::Message,
+{
+    message.encode_to_vec()
 }
