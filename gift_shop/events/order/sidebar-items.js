@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["GiftCardAdded",""],["OrderCanceled",""],["OrderCreated",""],["OrderValidated",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["GiftCardAdded",""],["OrderCanceled",""],["OrderCreated",""],["OrderValidated",""]]};

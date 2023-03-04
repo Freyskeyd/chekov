@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error",""]],"trait":[["Backend",""]]});
+window.SIDEBAR_ITEMS = {"mod":[["error",""]],"trait":[["Backend",""]]};

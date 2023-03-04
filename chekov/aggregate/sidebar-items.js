@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["Aggregate","Define an Aggregate"]],"type":[["StaticState",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["Aggregate","Define an Aggregate"]],"type":[["StaticState",""]]};

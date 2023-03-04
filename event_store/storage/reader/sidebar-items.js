@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ReadStreamRequest",""],["Reader",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ReadStreamRequest",""],["Reader",""]]};

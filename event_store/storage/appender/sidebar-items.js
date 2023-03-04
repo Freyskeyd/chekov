@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["AppendToStreamRequest",""],["Appender","An Appender defines the parameters of an append action"]]});
+window.SIDEBAR_ITEMS = {"struct":[["AppendToStreamRequest",""],["Appender","An Appender defines the parameters of an append action"]]};

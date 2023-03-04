@@ -1,4 +1,4 @@
-(function() {var implementors = {};
-implementors["event_store_eventbus_inmemory"] = [{"text":"impl <a class=\"trait\" href=\"event_store_core/event_bus/trait.EventBus.html\" title=\"trait event_store_core::event_bus::EventBus\">EventBus</a> for <a class=\"struct\" href=\"event_store_eventbus_inmemory/struct.InMemoryEventBus.html\" title=\"struct event_store_eventbus_inmemory::InMemoryEventBus\">InMemoryEventBus</a>","synthetic":false,"types":["event_store_eventbus_inmemory::InMemoryEventBus"]}];
-implementors["event_store_eventbus_postgres"] = [{"text":"impl <a class=\"trait\" href=\"event_store_core/event_bus/trait.EventBus.html\" title=\"trait event_store_core::event_bus::EventBus\">EventBus</a> for <a class=\"struct\" href=\"event_store_eventbus_postgres/struct.PostgresEventBus.html\" title=\"struct event_store_eventbus_postgres::PostgresEventBus\">PostgresEventBus</a>","synthetic":false,"types":["event_store_eventbus_postgres::PostgresEventBus"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"event_store_eventbus_inmemory":[["impl EventBus for <a class=\"struct\" href=\"event_store_eventbus_inmemory/struct.InMemoryEventBus.html\" title=\"struct event_store_eventbus_inmemory::InMemoryEventBus\">InMemoryEventBus</a>"]],
+"event_store_eventbus_postgres":[["impl EventBus for <a class=\"struct\" href=\"event_store_eventbus_postgres/struct.PostgresEventBus.html\" title=\"struct event_store_eventbus_postgres::PostgresEventBus\">PostgresEventBus</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,3 +1,3 @@
-(function() {var implementors = {};
-implementors["gift_shop"] = [{"text":"impl <a class=\"trait\" href=\"chekov/application/trait.Application.html\" title=\"trait chekov::application::Application\">Application</a> for <a class=\"struct\" href=\"gift_shop/struct.DefaultApp.html\" title=\"struct gift_shop::DefaultApp\">DefaultApp</a>","synthetic":false,"types":["gift_shop::DefaultApp"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"gift_shop":[["impl <a class=\"trait\" href=\"chekov/application/trait.Application.html\" title=\"trait chekov::application::Application\">Application</a> for <a class=\"struct\" href=\"gift_shop/struct.DefaultApp.html\" title=\"struct gift_shop::DefaultApp\">DefaultApp</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

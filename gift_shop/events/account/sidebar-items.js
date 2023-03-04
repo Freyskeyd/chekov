@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["MoneyMovementEvent",""]],"struct":[["AccountOpened",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["MoneyMovementEvent",""]],"struct":[["AccountOpened",""]]};

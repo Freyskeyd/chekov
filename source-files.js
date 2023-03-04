@@ -1,14 +1,17 @@
-var sourcesIndex = {};
-sourcesIndex["chekov"] = {"name":"","dirs":[{"name":"aggregate","dirs":[{"name":"instance","files":["internal.rs","mod.rs","runtime.rs"]}],"files":["mod.rs","registry.rs","resolver.rs"]},{"name":"application","files":["builder.rs","internal.rs","mod.rs"]},{"name":"command","dirs":[{"name":"handler","files":["instance.rs","mod.rs","registry.rs"]}],"files":["consistency.rs","metadata.rs","mod.rs"]},{"name":"event","files":["handler.rs","mod.rs","resolver.rs"]},{"name":"subscriber","files":["listener.rs","manager.rs","mod.rs","subscriber.rs"]}],"files":["error.rs","event_store.rs","lib.rs","message.rs","prelude.rs","router.rs"]};
-sourcesIndex["chekov_macros"] = {"name":"","files":["aggregate.rs","command.rs","event.rs","event_handler.rs","lib.rs"]};
-sourcesIndex["event_store"] = {"name":"","dirs":[{"name":"connection","files":["messaging.rs","mod.rs"]},{"name":"event","files":["mod.rs"]},{"name":"event_store","files":["logic.rs","mod.rs","runtime.rs"]},{"name":"storage","files":["appender.rs","mod.rs","reader.rs"]},{"name":"subscriptions","files":["error.rs","fsm.rs","mod.rs","pub_sub.rs","state.rs","subscriber.rs","subscription.rs","supervisor.rs"]}],"files":["lib.rs","prelude.rs"]};
-sourcesIndex["event_store_backend_inmemory"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["event_store_backend_postgres"] = {"name":"","files":["error.rs","lib.rs","sql.rs"]};
-sourcesIndex["event_store_core"] = {"name":"","dirs":[{"name":"backend","files":["error.rs","mod.rs"]},{"name":"event","files":["error.rs","mod.rs"]},{"name":"event_bus","files":["error.rs","mod.rs"]},{"name":"storage","files":["error.rs","mod.rs"]},{"name":"stream","files":["error.rs","mod.rs"]}],"files":["error.rs","lib.rs","versions.rs"]};
-sourcesIndex["event_store_eventbus_inmemory"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["event_store_eventbus_postgres"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["event_store_storage_inmemory"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["event_store_storage_postgres"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["gift_shop"] = {"name":"","dirs":[{"name":"account","files":["aggregate.rs","projector.rs","repository.rs"]}],"files":["account.rs","commands.rs","events.rs","gift_card.rs","http.rs","main.rs","order.rs"]};
-sourcesIndex["watcher"] = {"name":"","dirs":[{"name":"ui","files":["util.rs"]}],"files":["app.rs","main.rs","ui.rs"]};
+var sourcesIndex = JSON.parse('{\
+"chekov":["",[["aggregate",[["instance",[],["internal.rs","mod.rs","runtime.rs"]]],["mod.rs","registry.rs","resolver.rs"]],["application",[],["builder.rs","internal.rs","mod.rs"]],["command",[["handler",[],["instance.rs","mod.rs","registry.rs"]]],["consistency.rs","metadata.rs","mod.rs"]],["event",[],["handler.rs","mod.rs","resolver.rs"]],["subscriber",[],["listener.rs","manager.rs","mod.rs","subscriber.rs"]]],["error.rs","event_store.rs","lib.rs","message.rs","prelude.rs","router.rs"]],\
+"chekov_api":["",[["generated",[],["rs.chekov.api.aggregates.rs","rs.chekov.api.chekov.rs","rs.chekov.api.events.rs","rs.chekov.api.streams.rs"]]],["aggregates.rs","client.rs","events.rs","lib.rs","streams.rs"]],\
+"chekov_macros":["",[],["aggregate.rs","command.rs","event.rs","event_handler.rs","lib.rs"]],\
+"console_subscriber":["",[],["builder.rs","command.rs","lib.rs","server.rs","visitors.rs"]],\
+"event_store":["",[["connection",[],["messaging.rs","mod.rs"]],["event",[],["mod.rs"]],["event_store",[],["logic.rs","mod.rs","runtime.rs"]],["storage",[],["appender.rs","mod.rs","reader.rs"]],["subscriptions",[],["error.rs","fsm.rs","mod.rs","pub_sub.rs","state.rs","subscriber.rs","subscription.rs","supervisor.rs"]]],["lib.rs","prelude.rs"]],\
+"event_store_backend_inmemory":["",[],["lib.rs"]],\
+"event_store_backend_postgres":["",[],["error.rs","lib.rs","sql.rs"]],\
+"event_store_core":["",[["backend",[],["error.rs","mod.rs"]],["event",[],["error.rs","mod.rs"]],["event_bus",[],["error.rs","mod.rs"]],["storage",[],["error.rs","mod.rs"]],["stream",[],["error.rs","mod.rs"]]],["error.rs","lib.rs","versions.rs"]],\
+"event_store_eventbus_inmemory":["",[],["lib.rs"]],\
+"event_store_eventbus_postgres":["",[],["lib.rs"]],\
+"event_store_storage_inmemory":["",[],["lib.rs"]],\
+"event_store_storage_postgres":["",[],["lib.rs"]],\
+"gift_shop":["",[["account",[],["aggregate.rs","projector.rs","repository.rs"]]],["account.rs","commands.rs","events.rs","gift_card.rs","http.rs","main.rs","order.rs"]],\
+"watcher":["",[["ui",[],["util.rs"]]],["app.rs","conn.rs","main.rs","state.rs","ui.rs"]]\
+}');
 createSourceSidebar();

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ChekovServer",""]],"trait":[["Chekov","Generated trait containing gRPC methods that should be implemented for use with ChekovServer."]]};

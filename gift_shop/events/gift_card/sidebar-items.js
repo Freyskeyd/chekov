@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["GiftCardCreated",""],["GiftCardUsed",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["GiftCardCreated",""],["GiftCardUsed",""]]};

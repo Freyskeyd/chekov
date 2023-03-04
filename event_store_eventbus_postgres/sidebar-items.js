@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PostgresEventBus",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["PostgresEventBus",""]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"trait":[["BackendError",""]]});
+window.SIDEBAR_ITEMS = {"trait":[["BackendError",""]]};

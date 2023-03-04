@@ -1,4 +1,4 @@
-(function() {var implementors = {};
-implementors["event_store_storage_inmemory"] = [{"text":"impl <a class=\"trait\" href=\"event_store_core/storage/trait.Storage.html\" title=\"trait event_store_core::storage::Storage\">Storage</a> for <a class=\"struct\" href=\"event_store_storage_inmemory/struct.InMemoryStorage.html\" title=\"struct event_store_storage_inmemory::InMemoryStorage\">InMemoryStorage</a>","synthetic":false,"types":["event_store_storage_inmemory::InMemoryStorage"]}];
-implementors["event_store_storage_postgres"] = [{"text":"impl <a class=\"trait\" href=\"event_store_core/storage/trait.Storage.html\" title=\"trait event_store_core::storage::Storage\">Storage</a> for <a class=\"struct\" href=\"event_store_storage_postgres/struct.PostgresStorage.html\" title=\"struct event_store_storage_postgres::PostgresStorage\">PostgresStorage</a>","synthetic":false,"types":["event_store_storage_postgres::PostgresStorage"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"event_store_storage_inmemory":[["impl Storage for <a class=\"struct\" href=\"event_store_storage_inmemory/struct.InMemoryStorage.html\" title=\"struct event_store_storage_inmemory::InMemoryStorage\">InMemoryStorage</a>"]],
+"event_store_storage_postgres":[["impl Storage for <a class=\"struct\" href=\"event_store_storage_postgres/struct.PostgresStorage.html\" title=\"struct event_store_storage_postgres::PostgresStorage\">PostgresStorage</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

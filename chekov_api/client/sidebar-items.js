@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["chekov_client","Generated client implementations."],["chekov_server","Generated server implementations."]],"struct":[["Update",""],["WatchUpdateRequest",""]]};

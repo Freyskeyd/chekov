@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PostgresBackend",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["PostgresBackend",""]]};

@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"chekov_api":[["impl&lt;T:&nbsp;<a class=\"trait\" href=\"chekov_api/client/chekov_server/trait.Chekov.html\" title=\"trait chekov_api::client::chekov_server::Chekov\">Chekov</a>&gt; <a class=\"trait\" href=\"https://docs.rs/tonic/0.7.2/tonic/transport/server/trait.NamedService.html\" title=\"trait tonic::transport::server::NamedService\">NamedService</a> for <a class=\"struct\" href=\"chekov_api/client/chekov_server/struct.ChekovServer.html\" title=\"struct chekov_api::client::chekov_server::ChekovServer\">ChekovServer</a>&lt;T&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

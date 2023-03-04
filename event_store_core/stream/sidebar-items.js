@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["error",""]],"struct":[["Stream","A `Stream` represents an `Event` stream"]]});
+window.SIDEBAR_ITEMS = {"mod":[["error",""]],"struct":[["Stream","A `Stream` represents an `Event` stream"]]};
