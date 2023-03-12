@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
         .launch()
         .await;
 
-    let _ = HttpServer::new(move || {
+    HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .app_data(Data::new(db_pool.clone()))

@@ -43,7 +43,7 @@ struct GetSubscriberCountForStream(String);
 
 #[derive(Message)]
 #[rtype("()")]
-pub(crate) struct PubSubNotification {
+pub struct PubSubNotification {
     pub(crate) stream: String,
     pub(crate) events: Vec<RecordedEvent>,
 }
@@ -64,10 +64,7 @@ impl Handler<GetSubscriberCountForStream> for PubSub {
         msg: GetSubscriberCountForStream,
         _ctx: &mut Self::Context,
     ) -> Self::Result {
-        self.listeners
-            .get(&msg.0)
-            .map(|listeners| listeners.len())
-            .unwrap_or(0)
+        self.listeners.get(&msg.0).map_or(0, Vec::len)
     }
 }
 
@@ -86,25 +83,25 @@ impl Handler<PubSubNotification> for PubSub {
         let v: Vec<Arc<RecordedEvent>> = msg.events.into_iter().map(Into::into).collect();
 
         if let Some(listeners) = self.listeners.get::<str>(&stream) {
-            listeners.iter().for_each(|listener| {
+            for listener in listeners.iter() {
                 // FIX: Deal with failure
                 let _ = listener.try_send(SubscriptionNotification::PubSubEvents(
                     stream.clone(),
                     v.clone(),
                 ));
-            });
+            }
         }
 
         // TODO: Group the two loops
         // WARNING: Listeners subscribing both to stream_id and $all will receive events 2times
         if let Some(listeners) = self.listeners.get::<str>("$all") {
-            listeners.iter().for_each(|listener| {
+            for listener in listeners.iter() {
                 // FIX: Deal with failure
                 let _ = listener.try_send(SubscriptionNotification::PubSubEvents(
                     stream.clone(),
                     v.clone(),
                 ));
-            });
+            }
         }
     }
 }

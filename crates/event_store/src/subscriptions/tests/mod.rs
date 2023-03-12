@@ -17,7 +17,7 @@ macro_rules! pluck {
 }
 
 mod pub_sub;
-pub(crate) mod support;
+pub mod support;
 mod transient_fsm;
 
 struct TestContext {}

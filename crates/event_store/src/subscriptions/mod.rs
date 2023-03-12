@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 mod error;
 mod fsm;
-pub(crate) mod pub_sub;
+pub mod pub_sub;
 mod state;
 mod subscriber;
 mod subscription;
@@ -56,7 +56,7 @@ impl Default for SubscriptionOptions {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum StartFrom {
     Origin,
     Version(i64),

@@ -107,7 +107,7 @@ impl<A: Aggregate> ActixHandler<SubscriptionNotification> for AggregateInstance<
         match msg {
             SubscriptionNotification::Events(events) => {
                 for event in events.as_ref() {
-                    let _ = self.apply_recorded_event(&event);
+                    let _ = self.apply_recorded_event(event);
                 }
             }
             SubscriptionNotification::OwnedEvents(events) => {

@@ -225,8 +225,8 @@ impl OrderRepository {
         let todo = sqlx::query(
             "INSERT INTO orders (order_id, account_id) VALUES ($1, $2) RETURNING order_id, account_id, items, total_price",
         )
-        .bind(&entity.order_id)
-        .bind(&entity.account_id)
+        .bind(entity.order_id)
+        .bind(entity.account_id)
         .map(|row: PgRow| Order {
             order_id: row.get(0),
             account_id: row.get(1),

@@ -14,7 +14,7 @@ async fn should_persist_pending_events_in_order_applied() -> Result<(), Box<dyn 
     let _ = start_aggregate(&identifier).await;
 
     let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
-        AppendItem(10, identifier.clone()),
+        AppendItem(10, identifier),
     )
     .await;
 
@@ -23,7 +23,7 @@ async fn should_persist_pending_events_in_order_applied() -> Result<(), Box<dyn 
     let events = result.unwrap();
     assert!(events.len() == 10);
 
-    let reader = Reader::default().stream(&identifier)?.limit(100);
+    let reader = Reader::default().stream(identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
     assert!(recorded_events.len() == 10);
@@ -33,7 +33,7 @@ async fn should_persist_pending_events_in_order_applied() -> Result<(), Box<dyn 
     let slice = recorded_events
         .into_iter()
         .filter(|event| event.stream_uuid == identifier_as_string)
-        .map(|event| serde_json::from_value::<usize>(event.data.clone()).unwrap())
+        .map(|event| serde_json::from_value::<usize>(event.data).unwrap())
         .collect::<Vec<usize>>();
 
     assert!(slice == (1..=10).collect::<Vec<usize>>());
@@ -49,19 +49,19 @@ async fn should_not_persist_events_when_command_returns_no_events(
     let _ = start_aggregate(&identifier).await;
 
     let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
-        AppendItem(0, identifier.clone()),
+        AppendItem(0, identifier),
     )
     .await;
 
     assert!(result.is_ok());
 
     let events = result.unwrap();
-    assert!(events.len() == 0);
+    assert!(events.is_empty());
 
-    let reader = Reader::default().stream(&identifier)?.limit(100);
+    let reader = Reader::default().stream(identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
-    assert!(recorded_events.len() == 0);
+    assert!(recorded_events.is_empty());
 
     Ok(())
 }
@@ -80,7 +80,7 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
     let addr = start_aggregate(&identifier).await;
 
     let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
-        AppendItem(10, identifier.clone()),
+        AppendItem(10, identifier),
     )
     .await;
 
@@ -89,15 +89,14 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
     let events = result.unwrap();
     assert!(events.len() == 10);
 
-    let reader = Reader::default().stream(&identifier)?.limit(100);
+    let reader = Reader::default().stream(identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
     assert!(recorded_events.len() == 10);
 
-    let res = AggregateInstanceRegistry::<ExampleAggregate>::shutdown_aggregate::<MyApplication>(
-        identifier.to_string(),
-    )
-    .await;
+    let res =
+        AggregateInstanceRegistry::<ExampleAggregate>::shutdown_aggregate(identifier.to_string())
+            .await;
 
     assert!(res.is_ok(), "Aggregate couldn't be shutdown");
     assert!(!addr.connected());
@@ -124,7 +123,7 @@ async fn should_reload_persisted_events_in_batches_when_restarting_aggregate_pro
     let addr = start_aggregate(&identifier).await;
 
     let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
-        AppendItem(300, identifier.clone()),
+        AppendItem(300, identifier),
     )
     .await;
 
@@ -133,10 +132,9 @@ async fn should_reload_persisted_events_in_batches_when_restarting_aggregate_pro
     let events = result.unwrap();
     assert!(events.len() == 300);
 
-    let res = AggregateInstanceRegistry::<ExampleAggregate>::shutdown_aggregate::<MyApplication>(
-        identifier.to_string(),
-    )
-    .await;
+    let res =
+        AggregateInstanceRegistry::<ExampleAggregate>::shutdown_aggregate(identifier.to_string())
+            .await;
 
     assert!(res.is_ok(), "Aggregate couldn't be shutdown");
     assert!(!addr.connected());

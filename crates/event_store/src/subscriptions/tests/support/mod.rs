@@ -9,11 +9,11 @@ use uuid::Uuid;
 
 use crate::{subscriptions::SubscriptionNotification, EventStore};
 
-pub(crate) mod event;
-pub(crate) mod subscriber;
+pub mod event;
+pub mod subscriber;
 
-pub(crate) type Tracker = Arc<Mutex<VecDeque<SubscriptionNotification>>>;
-pub(crate) struct InnerSub {
+pub type Tracker = Arc<Mutex<VecDeque<SubscriptionNotification>>>;
+pub struct InnerSub {
     pub(crate) reference: Tracker,
 }
 
@@ -36,7 +36,7 @@ impl Handler<SubscriptionNotification> for InnerSub {
     }
 }
 
-pub(crate) struct EventStoreHelper<T: Storage> {
+pub struct EventStoreHelper<T: Storage> {
     event_store: Addr<EventStore<T>>,
 }
 

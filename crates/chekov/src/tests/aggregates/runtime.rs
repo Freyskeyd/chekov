@@ -100,7 +100,7 @@ async fn can_execute_a_command() {
     .await
     .map(|(value, _)| value);
 
-    let expected = vec![MyEvent { id: id }];
+    let expected = vec![MyEvent { id }];
 
     assert!(matches!(result, Ok(events) if events == expected));
 }

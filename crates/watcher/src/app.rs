@@ -6,11 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::runtime::Handle;
-use tui::{
-    backend::Backend,
-    widgets::{ListState, TableState},
-    Terminal,
-};
+use tui::{backend::Backend, Terminal};
 use uuid::Uuid;
 
 use event_store::{
@@ -26,38 +22,16 @@ pub struct TabsState<'a> {
     pub index: usize,
 }
 
-impl<'a> TabsState<'a> {
-    pub fn new(titles: Vec<&'a str>) -> TabsState {
-        TabsState { titles, index: 0 }
-    }
-
-    pub fn next(&mut self) {
-        self.index = (self.index + 1) % self.titles.len();
-    }
-
-    pub fn previous(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        } else {
-            self.index = self.titles.len() - 1;
-        }
-    }
-}
-
 pub struct App<'a> {
     pub(crate) title: &'a str,
     pub(crate) tabs: TabsState<'a>,
-    pub(crate) state: TableState,
-    pub(crate) list_state: ListState,
     pub(crate) items: Vec<String>,
 }
 
 impl<'a> App<'a> {
     pub(crate) fn new() -> App<'a> {
         App {
-            state: TableState::default(),
             title: "Chekov",
-            list_state: ListState::default(),
             tabs: TabsState {
                 titles: vec!["Events", "Streams"],
                 index: 0,
@@ -65,37 +39,10 @@ impl<'a> App<'a> {
             items: vec![],
         }
     }
-    pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
 }
 
 async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
-    let mut backend =
+    let backend =
         PostgresBackend::with_url("postgresql://postgres:postgres@localhost/event_store_bank")
             .await
             .unwrap();
@@ -142,7 +89,7 @@ async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
                 }
             }
             event_store::core::event_bus::EventBusMessage::Notification(_) => {}
-            event_store::core::event_bus::EventBusMessage::Events(stream, events) => todo!(),
+            event_store::core::event_bus::EventBusMessage::Events(_stream, _events) => todo!(),
             event_store::core::event_bus::EventBusMessage::Unkown => {}
         }
     }
@@ -165,25 +112,19 @@ pub(crate) async fn run_app<'a, B: Backend>(
 
             if event::poll(timeout).expect("poll works") {
                 if let Event::Key(key) = event::read().expect("can read events") {
-                    match key.code {
-                        KeyCode::Char('q') => {
-                            tx_one.send(Message::Interrupt).expect("can send events");
-                        }
-                        _ => {}
+                    if let KeyCode::Char('q') = key.code {
+                        tx_one.send(Message::Interrupt).expect("can send events");
                     }
                 }
             }
 
-            if last_tick.elapsed() >= tick_rate {
-                if let Ok(_) = tx_one.send(Message::Tick) {
-                    last_tick = Instant::now();
-                }
+            if last_tick.elapsed() >= tick_rate && tx_one.send(Message::Tick).is_ok() {
+                last_tick = Instant::now();
             }
         }
     });
 
-    let tx_two = tx.clone();
-    let fut = run_stream(tx_two.clone());
+    let fut = run_stream(tx);
     let handle = Handle::current();
 
     thread::spawn(move || {

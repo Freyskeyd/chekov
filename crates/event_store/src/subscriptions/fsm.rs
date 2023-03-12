@@ -14,7 +14,8 @@ use actix::prelude::*;
 use event_store_core::storage::Storage;
 use tracing::debug;
 
-/// connect_subscriber -> subscribe
+/// `connect_subscriber` -> subscribe
+#[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Debug)]
 enum FSM {
     Initialized,
@@ -54,7 +55,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
-    pub fn has_subscriber(&self) -> bool {
+    pub const fn has_subscriber(&self) -> bool {
         self.data.subscriber.is_some()
     }
 
@@ -261,7 +262,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.queue.extend(
             events
                 .into_iter()
-                .map(|event| Arc::new(event))
+                .map(Arc::new)
                 .collect::<Vec<Arc<RecordedEvent>>>(),
         );
         self.data.last_received = last_received;
@@ -273,7 +274,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.last_sent = std::cmp::max(self.data.last_sent, event_number);
         // TODO: Improve this part to be more efficient
         self.data.in_flight_event_numbers.push(event_number);
-        self.data.in_flight_event_numbers.sort();
+        self.data.in_flight_event_numbers.sort_unstable();
         self.data.in_flight_event_numbers.dedup();
     }
 
@@ -286,13 +287,13 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.last_received = std::cmp::max(self.data.last_received, event_number);
         // TODO: Improve this part to be more efficient
         self.data.in_flight_event_numbers.push(event_number);
-        self.data.in_flight_event_numbers.sort();
+        self.data.in_flight_event_numbers.sort_unstable();
         self.data.in_flight_event_numbers.dedup();
     }
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
-pub(crate) enum InternalFSMState {
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum InternalFSMState {
     Initial,
     RequestCatchUp,
     CatchingUp,

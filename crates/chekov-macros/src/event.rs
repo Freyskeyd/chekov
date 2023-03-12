@@ -70,16 +70,17 @@ impl EventState {
         let struct_name = self.event_name();
         let input_name = format_ident!("event");
 
+        #[allow(clippy::if_same_then_else)]
         let try_from = if self.data.is_enum() {
             quote! {
                 ::serde_json::from_value::<#struct_name>(#input_name.data).map_err(|e| {
-                    ()
+                    todo!()
                 })
             }
         } else {
             quote! {
                 ::serde_json::from_value::<#struct_name>(#input_name.data).map_err(|e|{
-                ()
+                    todo!()
                 })
             }
         };

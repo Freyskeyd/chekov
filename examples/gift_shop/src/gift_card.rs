@@ -113,10 +113,10 @@ impl GiftCardRepository {
         let todo = sqlx::query(
             "INSERT INTO gift_cards (gift_card_id, name, price, count) VALUES ($1, $2, $3, $4) RETURNING gift_card_id, name, price, count",
         )
-        .bind(&entity.gift_card_id)
+        .bind(entity.gift_card_id)
         .bind(&entity.name)
-        .bind(&entity.price)
-        .bind(&entity.count)
+        .bind(entity.price)
+        .bind(entity.count)
         .map(|row: PgRow| GiftCard {
             gift_card_id: row.get(0),
             name: row.get(1),
