@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_color",""],["get_main_layout_margin",""]]};
+window.SIDEBAR_ITEMS = {"fn":[["get_color",""]]};

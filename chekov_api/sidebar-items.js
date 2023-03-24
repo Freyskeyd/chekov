@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":[["aggregates",""],["client",""],["events",""],["streams",""]],"struct":[["GetStreamList",""],["StreamServer",""]]};

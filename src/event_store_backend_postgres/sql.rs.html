@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/event_store-backend-postgres/src/sql.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sql.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../event_store_backend_postgres/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/event_store-backend-postgres/src/sql.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>sql.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../event_store_backend_postgres/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -257,18 +257,6 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_stream::try_stream;
 <span class="kw">use </span>event_store_core::event::RecordedEvent;
 <span class="kw">use </span>event_store_core::event::UnsavedEvent;
@@ -284,7 +272,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::error::PostgresBackendError;
 
-<span class="kw">const </span>STREAM_FORWARD: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">r#&quot;SELECT
+<span class="kw">const </span>STREAM_FORWARD: <span class="kw-2">&amp;</span>str = <span class="string">r#&quot;SELECT
         stream_events.stream_version as event_number,
         events.event_id as event_uuid,
         streams.stream_uuid,
@@ -361,9 +349,9 @@
         LIMIT $3;
          &quot;#</span>,
     )
-    .bind(<span class="kw-2">&amp;</span>stream_id)
-    .bind(<span class="kw-2">&amp;</span>version)
-    .bind(<span class="kw-2">&amp;</span>limit)
+    .bind(stream_id)
+    .bind(version)
+    .bind(limit)
     .fetch_all(conn)
     .<span class="kw">await
 </span>}
@@ -376,21 +364,9 @@
     #[allow(clippy::similar_names)]
     </span>sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(
         <span class="string">&quot;SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1&quot;
-    </span>).bind(<span class="kw-2">&amp;</span>stream_uuid)
+    </span>).bind(stream_uuid)
         .fetch_one(conn)
         .<span class="kw">await
-</span>}
-
-<span class="kw">pub async fn </span>list_streams(
-    conn: <span class="kw">impl </span>sqlx::Executor&lt;<span class="lifetime">&#39;_</span>, Database = sqlx::Postgres&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Stream&gt;, sqlx::Error&gt; {
-    <span class="attr">#[allow(clippy::used_underscore_binding)]
-    #[allow(clippy::similar_names)]
-    </span>sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(
-        <span class="string">&quot;SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams&quot;</span>,
-    )
-    .fetch_all(conn)
-    .<span class="kw">await
 </span>}
 
 <span class="kw">pub async fn </span>create_stream(
@@ -399,7 +375,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Stream, PostgresBackendError&gt; {
     <span class="attr">#[allow(clippy::used_underscore_binding)]
     </span><span class="prelude-val">Ok</span>(sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(<span class="string">&quot;INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at&quot;</span>)
-            .bind(<span class="kw-2">&amp;</span>stream_uuid)
+            .bind(stream_uuid)
             .fetch_one(pool)
             .<span class="kw">await</span><span class="question-mark">?</span>)
 }
@@ -489,7 +465,7 @@ FROM
             .bind(event.correlation_id)
             .bind(<span class="kw-2">&amp;</span>event.data)
             .bind(<span class="kw-2">&amp;</span>event.metadata)
-            .bind(<span class="kw-2">&amp;</span>event.created_at);
+            .bind(event.created_at);
     }
     <span class="kw">for </span>event <span class="kw">in </span>events.iter() {
         query = query.bind(event.event_uuid).bind(event.stream_version);
@@ -541,4 +517,4 @@ FROM
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="event_store_backend_postgres" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="event_store_backend_postgres" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.1 (8460ca823 2023-03-20)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

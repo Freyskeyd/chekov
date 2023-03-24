@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/watcher/src/app.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../watcher/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/watcher/src/app.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>app.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-ea63cb6500f71309.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../watcher/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -146,67 +146,6 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
 </pre><pre class="rust"><code><span class="kw">use </span>crossterm::event::{<span class="self">self</span>, Event, KeyCode};
 <span class="kw">use </span>std::{
     io,
@@ -215,148 +154,94 @@
     time::{Duration, Instant},
 };
 <span class="kw">use </span>tokio::runtime::Handle;
-<span class="kw">use </span>tonic::transport::Uri;
-<span class="kw">use </span>tui::{
-    backend::Backend,
-    widgets::{ListState, TableState},
-    Terminal,
-};
+<span class="kw">use </span>tui::{backend::Backend, Terminal};
 <span class="kw">use </span>uuid::Uuid;
 
-<span class="kw">use </span>event_store::prelude::RecordedEvent;
+<span class="kw">use </span>event_store::{
+    core::{backend::Backend <span class="kw">as </span>EventStoreBackend, event_bus::EventBus},
+    prelude::{PostgresBackend, PostgresEventBus, RecordedEvent},
+};
+<span class="kw">use </span>futures::TryStreamExt;
 
-<span class="kw">use crate</span>::{conn, state::State, ui::ui, Message};
+<span class="kw">use crate</span>::{ui::ui, Message};
 
 <span class="kw">pub struct </span>TabsState&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub </span>titles: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;,
     <span class="kw">pub </span>index: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; TabsState&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>new(titles: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;) -&gt; TabsState {
-        TabsState { titles, index: <span class="number">0 </span>}
-    }
-
-    <span class="kw">pub fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.index = (<span class="self">self</span>.index + <span class="number">1</span>) % <span class="self">self</span>.titles.len();
-    }
-
-    <span class="kw">pub fn </span>previous(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if </span><span class="self">self</span>.index &gt; <span class="number">0 </span>{
-            <span class="self">self</span>.index -= <span class="number">1</span>;
-        } <span class="kw">else </span>{
-            <span class="self">self</span>.index = <span class="self">self</span>.titles.len() - <span class="number">1</span>;
-        }
-    }
-}
-
 <span class="kw">pub struct </span>App&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) title: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
     <span class="kw">pub</span>(<span class="kw">crate</span>) tabs: TabsState&lt;<span class="lifetime">&#39;a</span>&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) state: TableState,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) list_state: ListState,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) events: Vec&lt;String&gt;,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) streams: Vec&lt;String&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) items: Vec&lt;String&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; App&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new() -&gt; App&lt;<span class="lifetime">&#39;a</span>&gt; {
         App {
-            state: TableState::default(),
             title: <span class="string">&quot;Chekov&quot;</span>,
-            list_state: ListState::default(),
             tabs: TabsState {
                 titles: <span class="macro">vec!</span>[<span class="string">&quot;Events&quot;</span>, <span class="string">&quot;Streams&quot;</span>],
                 index: <span class="number">0</span>,
             },
-            events: <span class="macro">vec!</span>[],
-            streams: <span class="macro">vec!</span>[],
+            items: <span class="macro">vec!</span>[],
         }
-    }
-    <span class="kw">pub fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>i = <span class="kw">match </span><span class="self">self</span>.state.selected() {
-            <span class="prelude-val">Some</span>(i) =&gt; {
-                <span class="kw">if </span>i &gt;= <span class="self">self</span>.events.len() - <span class="number">1 </span>{
-                    <span class="number">0
-                </span>} <span class="kw">else </span>{
-                    i + <span class="number">1
-                </span>}
-            }
-            <span class="prelude-val">None </span>=&gt; <span class="number">0</span>,
-        };
-        <span class="self">self</span>.state.select(<span class="prelude-val">Some</span>(i));
-    }
-
-    <span class="kw">pub fn </span>previous(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>i = <span class="kw">match </span><span class="self">self</span>.state.selected() {
-            <span class="prelude-val">Some</span>(i) =&gt; {
-                <span class="kw">if </span>i == <span class="number">0 </span>{
-                    <span class="self">self</span>.events.len() - <span class="number">1
-                </span>} <span class="kw">else </span>{
-                    i - <span class="number">1
-                </span>}
-            }
-            <span class="prelude-val">None </span>=&gt; <span class="number">0</span>,
-        };
-        <span class="self">self</span>.state.select(<span class="prelude-val">Some</span>(i));
     }
 }
 
 <span class="kw">async fn </span>run_stream(tx: Sender&lt;Message&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
-    <span class="kw">let </span>target = <span class="string">&quot;http://[::1]:50051&quot;</span>;
-    <span class="kw">let </span>uri = Uri::from_static(target);
-    <span class="kw">let </span><span class="kw-2">mut </span>conn = conn::Connection::new(uri);
-    <span class="kw">let </span><span class="kw-2">mut </span>state = State::default();
+    <span class="kw">let </span>backend =
+        PostgresBackend::with_url(<span class="string">&quot;postgresql://postgres:postgres@localhost/event_store_bank&quot;</span>)
+            .<span class="kw">await
+            </span>.unwrap();
 
-    <span class="kw">loop </span>{
-        <span class="macro">tokio::select! </span>{
-            state_update = conn.next_update() =&gt; {
-                state.update(state_update);
+    <span class="kw">let </span><span class="kw-2">mut </span>listener = PostgresEventBus::initiate(
+        <span class="string">&quot;postgresql://postgres:postgres@localhost/event_store_bank&quot;</span>.to_string(),
+    )
+    .<span class="kw">await
+    </span>.unwrap();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>stream = listener.create_stream().<span class="kw">await</span>;
+    <span class="kw">while let </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(notif)) = stream.try_next().<span class="kw">await </span>{
+        <span class="comment">// Reload state
+
+        </span><span class="kw">match </span>notif {
+            event_store::core::event_bus::EventBusMessage::Notification(notification)
+                <span class="kw">if </span>notification.stream_uuid == <span class="string">&quot;$all&quot; </span>=&gt;
+            {
+                <span class="kw">let </span>stream_uuid = notification.stream_uuid;
+                <span class="kw">let </span>correlation_id = Uuid::new_v4();
+
+                <span class="kw">if let </span><span class="prelude-val">Ok</span>(events) = backend
+                    .read_stream(
+                        stream_uuid.to_string(),
+                        notification.first_stream_version <span class="kw">as </span>usize,
+                        (notification.last_stream_version - notification.first_stream_version + <span class="number">1</span>)
+                            <span class="kw">as </span>usize,
+                        correlation_id,
+                    )
+                    .<span class="kw">await
+                </span>{
+                    <span class="kw">let </span>e = events
+                        .into_iter()
+                        .map(|event: RecordedEvent| {
+                            <span class="macro">format!</span>(
+                                <span class="string">&quot;{event_type}({})&quot;</span>,
+                                event.data,
+                                event_type = event.event_type
+                            )
+                        })
+                        .collect();
+
+                    tx.send(Message::Event(e)).expect(<span class="string">&quot;Cannot send notif&quot;</span>);
+                }
             }
+            event_store::core::event_bus::EventBusMessage::Notification(<span class="kw">_</span>) =&gt; {}
+            event_store::core::event_bus::EventBusMessage::Events(_stream, _events) =&gt; <span class="macro">todo!</span>(),
+            event_store::core::event_bus::EventBusMessage::Unkown =&gt; {}
         }
     }
-
-    <span class="comment">// let mut stream = listener.create_stream().await;
-    // while let Ok(Some(notif)) = stream.try_next().await {
-    //     // Reload state
-    //
-    //     match notif {
-    //         event_store::core::event_bus::EventBusMessage::Notification(notification)
-    //             if notification.stream_uuid == &quot;$all&quot; =&gt;
-    //         {
-    //             let stream_uuid = notification.stream_uuid;
-    //             let correlation_id = Uuid::new_v4();
-    //
-    //             if let Ok(events) = backend
-    //                 .read_stream(
-    //                     stream_uuid.to_string(),
-    //                     notification.first_stream_version as usize,
-    //                     (notification.last_stream_version - notification.first_stream_version + 1)
-    //                         as usize,
-    //                     correlation_id,
-    //                 )
-    //                 .await
-    //             {
-    //                 let e = events
-    //                     .into_iter()
-    //                     .map(|event: RecordedEvent| {
-    //                         format!(
-    //                             &quot;{event_type}({})&quot;,
-    //                             event.data,
-    //                             event_type = event.event_type
-    //                         )
-    //                     })
-    //                     .collect();
-    //
-    //                 tx.send(Message::Event(e)).expect(&quot;Cannot send notif&quot;);
-    //             }
-    //         }
-    //         event_store::core::event_bus::EventBusMessage::Notification(_) =&gt; {}
-    //         event_store::core::event_bus::EventBusMessage::Events(stream, events) =&gt; todo!(),
-    //         event_store::core::event_bus::EventBusMessage::Unkown =&gt; {}
-    //     }
-    // }
-    </span><span class="prelude-val">Ok</span>(())
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">async fn </span>run_app&lt;<span class="lifetime">&#39;a</span>, B: Backend&gt;(
@@ -366,7 +251,6 @@
     <span class="kw">let </span>(tx, rx) = mpsc::channel();
     <span class="kw">let </span>tick_rate = Duration::from_millis(<span class="number">200</span>);
     <span class="kw">let </span>tx_one = tx.clone();
-
     thread::spawn(<span class="kw">move </span>|| {
         <span class="kw">let </span><span class="kw-2">mut </span>last_tick = Instant::now();
         <span class="kw">loop </span>{
@@ -376,25 +260,19 @@
 
             <span class="kw">if </span>event::poll(timeout).expect(<span class="string">&quot;poll works&quot;</span>) {
                 <span class="kw">if let </span>Event::Key(key) = event::read().expect(<span class="string">&quot;can read events&quot;</span>) {
-                    <span class="kw">match </span>key.code {
-                        KeyCode::Char(<span class="string">&#39;q&#39;</span>) =&gt; {
-                            tx_one.send(Message::Interrupt).expect(<span class="string">&quot;can send events&quot;</span>);
-                        }
-                        <span class="kw">_ </span>=&gt; {}
+                    <span class="kw">if let </span>KeyCode::Char(<span class="string">&#39;q&#39;</span>) = key.code {
+                        tx_one.send(Message::Interrupt).expect(<span class="string">&quot;can send events&quot;</span>);
                     }
                 }
             }
 
-            <span class="kw">if </span>last_tick.elapsed() &gt;= tick_rate {
-                <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) = tx_one.send(Message::Tick) {
-                    last_tick = Instant::now();
-                }
+            <span class="kw">if </span>last_tick.elapsed() &gt;= tick_rate &amp;&amp; tx_one.send(Message::Tick).is_ok() {
+                last_tick = Instant::now();
             }
         }
     });
 
-    <span class="kw">let </span>tx_two = tx.clone();
-    <span class="kw">let </span>fut = run_stream(tx_two.clone());
+    <span class="kw">let </span>fut = run_stream(tx);
     <span class="kw">let </span>handle = Handle::current();
 
     thread::spawn(<span class="kw">move </span>|| {
@@ -409,7 +287,7 @@
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             }
             <span class="prelude-val">Ok</span>(Message::Event(<span class="kw-2">mut </span>values)) =&gt; {
-                app.events.append(<span class="kw-2">&amp;mut </span>values);
+                app.items.append(<span class="kw-2">&amp;mut </span>values);
                 terminal.draw(|f| ui(f, <span class="kw-2">&amp;mut </span>app))<span class="question-mark">?</span>;
             }
             <span class="kw">_ </span>=&gt; {}
@@ -417,4 +295,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="watcher" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="watcher" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.1 (8460ca823 2023-03-20)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
