@@ -253,10 +253,6 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_stream::try_stream;
 <span class="kw">use </span>event_store_core::event::RecordedEvent;
 <span class="kw">use </span>event_store_core::event::UnsavedEvent;
@@ -326,8 +322,7 @@
     <span class="kw">let </span>version: i64 = version.try_into().unwrap();
     <span class="kw">let </span>limit: i64 = limit.try_into().unwrap();
     <span class="macro">trace!</span>(<span class="string">&quot;Version {}, Limit: {}&quot;</span>, version, limit);
-    <span class="attr">#[allow(clippy::used_underscore_binding)]
-    </span>sqlx::query_as::&lt;<span class="kw">_</span>, RecordedEvent&gt;(
+    sqlx::query_as::&lt;<span class="kw">_</span>, RecordedEvent&gt;(
         <span class="string">r#&quot;SELECT
         stream_events.stream_version as event_number,
         events.event_id as event_uuid,
@@ -360,9 +355,7 @@
     conn: <span class="kw">impl </span>sqlx::Executor&lt;<span class="lifetime">&#39;_</span>, Database = sqlx::Postgres&gt;,
     stream_uuid: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Stream, sqlx::Error&gt; {
-    <span class="attr">#[allow(clippy::used_underscore_binding)]
-    #[allow(clippy::similar_names)]
-    </span>sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(
+    sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(
         <span class="string">&quot;SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1&quot;
     </span>).bind(stream_uuid)
         .fetch_one(conn)
@@ -373,8 +366,7 @@
     pool: <span class="kw">impl </span>sqlx::Executor&lt;<span class="lifetime">&#39;_</span>, Database = sqlx::Postgres&gt;,
     stream_uuid: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Stream, PostgresBackendError&gt; {
-    <span class="attr">#[allow(clippy::used_underscore_binding)]
-    </span><span class="prelude-val">Ok</span>(sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(<span class="string">&quot;INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at&quot;</span>)
+    <span class="prelude-val">Ok</span>(sqlx::query_as::&lt;<span class="kw">_</span>, Stream&gt;(<span class="string">&quot;INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at&quot;</span>)
             .bind(stream_uuid)
             .fetch_one(pool)
             .<span class="kw">await</span><span class="question-mark">?</span>)
