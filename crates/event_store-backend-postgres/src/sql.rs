@@ -67,7 +67,6 @@ pub async fn read_stream(
     let version: i64 = version.try_into().unwrap();
     let limit: i64 = limit.try_into().unwrap();
     trace!("Version {}, Limit: {}", version, limit);
-    #[allow(clippy::used_underscore_binding)]
     sqlx::query_as::<_, RecordedEvent>(
         r#"SELECT
         stream_events.stream_version as event_number,
@@ -101,8 +100,6 @@ pub async fn stream_info(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_uuid: &str,
 ) -> Result<Stream, sqlx::Error> {
-    #[allow(clippy::used_underscore_binding)]
-    #[allow(clippy::similar_names)]
     sqlx::query_as::<_, Stream>(
         "SELECT stream_id, stream_uuid, stream_version, created_at, deleted_at FROM streams WHERE stream_uuid = $1"
     ).bind(stream_uuid)
@@ -114,7 +111,6 @@ pub async fn create_stream(
     pool: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     stream_uuid: &str,
 ) -> Result<Stream, PostgresBackendError> {
-    #[allow(clippy::used_underscore_binding)]
     Ok(sqlx::query_as::<_, Stream>("INSERT INTO streams (stream_uuid) VALUES ($1) RETURNING stream_id, stream_uuid, stream_version, created_at, deleted_at")
             .bind(stream_uuid)
             .fetch_one(pool)
