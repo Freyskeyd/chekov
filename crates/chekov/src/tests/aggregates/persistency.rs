@@ -23,7 +23,7 @@ async fn should_persist_pending_events_in_order_applied() -> Result<(), Box<dyn 
     let events = result.unwrap();
     assert!(events.len() == 10);
 
-    let reader = Reader::default().stream(identifier)?.limit(100);
+    let reader = Reader::default().stream(&identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
     assert!(recorded_events.len() == 10);
@@ -58,7 +58,7 @@ async fn should_not_persist_events_when_command_returns_no_events(
     let events = result.unwrap();
     assert!(events.is_empty());
 
-    let reader = Reader::default().stream(identifier)?.limit(100);
+    let reader = Reader::default().stream(&identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
     assert!(recorded_events.is_empty());
@@ -89,7 +89,7 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
     let events = result.unwrap();
     assert!(events.len() == 10);
 
-    let reader = Reader::default().stream(identifier)?.limit(100);
+    let reader = Reader::default().stream(&identifier)?.limit(100);
     let recorded_events = EventStore::<MyApplication>::with_reader(reader).await??;
 
     assert!(recorded_events.len() == 10);

@@ -1,13 +1,14 @@
 use chrono::DateTime;
-use sqlx::FromRow;
 
 pub mod error;
 
 use error::StreamError;
 
 /// A `Stream` represents an `Event` stream
-#[derive(Clone, Debug, PartialEq, FromRow)]
+#[derive(Clone, Debug, PartialEq, sqlx::FromRow)]
 pub struct Stream {
+    // FIXME: Uncomment when sqlx is up to date
+    // #[sqlx(try_from = "i64")]
     pub stream_id: i64,
     /// The stream identifier which is unique
     pub stream_uuid: String,

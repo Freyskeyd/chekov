@@ -19,13 +19,16 @@ impl SystemService for PubSub {}
 impl Supervised for PubSub {}
 
 impl PubSub {
+    #[allow(clippy::missing_errors_doc)]
+    #[allow(clippy::missing_panics_doc)]
     pub async fn subscribe(recipient: Recipient<SubscriptionNotification>, stream: String) {
         Self::from_registry()
             .send(Subscribe(recipient, stream))
             .await
-            .unwrap()
+            .unwrap();
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub async fn has_subscriber_for(stream: String) -> Result<usize, MailboxError> {
         Self::from_registry()
             .send(GetSubscriberCountForStream(stream))

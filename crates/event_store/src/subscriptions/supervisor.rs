@@ -25,6 +25,7 @@ impl<S: Storage> Supervised for SubscriptionsSupervisor<S> {}
 impl<S: Storage> ArbiterService for SubscriptionsSupervisor<S> {}
 
 impl<S: Storage> SubscriptionsSupervisor<S> {
+    #[allow(clippy::missing_errors_doc)]
     pub async fn start_subscription(
         options: &SubscriptionOptions,
         storage: Addr<EventStore<S>>,

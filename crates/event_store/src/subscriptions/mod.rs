@@ -86,6 +86,7 @@ pub enum SubscriptionNotification {
 }
 
 impl<S: Storage> Subscriptions<S> {
+    #[allow(clippy::missing_errors_doc)]
     pub async fn subscribe_to_stream(
         subscriber: Recipient<SubscriptionNotification>,
         options: SubscriptionOptions,

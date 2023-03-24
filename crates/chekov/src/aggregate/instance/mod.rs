@@ -114,7 +114,7 @@ impl<A: Aggregate> AggregateInstance<A> {
     ) -> Result<Vec<RecordedEvent>, EventStoreError> {
         crate::event_store::EventStore::<APP>::with_reader(
             event_store::prelude::Reader::with_correlation_id(correlation_id)
-                .stream(stream_id)
+                .stream(&stream_id)
                 .unwrap()
                 .from(ReadVersion::Origin)
                 .limit(10),

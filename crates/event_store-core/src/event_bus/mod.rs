@@ -39,8 +39,8 @@ pub enum EventBusMessage {
 pub struct EventNotification {
     pub stream_id: i32,
     pub stream_uuid: String,
-    pub first_stream_version: i32,
-    pub last_stream_version: i32,
+    pub first_stream_version: u32,
+    pub last_stream_version: u32,
 }
 
 impl<'a> TryFrom<&'a str> for EventNotification {
@@ -79,7 +79,7 @@ impl<'a> TryFrom<&'a str> for EventNotification {
             .ok_or(EventNotificationError::ParsingError {
                 field: "first_stream_version",
             })?
-            .parse::<i32>()
+            .parse::<u32>()
             .or(Err(EventNotificationError::ParsingError {
                 field: "first_stream_version",
             }))?;
@@ -89,7 +89,7 @@ impl<'a> TryFrom<&'a str> for EventNotification {
             .ok_or(EventNotificationError::ParsingError {
                 field: "last_stream_version",
             })?
-            .parse::<i32>()
+            .parse::<u32>()
             .or(Err(EventNotificationError::ParsingError {
                 field: "last_stream_version",
             }))?;

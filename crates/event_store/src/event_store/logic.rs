@@ -21,7 +21,7 @@ impl<S: Storage> std::default::Default for EventStore<S> {
 
 impl<S: Storage> EventStore<S> {
     #[must_use]
-    pub fn builder() -> EventStoreBuilder<S> {
+    pub const fn builder() -> EventStoreBuilder<S> {
         EventStoreBuilder { storage: None }
     }
 

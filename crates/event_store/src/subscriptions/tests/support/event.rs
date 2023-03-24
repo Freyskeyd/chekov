@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct EventFactory {}
 
 impl EventFactory {
-    pub fn create_event(number: usize) -> TestEvent {
+    pub const fn create_event(number: usize) -> TestEvent {
         TestEvent { event: number }
     }
 }

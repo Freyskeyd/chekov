@@ -29,9 +29,11 @@ async fn transient_subscription() {
         .await;
 
     let (tracker, addr) = SubscriberFactory::setup();
-    let mut opts = SubscriptionOptions::default();
-    opts.transient = true;
-    opts.stream_uuid = identity.to_string();
+    let opts = SubscriptionOptions {
+        transient: true,
+        stream_uuid: identity.to_string(),
+        ..Default::default()
+    };
 
     let mut fsm = SubscriptionFSM::with_options(&opts, es.get_addr());
 

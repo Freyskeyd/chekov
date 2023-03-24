@@ -45,7 +45,7 @@ impl Reader {
     /// # Errors
     ///
     /// Can fail if the stream doesn't have the expected format
-    pub fn stream<S: ToString>(mut self, stream: S) -> Result<Self, EventStoreError> {
+    pub fn stream<S: ToString>(mut self, stream: &S) -> Result<Self, EventStoreError> {
         // TODO: validate stream name format
         self.stream = stream.to_string();
 
@@ -78,6 +78,7 @@ impl Reader {
         self
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute<S: Storage>(
         self,
         event_store: Addr<EventStore<S>>,
@@ -97,7 +98,8 @@ impl Reader {
                 stream: self.stream,
                 version: match self.read_version {
                     ReadVersion::Origin => 0,
-                    // TODO: Should we switch to usize for version ?
+                    // FIXME: Update to use the correct type once sqlx is updated
+                    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                     ReadVersion::Version(version) => version as usize
                 },
                 limit: self.limit,

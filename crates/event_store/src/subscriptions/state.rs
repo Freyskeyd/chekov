@@ -22,5 +22,6 @@ pub struct SubscriptionState<S: Storage> {
 }
 
 impl<S: Storage> SubscriptionState<S> {
+    #[allow(clippy::unused_self)]
     pub(crate) fn reset_event_tracking(&mut self) {}
 }

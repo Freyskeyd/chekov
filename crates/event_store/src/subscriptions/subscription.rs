@@ -147,6 +147,7 @@ impl<S: Storage> Subscription<S> {
         subscription.start()
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub async fn connect(
         addr: &Addr<Self>,
         recipient: Recipient<SubscriptionNotification>,
