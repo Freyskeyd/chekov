@@ -3,12 +3,12 @@ use event_store_core::event::RecordedEvent;
 use event_store_core::event::UnsavedEvent;
 use event_store_core::stream::Stream;
 use futures::StreamExt;
-use log::trace;
 use sqlx::pool::PoolConnection;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 use sqlx::Row;
 use std::convert::TryInto;
+use tracing::trace;
 use uuid::Uuid;
 
 use crate::error::PostgresBackendError;
