@@ -99,7 +99,7 @@ impl UnsavedEvent {
             causation_id: None,
             correlation_id: None,
             event_type: event.event_type().to_owned(),
-            data: serde_json::to_value(&event)?,
+            data: serde_json::to_value(event)?,
             metadata: json!({}),
             event_uuid: Uuid::new_v4(),
             stream_uuid: String::new(),

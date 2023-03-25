@@ -4,16 +4,17 @@ use actix::{Actor, Addr, Context, Handler, ResponseFuture};
 use event_store_core::{
     error::EventStoreError, event::Event, storage::Storage, versions::ExpectedVersion,
 };
+use futures::Future;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::{subscriptions::SubscriptionNotification, EventStore};
 
-pub(crate) mod event;
-pub(crate) mod subscriber;
+pub mod event;
+pub mod subscriber;
 
-pub(crate) type Tracker = Arc<Mutex<VecDeque<SubscriptionNotification>>>;
-pub(crate) struct InnerSub {
+pub type Tracker = Arc<Mutex<VecDeque<SubscriptionNotification>>>;
+pub struct InnerSub {
     pub(crate) reference: Tracker,
 }
 
@@ -36,7 +37,7 @@ impl Handler<SubscriptionNotification> for InnerSub {
     }
 }
 
-pub(crate) struct EventStoreHelper<T: Storage> {
+pub struct EventStoreHelper<T: Storage> {
     event_store: Addr<EventStore<T>>,
 }
 
@@ -52,20 +53,20 @@ impl<T: Storage> EventStoreHelper<T> {
         Self { event_store }
     }
 
-    pub(crate) async fn append<E: Event>(
+    pub(crate) fn append<E: Event>(
         &self,
         identity: &Uuid,
         version: ExpectedVersion,
         events: &[&E],
-    ) -> Result<Vec<Uuid>, EventStoreError> {
-        crate::append()
+    ) -> impl Future<Output = Result<Vec<Uuid>, EventStoreError>> {
+        let appender = crate::append()
             .to(identity)
             .unwrap()
             .expected_version(version)
-            .events(events)
-            .unwrap()
-            .execute(self.get_addr())
-            .await
+            .events(events);
+
+        let addr = self.get_addr();
+        async move { appender.unwrap().execute(addr).await }
     }
 
     pub(crate) fn get_addr(&self) -> Addr<EventStore<T>> {

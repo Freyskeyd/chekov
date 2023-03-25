@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct EventFactory {}
 
 impl EventFactory {
-    pub fn create_event(number: usize) -> TestEvent {
+    pub const fn create_event(number: usize) -> TestEvent {
         TestEvent { event: number }
     }
 }
@@ -35,7 +35,7 @@ impl TryFrom<RecordedEvent> for TestEvent {
 }
 
 #[derive(serde::Serialize)]
-pub(crate) struct MyEvent {}
+pub struct MyEvent {}
 impl Event for MyEvent {
     fn event_type(&self) -> &'static str {
         "MyEvent"
@@ -50,6 +50,6 @@ impl TryFrom<RecordedEvent> for MyEvent {
     type Error = ();
 
     fn try_from(_: RecordedEvent) -> Result<Self, Self::Error> {
-        Ok(MyEvent {})
+        Ok(Self {})
     }
 }

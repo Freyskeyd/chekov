@@ -17,12 +17,12 @@ macro_rules! pluck {
 }
 
 mod pub_sub;
-pub(crate) mod support;
+pub mod support;
 mod transient_fsm;
 
 struct TestContext {}
 
-fn before_all() -> TestContext {
+const fn before_all() -> TestContext {
     TestContext {}
 }
 
@@ -38,9 +38,11 @@ async fn should_receive_subscribed_message_once_subscribed() {
 
     let (tracker, addr) = SubscriberFactory::setup();
 
-    let mut opts = SubscriptionOptions::default();
+    let opts = SubscriptionOptions {
+        transient: true,
+        ..Default::default()
+    };
 
-    opts.transient = true;
     Subscriptions::subscribe_to_stream(addr.recipient(), opts, addr_es.clone())
         .await
         .expect("Unable to subscribe");

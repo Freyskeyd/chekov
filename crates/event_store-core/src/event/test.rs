@@ -93,7 +93,7 @@ mod unsaved {
         use serde::ser::Error;
         let err = UnsavedEventError::from(serde_json::Error::custom("test"));
 
-        let _: UnsavedEventError = err.into();
+        let _: UnsavedEventError = err;
     }
 
     #[derive(serde::Serialize, serde::Deserialize)]

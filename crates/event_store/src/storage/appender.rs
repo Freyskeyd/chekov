@@ -190,6 +190,7 @@ impl Appender {
     /// # Errors
     ///
     /// The execution can fail in various cases such as `ExpectedVersionResult` failure
+    #[allow(clippy::missing_panics_doc)]
     pub async fn execute<S: Storage>(
         self,
         event_store: Addr<EventStore<S>>,

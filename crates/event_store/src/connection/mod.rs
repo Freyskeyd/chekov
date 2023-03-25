@@ -93,12 +93,16 @@ impl<S: Storage> StreamHandler<Result<EventBusMessage, EventBusError>> for Conne
                             correlation_id,
                         )
                         .in_current_span()
-                        .map(move |res| match res {
-                            Ok(events) => pub_sub.send(PubSubNotification {
-                                stream: stream_uuid,
-                                events,
-                            }),
-                            Err(_) => todo!(),
+                        .map(move |res| {
+                            res.map_or_else(
+                                |_| todo!(),
+                                |events| {
+                                    pub_sub.send(PubSubNotification {
+                                        stream: stream_uuid,
+                                        events,
+                                    })
+                                },
+                            )
                         });
 
                     tokio::spawn(fut);

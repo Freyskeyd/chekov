@@ -19,7 +19,7 @@ struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
 
 #[derive(Debug, Message)]
 #[rtype("()")]
-pub(crate) struct CatchUp;
+pub struct CatchUp;
 
 #[derive(Debug)]
 pub struct Subscription<S: Storage> {
@@ -147,6 +147,7 @@ impl<S: Storage> Subscription<S> {
         subscription.start()
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub async fn connect(
         addr: &Addr<Self>,
         recipient: Recipient<SubscriptionNotification>,
@@ -163,6 +164,7 @@ impl<S: Storage> Subscription<S> {
     }
 
     fn handle_state_update(&mut self, state: InternalFSMState, ctx: &mut Context<Self>) {
+        #[allow(clippy::match_same_arms)]
         match state {
             InternalFSMState::Initial | InternalFSMState::Disconnected => {
                 // subscribe to stream

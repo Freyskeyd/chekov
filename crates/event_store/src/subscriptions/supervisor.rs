@@ -25,17 +25,15 @@ impl<S: Storage> Supervised for SubscriptionsSupervisor<S> {}
 impl<S: Storage> ArbiterService for SubscriptionsSupervisor<S> {}
 
 impl<S: Storage> SubscriptionsSupervisor<S> {
+    #[allow(clippy::missing_errors_doc)]
     pub async fn start_subscription(
         options: &SubscriptionOptions,
         storage: Addr<EventStore<S>>,
     ) -> Result<Addr<Subscription<S>>, SubscriptionError> {
-        match Self::from_registry()
+        Self::from_registry()
             .send(CreateSubscription(options.clone(), storage))
             .await
-        {
-            Ok(v) => Ok(v),
-            Err(_) => Err(SubscriptionError::UnableToStart),
-        }
+            .map_err(|_| SubscriptionError::UnableToStart)
     }
 
     pub fn notify_subscribers(stream_uuid: &str, events: Arc<Vec<Arc<RecordedEvent>>>) {

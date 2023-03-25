@@ -15,7 +15,7 @@ impl AccountRepository {
         let todo = sqlx::query(
             "INSERT INTO accounts (account_id, name) VALUES ($1, $2) RETURNING account_id, name, balance",
         )
-        .bind(&account.account_id)
+        .bind(account.account_id)
         .bind(&account.name)
         .map(|row: PgRow| Account {
             account_id: row.get(0),

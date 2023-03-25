@@ -96,15 +96,12 @@ where
     fn handle(&mut self, reader: ExecuteStreamForward, _: &mut Self::Context) -> Self::Result {
         let addr = self.addr.clone();
         Box::pin(async move {
-            let stream = addr
-                .send(StreamForward {
-                    correlation_id: Uuid::new_v4(),
-                    stream_uuid: reader.0,
-                })
-                .await?
-                .map(|res| res.stream);
-
-            stream
+            addr.send(StreamForward {
+                correlation_id: Uuid::new_v4(),
+                stream_uuid: reader.0,
+            })
+            .await?
+            .map(|res| res.stream)
         })
     }
 }

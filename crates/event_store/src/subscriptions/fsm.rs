@@ -14,7 +14,8 @@ use actix::prelude::*;
 use event_store_core::storage::Storage;
 use tracing::debug;
 
-/// connect_subscriber -> subscribe
+/// `connect_subscriber` -> subscribe
+#[allow(clippy::upper_case_acronyms)]
 #[derive(PartialEq, Debug)]
 enum FSM {
     Initialized,
@@ -54,7 +55,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         }
     }
 
-    pub fn has_subscriber(&self) -> bool {
+    pub const fn has_subscriber(&self) -> bool {
         self.data.subscriber.is_some()
     }
 
@@ -103,28 +104,22 @@ impl<S: Storage> SubscriptionFSM<S> {
     pub async fn subscribe(&mut self) {
         debug!("Executing subscribe for {}", self.data.subscription_name);
 
-        match self.state {
-            InternalFSMState::Initial => {
-                if self.data.transient {
-                    self.data.reset_event_tracking();
-                    if self.subscribe_to_events().await.is_ok() {
-                        let start_from: i64 = self.data.start_from.into();
-                        debug!("Start from is : {}", start_from);
-                        self.data.last_received = start_from;
-                        self.data.last_sent = start_from;
-                        self.data.last_ack = start_from;
+        if self.state == InternalFSMState::Initial && self.data.transient {
+            self.data.reset_event_tracking();
+            if self.subscribe_to_events().await.is_ok() {
+                let start_from: i64 = self.data.start_from.into();
+                debug!("Start from is : {}", start_from);
+                self.data.last_received = start_from;
+                self.data.last_sent = start_from;
+                self.data.last_ack = start_from;
 
-                        self.notify_subscribed().await;
-                        self.state = InternalFSMState::RequestCatchUp;
-                        // go to request_catch_up ->
-                    } else {
-                        // retry after a delay
-                        self.state = InternalFSMState::Initial;
-                    }
-                }
+                self.notify_subscribed().await;
+                self.state = InternalFSMState::RequestCatchUp;
+                // go to request_catch_up ->
+            } else {
+                // retry after a delay
+                self.state = InternalFSMState::Initial;
             }
-            InternalFSMState::Disconnected => {}
-            _ => {}
         }
     }
 
@@ -144,6 +139,8 @@ impl<S: Storage> SubscriptionFSM<S> {
         };
     }
 
+    #[allow(clippy::unused_self)]
+    #[allow(clippy::unused_async)]
     async fn initialize(&mut self) {}
 
     #[tracing::instrument(skip(self))]
@@ -166,13 +163,12 @@ impl<S: Storage> SubscriptionFSM<S> {
                     if self.data.last_sent == self.data.last_received {
                         // Subscriber is up-to-date with latest published events
                         self.state = InternalFSMState::Subscribed;
-                        Ok(())
                     } else {
                         // Need to catch-up with events published while catching up
                         self.state = InternalFSMState::RequestCatchUp;
-
-                        Ok(())
                     }
+
+                    Ok(())
                 }
 
                 Ok(events) => {
@@ -261,7 +257,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.queue.extend(
             events
                 .into_iter()
-                .map(|event| Arc::new(event))
+                .map(Arc::new)
                 .collect::<Vec<Arc<RecordedEvent>>>(),
         );
         self.data.last_received = last_received;
@@ -273,7 +269,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.last_sent = std::cmp::max(self.data.last_sent, event_number);
         // TODO: Improve this part to be more efficient
         self.data.in_flight_event_numbers.push(event_number);
-        self.data.in_flight_event_numbers.sort();
+        self.data.in_flight_event_numbers.sort_unstable();
         self.data.in_flight_event_numbers.dedup();
     }
 
@@ -286,13 +282,13 @@ impl<S: Storage> SubscriptionFSM<S> {
         self.data.last_received = std::cmp::max(self.data.last_received, event_number);
         // TODO: Improve this part to be more efficient
         self.data.in_flight_event_numbers.push(event_number);
-        self.data.in_flight_event_numbers.sort();
+        self.data.in_flight_event_numbers.sort_unstable();
         self.data.in_flight_event_numbers.dedup();
     }
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
-pub(crate) enum InternalFSMState {
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum InternalFSMState {
     Initial,
     RequestCatchUp,
     CatchingUp,

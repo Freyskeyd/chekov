@@ -143,7 +143,7 @@ pub(crate) struct InvalidEvent {
 #[macro_export]
 macro_rules! assert_aggregate_version {
     ($instance: expr, $number: expr) => {
-        let value = $instance.send(crate::message::AggregateVersion).await?;
+        let value = $instance.send($crate::message::AggregateVersion).await?;
 
         assert_eq!(
             value, $number,
@@ -157,7 +157,7 @@ macro_rules! assert_aggregate_version {
 macro_rules! assert_aggregate_state {
     ($instance: expr, $expected: expr) => {
         let value = $instance
-            .send(crate::message::AggregateState(std::marker::PhantomData))
+            .send($crate::message::AggregateState(std::marker::PhantomData))
             .await?;
 
         assert_eq!(

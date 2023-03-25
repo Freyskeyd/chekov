@@ -83,10 +83,7 @@ pub(crate) fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     f.render_widget(tabs, rects[0]);
 
-    match app.tabs.index {
-        0 => draw_main_tab(f, app, rects[1]),
-        // 1 => draw_second_tab(f, app, chunks[1]),
-        // 2 => draw_third_tab(f, app, chunks[1]),
-        _ => {}
+    if app.tabs.index == 0 {
+        draw_main_tab(f, app, rects[1])
     };
 }

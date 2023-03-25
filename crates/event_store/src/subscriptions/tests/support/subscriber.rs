@@ -7,7 +7,7 @@ use crate::subscriptions::SubscriptionNotification;
 
 use super::{InnerSub, Tracker};
 
-pub(crate) struct SubscriberFactory {}
+pub struct SubscriberFactory {}
 
 impl SubscriberFactory {
     pub fn setup() -> (Tracker, Addr<InnerSub>) {

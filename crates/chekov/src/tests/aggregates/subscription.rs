@@ -14,7 +14,7 @@ async fn aggregate_should_starts_a_pubsub_subscription() {
         1,
         PubSub::has_subscriber_for(identity.to_string())
             .await
-            .expect(&format!(
+            .unwrap_or_else(|_| panic!(
                 "Failed to fetch the subscriber list for the stream {}",
                 identity
             ))

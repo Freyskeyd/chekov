@@ -62,6 +62,7 @@ impl<A: Aggregate> AggregateInstanceRegistry<A> {
             .await?
     }
 
+    #[allow(dead_code)]
     pub(crate) async fn start_aggregate<APP: Application>(
         identifier: String,
         correlation_id: Option<Uuid>,
@@ -92,7 +93,8 @@ impl<A: Aggregate> AggregateInstanceRegistry<A> {
             .map_err(|_| ())
     }
 
-    pub(crate) async fn shutdown_aggregate<APP: Application>(identifier: String) -> Result<(), ()> {
+    #[allow(dead_code)]
+    pub(crate) async fn shutdown_aggregate(identifier: String) -> Result<(), ()> {
         trace!(
             "AggregateInstanceRegistry {:?} is asked to shutdown {}",
             std::any::type_name::<Self>(),
