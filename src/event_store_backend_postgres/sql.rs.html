@@ -258,12 +258,12 @@
 <span class="kw">use </span>event_store_core::event::UnsavedEvent;
 <span class="kw">use </span>event_store_core::stream::Stream;
 <span class="kw">use </span>futures::StreamExt;
-<span class="kw">use </span>log::trace;
 <span class="kw">use </span>sqlx::pool::PoolConnection;
 <span class="kw">use </span>sqlx::postgres::PgRow;
 <span class="kw">use </span>sqlx::Postgres;
 <span class="kw">use </span>sqlx::Row;
 <span class="kw">use </span>std::convert::TryInto;
+<span class="kw">use </span>tracing::trace;
 <span class="kw">use </span>uuid::Uuid;
 
 <span class="kw">use </span><span class="kw">crate</span>::error::PostgresBackendError;
