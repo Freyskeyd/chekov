@@ -40,12 +40,12 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) stream_uuid: String,
     <span class="kw">pub</span>(<span class="kw">crate</span>) start_from: StartFrom,
     <span class="kw">pub</span>(<span class="kw">crate</span>) subscription_name: String,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) last_received: i64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) last_sent: i64,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) last_ack: i64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) last_received: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) last_sent: u64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) last_ack: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) queue: VecDeque&lt;Arc&lt;RecordedEvent&gt;&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) transient: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) in_flight_event_numbers: Vec&lt;i64&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) in_flight_event_numbers: Vec&lt;u64&gt;,
 }
 
 <span class="kw">impl</span>&lt;S: Storage&gt; SubscriptionState&lt;S&gt; {

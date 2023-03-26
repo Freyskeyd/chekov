@@ -303,6 +303,8 @@
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
 <a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
 </pre><pre class="rust"><code><span class="comment">// TODO: Remove this when https://github.com/rust-lang/rust/issues/88104 is resolved
 </span><span class="attr">#![allow(unused_braces)]
 
@@ -365,7 +367,7 @@
         }
 
         <span class="self">self</span>.stream_counter += <span class="number">1</span>;
-        stream.stream_id = <span class="self">self</span>.stream_counter <span class="kw">as </span>i64;
+        stream.stream_id = <span class="self">self</span>.stream_counter <span class="kw">as </span>u64;
 
         <span class="self">self</span>.streams.insert(stream_uuid.clone(), stream);
         <span class="self">self</span>.events.insert(stream_uuid.clone(), Vec::new());
@@ -439,10 +441,11 @@
                 .iter()
                 .enumerate()
                 .map(|(i, event)| RecordedEvent {
-                    event_number: (e.len() + <span class="number">1 </span>+ i) <span class="kw">as </span>i64,
+                    <span class="comment">// FIXME: Unsafe cast of usize to u64
+                    </span>event_number: (e.len() + <span class="number">1 </span>+ i) <span class="kw">as </span>u64,
                     event_uuid: Uuid::new_v4(),
                     stream_uuid: event.stream_uuid.clone(),
-                    stream_version: <span class="prelude-val">Some</span>(event.stream_version),
+                    stream_version: <span class="prelude-val">Some</span>(event.stream_version <span class="kw">as </span>i64),
                     causation_id: event.causation_id,
                     correlation_id: event.correlation_id,
                     event_type: event.event_type.clone(),
@@ -453,7 +456,8 @@
                 .collect();
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = <span class="self">self</span>.streams.get_mut(stream_uuid) {
-                s.stream_version += re.len() <span class="kw">as </span>i64;
+                <span class="comment">// FIXME: Unsafe cast of usize to u64
+                </span>s.stream_version += re.len() <span class="kw">as </span>u64;
             } <span class="kw">else </span>{
                 <span class="kw">return </span>Box::pin(<span class="kw">async move </span>{ <span class="prelude-val">Err</span>(StorageError::StreamDoesntExists) });
             }

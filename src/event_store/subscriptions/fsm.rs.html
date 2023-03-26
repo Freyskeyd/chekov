@@ -412,7 +412,7 @@
         <span class="kw">if </span><span class="self">self</span>.state == InternalFSMState::Initial &amp;&amp; <span class="self">self</span>.data.transient {
             <span class="self">self</span>.data.reset_event_tracking();
             <span class="kw">if </span><span class="self">self</span>.subscribe_to_events().<span class="kw">await</span>.is_ok() {
-                <span class="kw">let </span>start_from: i64 = <span class="self">self</span>.data.start_from.into();
+                <span class="kw">let </span>start_from: u64 = <span class="self">self</span>.data.start_from.into();
                 <span class="macro">debug!</span>(<span class="string">&quot;Start from is : {}&quot;</span>, start_from);
                 <span class="self">self</span>.data.last_received = start_from;
                 <span class="self">self</span>.data.last_sent = start_from;
@@ -569,7 +569,7 @@
     }
 
     <span class="attr">#[tracing::instrument(skip(<span class="self">self</span>))]
-    </span><span class="kw">fn </span>track_sent(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event_number: i64) {
+    </span><span class="kw">fn </span>track_sent(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event_number: u64) {
         <span class="macro">debug!</span>(<span class="string">&quot;Executing track_sent for {}&quot;</span>, <span class="self">self</span>.data.subscription_name);
         <span class="self">self</span>.data.last_sent = std::cmp::max(<span class="self">self</span>.data.last_sent, event_number);
         <span class="comment">// TODO: Improve this part to be more efficient
@@ -579,7 +579,7 @@
     }
 
     <span class="attr">#[tracing::instrument(skip(<span class="self">self</span>))]
-    </span><span class="kw">fn </span>track_last_received(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event_number: i64) {
+    </span><span class="kw">fn </span>track_last_received(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event_number: u64) {
         <span class="macro">debug!</span>(
             <span class="string">&quot;Executing track_last_received for {}&quot;</span>,
             <span class="self">self</span>.data.subscription_name

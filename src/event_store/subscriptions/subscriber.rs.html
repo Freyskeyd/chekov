@@ -61,7 +61,7 @@
 </span><span class="kw">pub struct </span>Subscriber {
     <span class="kw">pub </span>recipient: Recipient&lt;SubscriptionNotification&gt;,
     <span class="kw">pub</span>(<span class="kw">crate</span>) in_flight: VecDeque&lt;Arc&lt;RecordedEvent&gt;&gt;,
-    last_sent: i64,
+    last_sent: u64,
 }
 
 <span class="kw">impl </span>Actor <span class="kw">for </span>Subscriber {

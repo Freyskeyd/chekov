@@ -253,6 +253,9 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre><pre class="rust"><code><span class="kw">use </span>async_stream::try_stream;
 <span class="kw">use </span>event_store_core::event::RecordedEvent;
 <span class="kw">use </span>event_store_core::event::UnsavedEvent;
@@ -315,10 +318,11 @@
 
 <span class="kw">pub async fn </span>read_stream(
     conn: <span class="kw">impl </span>sqlx::Executor&lt;<span class="lifetime">&#39;_</span>, Database = sqlx::Postgres&gt;,
-    stream_id: i64,
+    stream_id: u64,
     version: usize,
     limit: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;RecordedEvent&gt;, sqlx::Error&gt; {
+    <span class="kw">let </span>stream_id: i64 = stream_id.try_into().unwrap();
     <span class="kw">let </span>version: i64 = version.try_into().unwrap();
     <span class="kw">let </span>limit: i64 = limit.try_into().unwrap();
     <span class="macro">trace!</span>(<span class="string">&quot;Version {}, Limit: {}&quot;</span>, version, limit);
@@ -460,7 +464,9 @@ FROM
             .bind(event.created_at);
     }
     <span class="kw">for </span>event <span class="kw">in </span>events.iter() {
-        query = query.bind(event.event_uuid).bind(event.stream_version);
+        query = query
+            .bind(event.event_uuid)
+            .bind(event.stream_version <span class="kw">as </span>i64);
     }
 
     query.map(|row: PgRow| row.get(<span class="number">0</span>)).fetch_all(conn).<span class="kw">await

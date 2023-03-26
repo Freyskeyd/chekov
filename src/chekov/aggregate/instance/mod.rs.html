@@ -241,6 +241,8 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="self">self</span>::internal::CommandExecutionResult;
 <span class="kw">use </span><span class="kw">super</span>::resolver::EventResolverRegistry;
 <span class="kw">use </span><span class="kw">crate</span>::command::{Command, Handler, NoHandler};
@@ -266,7 +268,7 @@
 </span><span class="comment">// TODO: Only one aggregate per app, need to add generic APP
 </span><span class="kw">pub struct </span>AggregateInstance&lt;A: Aggregate&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) inner: A,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) current_version: i64,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) current_version: u64,
     <span class="kw">pub</span>(<span class="kw">crate</span>) identity: String,
     <span class="kw">pub</span>(<span class="kw">crate</span>) resolver: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>EventResolverRegistry&lt;A&gt;,
 }
@@ -375,11 +377,13 @@
 
     <span class="kw">fn </span>apply_recorded_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>RecordedEvent) -&gt; <span class="prelude-ty">Result</span>&lt;(), ApplyError&gt; {
         <span class="kw">match </span>event.stream_version {
-            <span class="prelude-val">Some</span>(version) <span class="kw">if </span><span class="self">self</span>.current_version + <span class="number">1 </span>&gt; version =&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="comment">// FIXME: Use u64 instead of i64
+            </span><span class="prelude-val">Some</span>(version) <span class="kw">if </span>(<span class="self">self</span>.current_version + <span class="number">1</span>) <span class="kw">as </span>i64 &gt; version =&gt; <span class="prelude-val">Ok</span>(()),
             <span class="comment">// TODO: Replace Any by some more descriptive errors
             </span><span class="prelude-val">None </span><span class="kw">if </span><span class="self">self</span>.current_version != <span class="number">0 </span>=&gt; <span class="prelude-val">Err</span>(ApplyError::Any),
             <span class="comment">// TODO: Replace Any by some more descriptive errors
-            </span><span class="prelude-val">Some</span>(version) <span class="kw">if </span>(<span class="self">self</span>.current_version + <span class="number">1</span>) != version =&gt; <span class="prelude-val">Err</span>(ApplyError::Any),
+            // FIXME: Use u64 instead of i64
+            </span><span class="prelude-val">Some</span>(version) <span class="kw">if </span>(<span class="self">self</span>.current_version + <span class="number">1</span>) <span class="kw">as </span>i64 != version =&gt; <span class="prelude-val">Err</span>(ApplyError::Any),
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(resolver) = <span class="self">self</span>.resolver.get_applier(<span class="kw-2">&amp;</span>event.event_type) {
                     <span class="comment">// TODO: Remove clone
@@ -440,7 +444,7 @@
         <span class="kw-2">mut </span>state: A,
         correlation_id: Uuid,
         stream_id: String,
-        current_version: i64,
+        current_version: u64,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CommandExecutionResult&lt;E, A&gt;, CommandExecutorError&gt;
     <span class="kw">where
         </span>A: EventApplier&lt;E&gt;,
@@ -458,7 +462,7 @@
         <span class="comment">// TODO deal with mailbox error
         </span>.<span class="kw">await</span><span class="question-mark">??</span>;
 
-        <span class="kw">let </span>new_version = current_version + events.len() <span class="kw">as </span>i64;
+        <span class="kw">let </span>new_version = current_version + events.len() <span class="kw">as </span>u64;
         <span class="prelude-val">Ok</span>(CommandExecutionResult {
             events,
             new_version,
@@ -469,7 +473,7 @@
     <span class="kw">async fn </span>execute_and_apply&lt;C: Command, APP: Application&gt;(
         state: A,
         command: Dispatch&lt;C, APP&gt;,
-        current_version: i64,
+        current_version: u64,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CommandExecutionResult&lt;C::Event, A&gt;, CommandExecutorError&gt;
     <span class="kw">where
         </span>A: CommandExecutor&lt;C&gt;,

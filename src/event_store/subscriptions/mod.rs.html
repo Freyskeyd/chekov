@@ -167,10 +167,10 @@
 <span class="attr">#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 </span><span class="kw">pub enum </span>StartFrom {
     Origin,
-    Version(i64),
+    Version(u64),
 }
 
-<span class="kw">impl </span>From&lt;StartFrom&gt; <span class="kw">for </span>i64 {
+<span class="kw">impl </span>From&lt;StartFrom&gt; <span class="kw">for </span>u64 {
     <span class="kw">fn </span>from(s: StartFrom) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>s {
             StartFrom::Origin =&gt; <span class="number">0</span>,

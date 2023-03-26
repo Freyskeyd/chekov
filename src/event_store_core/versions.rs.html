@@ -152,7 +152,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>ReadVersion {
     Origin,
-    Version(i64),
+    Version(u64),
 }
 
 <span class="doccomment">/// The `ExpectedVersion` used to define optimistic concurrency
@@ -165,7 +165,7 @@
     <span class="doccomment">/// Define that we expect an existing stream
     </span>StreamExists,
     <span class="doccomment">/// Define that we expect a stream in a particular version
-    </span>Version(i64),
+    </span>Version(u64),
 }
 
 <span class="kw">impl </span>ExpectedVersion {

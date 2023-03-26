@@ -108,6 +108,7 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
 </pre><pre class="rust"><code><span class="kw">use </span>actix::Message;
 <span class="kw">use </span>chrono::DateTime;
 <span class="kw">use </span>chrono::Utc;
@@ -140,7 +141,8 @@
 #[rtype(<span class="string">&quot;()&quot;</span>)]
 </span><span class="kw">pub struct </span>RecordedEvent {
     <span class="doccomment">/// an incrementing and gapless integer used to order the event in a stream.
-    </span><span class="kw">pub </span>event_number: i64,
+    </span><span class="attr">#[sqlx(try_from = <span class="string">&quot;i64&quot;</span>)]
+    </span><span class="kw">pub </span>event_number: u64,
     <span class="doccomment">/// Unique identifier for this event
     </span><span class="kw">pub </span>event_uuid: Uuid,
     <span class="doccomment">/// The stream identifier for thie event
@@ -192,7 +194,7 @@
     </span><span class="kw">pub </span>metadata: serde_json::Value,
     <span class="kw">pub </span>event_uuid: Uuid,
     <span class="kw">pub </span>stream_uuid: String,
-    <span class="kw">pub </span>stream_version: i64,
+    <span class="kw">pub </span>stream_version: u64,
     <span class="kw">pub </span>created_at: DateTime&lt;chrono::offset::Utc&gt;,
 }
 

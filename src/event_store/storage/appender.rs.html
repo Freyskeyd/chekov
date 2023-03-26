@@ -381,6 +381,7 @@
 <a href="#381" id="381">381</a>
 <a href="#382" id="382">382</a>
 <a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::core::event::UnsavedEvent;
 <span class="kw">use </span><span class="kw">crate</span>::core::event::UnsavedEventError;
 <span class="kw">use </span><span class="kw">crate</span>::core::stream::Stream;
@@ -638,7 +639,8 @@
             .into_iter()
             .enumerate()
             .map(|(index, <span class="kw-2">mut </span>event)| {
-                event.stream_version = stream.stream_version + (index + <span class="number">1</span>) <span class="kw">as </span>i64;
+                <span class="comment">// FIXME: Unsafe cast from usize to u64
+                </span>event.stream_version = stream.stream_version + (index + <span class="number">1</span>) <span class="kw">as </span>u64;
                 event.stream_uuid = stream.stream_uuid.clone();
                 event
             })

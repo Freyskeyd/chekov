@@ -82,6 +82,7 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
 </pre><pre class="rust"><code><span class="kw">use </span>actix::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sqlx::postgres::PgNotification;
 <span class="kw">use </span>std::{convert::TryFrom, str::FromStr};
@@ -104,7 +105,8 @@
     <span class="attr">#[allow(dead_code)]
     </span>stream_id: i32,
     stream_uuid: String,
-    first_stream_version: i32,
+    <span class="comment">// FIXME: use u64
+    </span>first_stream_version: i32,
     last_stream_version: i32,
 }
 

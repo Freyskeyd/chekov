@@ -295,7 +295,7 @@
                     .stream(<span class="kw-2">&amp;</span>subscription.stream_uuid)
                     .unwrap()
                     .from(event_store::prelude::ReadVersion::Version(
-                        subscription.first_stream_version <span class="kw">as </span>i64,
+                        subscription.first_stream_version <span class="kw">as </span>u64,
                     ))
                     .limit(
                         (subscription.last_stream_version - subscription.first_stream_version + <span class="number">1</span>)
