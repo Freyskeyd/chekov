@@ -20,6 +20,7 @@ pub struct EventNotification {
     #[allow(dead_code)]
     stream_id: i32,
     stream_uuid: String,
+    // FIXME: use u64
     first_stream_version: i32,
     last_stream_version: i32,
 }

@@ -3,7 +3,7 @@ use crate::stream::Stream;
 #[derive(Debug)]
 pub enum ReadVersion {
     Origin,
-    Version(i64),
+    Version(u64),
 }
 
 /// The `ExpectedVersion` used to define optimistic concurrency
@@ -16,7 +16,7 @@ pub enum ExpectedVersion {
     /// Define that we expect an existing stream
     StreamExists,
     /// Define that we expect a stream in a particular version
-    Version(i64),
+    Version(u64),
 }
 
 impl ExpectedVersion {

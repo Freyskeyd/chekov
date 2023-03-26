@@ -12,7 +12,7 @@ use tracing::trace;
 use super::AggregateInstance;
 
 impl<A: Aggregate> ActixHandler<AggregateVersion> for AggregateInstance<A> {
-    type Result = i64;
+    type Result = u64;
 
     fn handle(&mut self, _: AggregateVersion, _: &mut Self::Context) -> Self::Result {
         self.current_version

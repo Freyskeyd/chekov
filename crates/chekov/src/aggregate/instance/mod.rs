@@ -23,7 +23,7 @@ mod runtime;
 // TODO: Only one aggregate per app, need to add generic APP
 pub struct AggregateInstance<A: Aggregate> {
     pub(crate) inner: A,
-    pub(crate) current_version: i64,
+    pub(crate) current_version: u64,
     pub(crate) identity: String,
     pub(crate) resolver: &'static EventResolverRegistry<A>,
 }
@@ -132,11 +132,13 @@ impl<A: Aggregate> AggregateInstance<A> {
 
     fn apply_recorded_event(&mut self, event: &RecordedEvent) -> Result<(), ApplyError> {
         match event.stream_version {
-            Some(version) if self.current_version + 1 > version => Ok(()),
+            // FIXME: Use u64 instead of i64
+            Some(version) if (self.current_version + 1) as i64 > version => Ok(()),
             // TODO: Replace Any by some more descriptive errors
             None if self.current_version != 0 => Err(ApplyError::Any),
             // TODO: Replace Any by some more descriptive errors
-            Some(version) if (self.current_version + 1) != version => Err(ApplyError::Any),
+            // FIXME: Use u64 instead of i64
+            Some(version) if (self.current_version + 1) as i64 != version => Err(ApplyError::Any),
             _ => {
                 if let Some(resolver) = self.resolver.get_applier(&event.event_type) {
                     // TODO: Remove clone
@@ -197,7 +199,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         mut state: A,
         correlation_id: Uuid,
         stream_id: String,
-        current_version: i64,
+        current_version: u64,
     ) -> Result<CommandExecutionResult<E, A>, CommandExecutorError>
     where
         A: EventApplier<E>,
@@ -215,7 +217,7 @@ impl<A: Aggregate> AggregateInstance<A> {
         // TODO deal with mailbox error
         .await??;
 
-        let new_version = current_version + events.len() as i64;
+        let new_version = current_version + events.len() as u64;
         Ok(CommandExecutionResult {
             events,
             new_version,
@@ -226,7 +228,7 @@ impl<A: Aggregate> AggregateInstance<A> {
     async fn execute_and_apply<C: Command, APP: Application>(
         state: A,
         command: Dispatch<C, APP>,
-        current_version: i64,
+        current_version: u64,
     ) -> Result<CommandExecutionResult<C::Event, A>, CommandExecutorError>
     where
         A: CommandExecutor<C>,

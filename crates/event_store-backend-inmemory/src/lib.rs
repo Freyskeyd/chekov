@@ -60,7 +60,7 @@ impl Backend for InMemoryBackend {
         }
 
         self.stream_counter += 1;
-        stream.stream_id = self.stream_counter as i64;
+        stream.stream_id = self.stream_counter as u64;
 
         self.streams.insert(stream_uuid.clone(), stream);
         self.events.insert(stream_uuid.clone(), Vec::new());
@@ -134,10 +134,11 @@ impl Backend for InMemoryBackend {
                 .iter()
                 .enumerate()
                 .map(|(i, event)| RecordedEvent {
-                    event_number: (e.len() + 1 + i) as i64,
+                    // FIXME: Unsafe cast of usize to u64
+                    event_number: (e.len() + 1 + i) as u64,
                     event_uuid: Uuid::new_v4(),
                     stream_uuid: event.stream_uuid.clone(),
-                    stream_version: Some(event.stream_version),
+                    stream_version: Some(event.stream_version as i64),
                     causation_id: event.causation_id,
                     correlation_id: event.correlation_id,
                     event_type: event.event_type.clone(),
@@ -148,7 +149,8 @@ impl Backend for InMemoryBackend {
                 .collect();
 
             if let Some(s) = self.streams.get_mut(stream_uuid) {
-                s.stream_version += re.len() as i64;
+                // FIXME: Unsafe cast of usize to u64
+                s.stream_version += re.len() as u64;
             } else {
                 return Box::pin(async move { Err(StorageError::StreamDoesntExists) });
             }

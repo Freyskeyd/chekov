@@ -30,7 +30,8 @@ pub trait Event: Serialize + Send + std::convert::TryFrom<RecordedEvent> {
 #[rtype("()")]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
-    pub event_number: i64,
+    #[sqlx(try_from = "i64")]
+    pub event_number: u64,
     /// Unique identifier for this event
     pub event_uuid: Uuid,
     /// The stream identifier for thie event
@@ -82,7 +83,7 @@ pub struct UnsavedEvent {
     pub metadata: serde_json::Value,
     pub event_uuid: Uuid,
     pub stream_uuid: String,
-    pub stream_version: i64,
+    pub stream_version: u64,
     pub created_at: DateTime<chrono::offset::Utc>,
 }
 

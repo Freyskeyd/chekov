@@ -255,7 +255,8 @@ impl Appender {
             .into_iter()
             .enumerate()
             .map(|(index, mut event)| {
-                event.stream_version = stream.stream_version + (index + 1) as i64;
+                // FIXME: Unsafe cast from usize to u64
+                event.stream_version = stream.stream_version + (index + 1) as u64;
                 event.stream_uuid = stream.stream_uuid.clone();
                 event
             })

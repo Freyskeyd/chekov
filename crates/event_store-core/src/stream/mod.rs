@@ -7,13 +7,13 @@ use error::StreamError;
 /// A `Stream` represents an `Event` stream
 #[derive(Clone, Debug, PartialEq, sqlx::FromRow)]
 pub struct Stream {
-    // FIXME: Uncomment when sqlx is up to date
-    // #[sqlx(try_from = "i64")]
-    pub stream_id: i64,
+    #[sqlx(try_from = "i64")]
+    pub stream_id: u64,
     /// The stream identifier which is unique
     pub stream_uuid: String,
     /// The current stream version number
-    pub stream_version: i64,
+    #[sqlx(try_from = "i64")]
+    pub stream_version: u64,
     /// The creation date of the stream
     pub created_at: DateTime<chrono::offset::Utc>,
     /// The deletion date of the stream
