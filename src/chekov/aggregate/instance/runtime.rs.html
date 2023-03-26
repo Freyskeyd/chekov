@@ -149,6 +149,9 @@
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::aggregate::instance::internal::CommandExecutionResult;
 <span class="kw">use </span><span class="kw">crate</span>::command::{Command, Handler};
 <span class="kw">use </span><span class="kw">crate</span>::error::CommandExecutorError;
@@ -212,6 +215,9 @@
         // return a future that wait for the result of the execute_and_apply. The future of the
         // execute_and_apply need to be dispatch to the Context::wait to lock any further message
         // to be proceed.
+        //
+        // NOTE: We can&#39;t make the dispatch non async because a dispatch can be both sent to an aggregate
+        // which can be non async but also to a command handler which need to be async.
         </span>Box::pin(
             <span class="kw">async move </span>{ <span class="self">Self</span>::execute_and_apply(mutable_state, cmd, current_version).<span class="kw">await </span>}
                 .into_actor(<span class="self">self</span>)
