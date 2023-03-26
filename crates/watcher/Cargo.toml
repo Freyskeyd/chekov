@@ -6,11 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+uuid.workspace = true
+futures.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+
 event_store = { version = "0.1", path = "../event_store" }
-tokio = { version = "1.12.0", features = ["full"] }
-futures = "0.3.17"
 tui = "0.18"
 crossterm = "0.23"
-sqlx = { version = "0.5.9", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"] }
-
-uuid = { version = "0.8.2", features = ["serde", "v4"] }

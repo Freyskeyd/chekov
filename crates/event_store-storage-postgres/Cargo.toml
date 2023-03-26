@@ -10,8 +10,5 @@ event_store-core = { version = "0.1.0", path = "../event_store-core" }
 event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres" }
 event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres" }
 
-chrono = { version = "0.4.19", features = ["serde"] }
-sqlx = { version = "0.5.9", features = ["postgres", "chrono", "time", "uuid", "json", "offline", "runtime-actix-native-tls"] }
-tokio = { version = "1.12.0", features = ["full"] }
-tracing = "0.1.28"
-tracing-futures = "0.2.5"
+sqlx.workspace = true
+tracing.workspace = true
