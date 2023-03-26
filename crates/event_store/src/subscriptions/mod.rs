@@ -59,10 +59,10 @@ impl Default for SubscriptionOptions {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum StartFrom {
     Origin,
-    Version(i64),
+    Version(u64),
 }
 
-impl From<StartFrom> for i64 {
+impl From<StartFrom> for u64 {
     fn from(s: StartFrom) -> Self {
         match s {
             StartFrom::Origin => 0,

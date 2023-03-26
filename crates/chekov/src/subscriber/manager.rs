@@ -129,7 +129,7 @@ where
                     .stream(&subscription.stream_uuid)
                     .unwrap()
                     .from(event_store::prelude::ReadVersion::Version(
-                        subscription.first_stream_version as i64,
+                        subscription.first_stream_version as u64,
                     ))
                     .limit(
                         (subscription.last_stream_version - subscription.first_stream_version + 1)

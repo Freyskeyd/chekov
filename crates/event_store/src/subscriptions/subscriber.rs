@@ -10,7 +10,7 @@ use super::SubscriptionNotification;
 pub struct Subscriber {
     pub recipient: Recipient<SubscriptionNotification>,
     pub(crate) in_flight: VecDeque<Arc<RecordedEvent>>,
-    last_sent: i64,
+    last_sent: u64,
 }
 
 impl Actor for Subscriber {

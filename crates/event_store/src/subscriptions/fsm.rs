@@ -107,7 +107,7 @@ impl<S: Storage> SubscriptionFSM<S> {
         if self.state == InternalFSMState::Initial && self.data.transient {
             self.data.reset_event_tracking();
             if self.subscribe_to_events().await.is_ok() {
-                let start_from: i64 = self.data.start_from.into();
+                let start_from: u64 = self.data.start_from.into();
                 debug!("Start from is : {}", start_from);
                 self.data.last_received = start_from;
                 self.data.last_sent = start_from;
@@ -264,7 +264,7 @@ impl<S: Storage> SubscriptionFSM<S> {
     }
 
     #[tracing::instrument(skip(self))]
-    fn track_sent(&mut self, event_number: i64) {
+    fn track_sent(&mut self, event_number: u64) {
         debug!("Executing track_sent for {}", self.data.subscription_name);
         self.data.last_sent = std::cmp::max(self.data.last_sent, event_number);
         // TODO: Improve this part to be more efficient
@@ -274,7 +274,7 @@ impl<S: Storage> SubscriptionFSM<S> {
     }
 
     #[tracing::instrument(skip(self))]
-    fn track_last_received(&mut self, event_number: i64) {
+    fn track_last_received(&mut self, event_number: u64) {
         debug!(
             "Executing track_last_received for {}",
             self.data.subscription_name

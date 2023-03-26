@@ -88,7 +88,7 @@ pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 pub(crate) struct ExecuteStreamInfo(pub(crate) String);
 
 #[derive(Message)]
-#[rtype("i64")]
+#[rtype("u64")]
 pub(crate) struct AggregateVersion;
 
 #[derive(Message)]

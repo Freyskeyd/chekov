@@ -60,10 +60,11 @@ pub fn stream_forward(
 
 pub async fn read_stream(
     conn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
-    stream_id: i64,
+    stream_id: u64,
     version: usize,
     limit: usize,
 ) -> Result<Vec<RecordedEvent>, sqlx::Error> {
+    let stream_id: i64 = stream_id.try_into().unwrap();
     let version: i64 = version.try_into().unwrap();
     let limit: i64 = limit.try_into().unwrap();
     trace!("Version {}, Limit: {}", version, limit);
@@ -205,7 +206,9 @@ FROM
             .bind(event.created_at);
     }
     for event in events.iter() {
-        query = query.bind(event.event_uuid).bind(event.stream_version);
+        query = query
+            .bind(event.event_uuid)
+            .bind(event.stream_version as i64);
     }
 
     query.map(|row: PgRow| row.get(0)).fetch_all(conn).await
