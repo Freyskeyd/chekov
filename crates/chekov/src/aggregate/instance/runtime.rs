@@ -61,6 +61,9 @@ where
         // return a future that wait for the result of the execute_and_apply. The future of the
         // execute_and_apply need to be dispatch to the Context::wait to lock any further message
         // to be proceed.
+        //
+        // NOTE: We can't make the dispatch non async because a dispatch can be both sent to an aggregate
+        // which can be non async but also to a command handler which need to be async.
         Box::pin(
             async move { Self::execute_and_apply(mutable_state, cmd, current_version).await }
                 .into_actor(self)
