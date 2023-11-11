@@ -48,7 +48,7 @@ pub struct EventMetadatas {
 
 #[doc(hidden)]
 #[derive(Debug, Clone, Message)]
-#[rtype(result = "Result(), ()>")]
+#[rtype(result = "Result<(), ()>")]
 pub struct EventEnvelope<E: Event> {
     pub event: E,
     pub meta: EventMetadatas,
@@ -65,55 +65,53 @@ pub struct ResolveAndApply(pub RecordedEvent);
 pub struct ResolveAndApplyMany(pub Vec<RecordedEvent>);
 
 #[derive(Message)]
-#[rtype("Result<Vec<RecordedEvent>, event_store::prelude::EventStoreError>")]
+#[rtype(result = "Result<Vec<RecordedEvent>, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteReader(pub(crate) event_store::prelude::Reader);
 
 #[derive(Message)]
-#[rtype(
-    "Result<
+#[rtype(result = "Result<
             std::pin::Pin<
                 Box<dyn futures::Stream<Item = Result<Vec<RecordedEvent>, EventStoreError>> + Send>,
             >,
             EventStoreError,
-        >"
-)]
+        >")]
 pub(crate) struct ExecuteStreamForward(pub(crate) String);
 
 #[derive(Message)]
-#[rtype("Result<Vec<Uuid>, event_store::prelude::EventStoreError>")]
+#[rtype(result = "Result<Vec<Uuid>, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteAppender(pub(crate) event_store::prelude::Appender);
 
 #[derive(Message)]
-#[rtype("Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
+#[rtype(result = "Result<event_store::prelude::Stream, event_store::prelude::EventStoreError>")]
 pub(crate) struct ExecuteStreamInfo(pub(crate) String);
 
 #[derive(Message)]
-#[rtype("u64")]
+#[rtype(result = "u64")]
 pub(crate) struct AggregateVersion;
 
 #[derive(Message)]
-#[rtype("A")]
+#[rtype(result = "A")]
 pub(crate) struct AggregateState<A: Aggregate>(pub(crate) PhantomData<A>);
 
 #[derive(Message, Debug)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub(crate) struct StartListening;
 
 #[derive(Message)]
-#[rtype("Addr<event_store::EventStore<S>>")]
+#[rtype(result = "Addr<event_store::EventStore<S>>")]
 pub(crate) struct GetEventStoreAddr<S: Storage> {
     pub(crate) _phantom: PhantomData<S>,
 }
 
 #[derive(Message)]
-#[rtype("Option<Addr<crate::aggregate::AggregateInstance<A>>>")]
+#[rtype(result = "Option<Addr<crate::aggregate::AggregateInstance<A>>>")]
 pub(crate) struct GetAggregateAddr<A: Aggregate> {
     pub(crate) identifier: String,
     pub(crate) _phantom: PhantomData<A>,
 }
 
 #[derive(Message)]
-#[rtype("Result<Addr<crate::aggregate::AggregateInstance<A>>, ()>")]
+#[rtype(result = "Result<Addr<crate::aggregate::AggregateInstance<A>>, ()>")]
 pub(crate) struct StartAggregate<A: Aggregate, APP: Application> {
     pub(crate) identifier: String,
     pub(crate) correlation_id: Option<Uuid>,
@@ -122,7 +120,7 @@ pub(crate) struct StartAggregate<A: Aggregate, APP: Application> {
 }
 
 #[derive(Message)]
-#[rtype("Result<(), ()>")]
+#[rtype(result = "Result<(), ()>")]
 pub(crate) struct ShutdownAggregate {
     pub(crate) identifier: String,
 }

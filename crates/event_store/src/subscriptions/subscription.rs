@@ -14,11 +14,11 @@ use actix::prelude::*;
 use tracing::debug;
 
 #[derive(Debug, Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 struct Connect(pub Recipient<SubscriptionNotification>, SubscriptionOptions);
 
 #[derive(Debug, Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct CatchUp;
 
 #[derive(Debug)]

@@ -26,7 +26,7 @@ pub type BoxedStream = Pin<
 >;
 
 #[derive(Debug, Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub enum EventBusMessage {
     Notification(EventNotification),
     Events(String, Vec<RecordedEvent>),

@@ -37,15 +37,15 @@ impl PubSub {
 }
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 struct Subscribe(Recipient<SubscriptionNotification>, String);
 
 #[derive(Message)]
-#[rtype("usize")]
+#[rtype(result = "usize")]
 struct GetSubscriberCountForStream(String);
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct PubSubNotification {
     pub(crate) stream: String,
     pub(crate) events: Vec<RecordedEvent>,

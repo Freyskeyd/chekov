@@ -85,7 +85,7 @@ impl<S: Storage> Handler<CreateSubscription<S>> for SubscriptionsSupervisor<S> {
 }
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct Started;
 
 impl<S: Storage> Handler<Started> for SubscriptionsSupervisor<S> {
@@ -97,7 +97,7 @@ impl<S: Storage> Handler<Started> for SubscriptionsSupervisor<S> {
 }
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct GoingDown;
 
 impl<S: Storage> Handler<GoingDown> for SubscriptionsSupervisor<S> {
@@ -109,7 +109,7 @@ impl<S: Storage> Handler<GoingDown> for SubscriptionsSupervisor<S> {
 }
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct Down;
 
 impl<S: Storage> Handler<Down> for SubscriptionsSupervisor<S> {
