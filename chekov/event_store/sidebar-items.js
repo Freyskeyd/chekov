@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PostgresEventBus",""],["PostgresStorage",""],["RecordedEvent","A `RecordedEvent` represents an `Event` which have been append to a `Stream`"]],"trait":[["Event","Represent event that can be handled by an `EventStore`"]]};
+window.SIDEBAR_ITEMS = {"struct":["PostgresEventBus","PostgresStorage","RecordedEvent"],"trait":["Event"]};

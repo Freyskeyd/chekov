@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["draw_main_tab",""],["draw_selectable_list",""],["ui",""]],"mod":[["util",""]]};
+window.SIDEBAR_ITEMS = {"fn":["draw_main_tab","draw_selectable_list","ui"],"mod":["util"]};

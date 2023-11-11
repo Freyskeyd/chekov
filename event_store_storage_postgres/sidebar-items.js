@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PostgresStorage",""]]};
+window.SIDEBAR_ITEMS = {"struct":["PostgresStorage"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EventBusError",""],["EventNotificationError",""]]};
+window.SIDEBAR_ITEMS = {"enum":["EventBusError","EventNotificationError"]};

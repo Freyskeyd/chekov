@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EventBusMessage",""]],"mod":[["error",""]],"struct":[["EventNotification","Notification produced by the `EventBus` which contains events/streams related informations"]],"trait":[["EventBus",""]],"type":[["BoxedStream",""]]};
+window.SIDEBAR_ITEMS = {"enum":["EventBusMessage"],"mod":["error"],"struct":["EventNotification"],"trait":["EventBus"],"type":["BoxedStream"]};

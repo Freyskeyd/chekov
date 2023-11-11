@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["InMemoryEventBus",""]]};
+window.SIDEBAR_ITEMS = {"struct":["InMemoryEventBus"]};

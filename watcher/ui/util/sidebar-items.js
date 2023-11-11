@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["get_color",""]]};
+window.SIDEBAR_ITEMS = {"fn":["get_color"]};

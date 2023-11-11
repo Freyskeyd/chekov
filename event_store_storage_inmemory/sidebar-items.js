@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["InMemoryStorage","InMemory storage used for tests mostly"]]};
+window.SIDEBAR_ITEMS = {"struct":["InMemoryStorage"]};

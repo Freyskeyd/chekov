@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["InMemoryError",""]],"struct":[["InMemoryBackend",""]]};
+window.SIDEBAR_ITEMS = {"enum":["InMemoryError"],"struct":["InMemoryBackend"]};

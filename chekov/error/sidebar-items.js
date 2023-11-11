@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ApplyError","Error returns by a failling EventApplier"],["CommandExecutorError","Error returns by a CommandExecutor"],["HandleError",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ApplyError","CommandExecutorError","HandleError"]};

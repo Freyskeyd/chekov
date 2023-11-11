@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["Event","Define an Event which can be produced and consumed"],["EventApplier","Define an event applier"],["EventHandler","Define a struct as an EventHandler"],["Handler","Receive an immutable event to handle"]]};
+window.SIDEBAR_ITEMS = {"trait":["Event","EventApplier","EventHandler","Handler"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"derive":[["Aggregate",""],["CommandHandler",""]],"struct":[["CommandMetadatas",""],["EventMetadatas",""],["NoHandler",""],["PostgresEventBus",""],["PostgresStorage",""],["RecordedEvent","A `RecordedEvent` represents an `Event` which have been append to a `Stream`"]],"trait":[["EventHandler","Define a struct as an EventHandler"]]};
+window.SIDEBAR_ITEMS = {"derive":["Aggregate","CommandHandler"],"struct":["AggregateInstance","EventMetadatas","PostgresEventBus","PostgresStorage","RecordedEvent"],"trait":["EventHandler"]};

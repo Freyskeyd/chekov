@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":[["applier",""],["command_handler",""],["event_handler",""]],"derive":[["Aggregate",""],["Command",""],["CommandHandler",""],["Event",""],["EventHandler",""]]};
+window.SIDEBAR_ITEMS = {"attr":["applier","command_handler","event_handler"],"derive":["Aggregate","Command","CommandHandler","Event","EventHandler"]};

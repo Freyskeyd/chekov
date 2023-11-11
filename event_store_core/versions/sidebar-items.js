@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["ExpectedVersion","The `ExpectedVersion` used to define optimistic concurrency"],["ExpectedVersionResult",""],["ReadVersion",""]]};
+window.SIDEBAR_ITEMS = {"enum":["ExpectedVersion","ExpectedVersionResult","ReadVersion"]};

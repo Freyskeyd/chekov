@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["RecordedEventError","Errors related to a recorded event"],["UnsavedEventError","Errors related to a unsaved event"]]};
+window.SIDEBAR_ITEMS = {"enum":["RecordedEventError","UnsavedEventError"]};

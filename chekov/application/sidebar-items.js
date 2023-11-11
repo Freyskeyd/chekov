@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["ApplicationBuilder","Struct to configure and launch an `Application` instance"]],"trait":[["Application","Application are high order logical seperator."]]};
+window.SIDEBAR_ITEMS = {"struct":["ApplicationBuilder"],"trait":["Application"]};

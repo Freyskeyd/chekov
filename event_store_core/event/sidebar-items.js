@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["error",""]],"struct":[["RecordedEvent","A `RecordedEvent` represents an `Event` which have been append to a `Stream`"],["UnsavedEvent","An `UnsavedEvent` is created from a type that implement `Event`"]],"trait":[["Event","Represent event that can be handled by an `EventStore`"]]};
+window.SIDEBAR_ITEMS = {"mod":["error"],"struct":["RecordedEvent","UnsavedEvent"],"trait":["Event"]};

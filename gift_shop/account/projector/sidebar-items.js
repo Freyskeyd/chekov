@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["__init677153121337850190",""]],"struct":[["ACCOUNTPROJECTOR_STATIC_EVENT_HANDLER_EVENT_RESOLVER",""],["AccountProjector",""],["AccountProjectorEventHandlerEventRegistry",""]]};
+window.SIDEBAR_ITEMS = {"fn":["__init677153121337850190"],"struct":["ACCOUNTPROJECTOR_STATIC_EVENT_HANDLER_EVENT_RESOLVER","AccountProjector","AccountProjectorEventHandlerEventRegistry"]};

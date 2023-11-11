@@ -1,4 +1,4 @@
-var sourcesIndex = JSON.parse('{\
+var srcIndex = JSON.parse('{\
 "chekov":["",[["aggregate",[["instance",[],["internal.rs","mod.rs","runtime.rs"]]],["mod.rs","registry.rs","resolver.rs"]],["application",[],["builder.rs","internal.rs","mod.rs"]],["command",[["handler",[],["instance.rs","mod.rs","registry.rs"]]],["consistency.rs","metadata.rs","mod.rs"]],["event",[],["handler.rs","mod.rs","resolver.rs"]],["subscriber",[],["listener.rs","manager.rs","mod.rs","subscriber.rs"]]],["error.rs","event_store.rs","lib.rs","message.rs","prelude.rs","router.rs"]],\
 "chekov_macros":["",[],["aggregate.rs","command.rs","event.rs","event_handler.rs","lib.rs"]],\
 "event_store":["",[["connection",[],["messaging.rs","mod.rs"]],["event",[],["mod.rs"]],["event_store",[],["logic.rs","mod.rs","runtime.rs"]],["storage",[],["appender.rs","mod.rs","reader.rs"]],["subscriptions",[],["error.rs","fsm.rs","mod.rs","pub_sub.rs","state.rs","subscriber.rs","subscription.rs","supervisor.rs"]]],["lib.rs","prelude.rs"]],\
@@ -12,4 +12,4 @@ var sourcesIndex = JSON.parse('{\
 "gift_shop":["",[["account",[],["aggregate.rs","projector.rs","repository.rs"]]],["account.rs","commands.rs","events.rs","gift_card.rs","http.rs","main.rs","order.rs"]],\
 "watcher":["",[["ui",[],["util.rs"]]],["app.rs","main.rs","ui.rs"]]\
 }');
-createSourceSidebar();
+createSrcSidebar();

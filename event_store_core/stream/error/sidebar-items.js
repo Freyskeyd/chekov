@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["StreamError",""]]};
+window.SIDEBAR_ITEMS = {"enum":["StreamError"]};
