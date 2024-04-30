@@ -6,7 +6,7 @@ pub use crate::core::event::UnsavedEvent;
 pub use crate::core::event::UnsavedEventError;
 
 #[derive(Debug, Clone, Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct RecordedEvents {
     pub(crate) events: Vec<RecordedEvent>,
 }

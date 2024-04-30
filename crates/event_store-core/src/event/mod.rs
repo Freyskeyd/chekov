@@ -27,7 +27,7 @@ pub trait Event: Serialize + Send + std::convert::TryFrom<RecordedEvent> {
 
 /// A `RecordedEvent` represents an `Event` which have been append to a `Stream`
 #[derive(sqlx::FromRow, Debug, Clone, Message, Serialize)]
-#[rtype("()")]
+#[rtype(result = "()")]
 pub struct RecordedEvent {
     /// an incrementing and gapless integer used to order the event in a stream.
     #[sqlx(try_from = "i64")]

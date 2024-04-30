@@ -21,7 +21,7 @@ mod messaging;
 pub use messaging::{Append, CreateStream, Read, StreamForward, StreamForwardResult, StreamInfo};
 
 #[derive(Message)]
-#[rtype("()")]
+#[rtype(result = "()")]
 // TODO: Remove this by a better subscription channel
 pub struct OpenNotificationChannel {
     pub(crate) sender: mpsc::UnboundedSender<EventBusMessage>,
