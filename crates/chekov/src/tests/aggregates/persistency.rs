@@ -67,6 +67,37 @@ async fn should_not_persist_events_when_command_returns_no_events(
 }
 
 #[test(actix::test)]
+async fn failed_command_leaves_aggregate_and_stream_unchanged(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let identifier = Uuid::new_v4();
+    start_application().await;
+    let instance = start_aggregate(&identifier).await;
+
+    let result = AggregateInstanceRegistry::<ExampleAggregate>::execute::<MyApplication, _>(
+        InvalidCommand(identifier),
+    )
+    .await;
+
+    assert!(matches!(
+        result,
+        Err(CommandExecutorError::ExecutionError(_))
+    ));
+    assert_aggregate_version!(&instance, 0);
+    assert_aggregate_state!(&instance, ExampleAggregate::default());
+
+    let reader = Reader::default().stream(&identifier)?.limit(100);
+    let read_result = EventStore::<MyApplication>::with_reader(reader).await?;
+    assert!(matches!(
+        read_result,
+        Err(event_store::prelude::EventStoreError::Storage(
+            event_store::core::storage::StorageError::StreamDoesntExists
+        ))
+    ));
+
+    Ok(())
+}
+
+#[test(actix::test)]
 async fn should_persist_event_metadata() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: Implement metadata persistency
     Ok(())
