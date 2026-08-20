@@ -1,4 +1,5 @@
 /target
+.worktrees/
 **/*.rs.bk
 Cargo.lock
 bs-config.js
