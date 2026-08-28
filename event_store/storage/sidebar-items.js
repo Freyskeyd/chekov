@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["appender","reader"],"struct":["InMemoryStorage","PostgresStorage"]};

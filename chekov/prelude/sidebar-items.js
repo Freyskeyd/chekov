@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"derive":["Aggregate","CommandHandler"],"struct":["AggregateInstance","EventMetadatas","PostgresEventBus","PostgresStorage","RecordedEvent"],"trait":["EventHandler"]};

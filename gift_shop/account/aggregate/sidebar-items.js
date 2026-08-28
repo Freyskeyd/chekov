@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AccountError"],"fn":["__init868681190900935704"]};

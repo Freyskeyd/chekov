@@ -1,4 +1,0 @@
-(function() {var implementors = {
-"event_store_backend_inmemory":[["impl Backend for <a class=\"struct\" href=\"event_store_backend_inmemory/struct.InMemoryBackend.html\" title=\"struct event_store_backend_inmemory::InMemoryBackend\">InMemoryBackend</a>"]],
-"event_store_backend_postgres":[["impl Backend for <a class=\"struct\" href=\"event_store_backend_postgres/struct.PostgresBackend.html\" title=\"struct event_store_backend_postgres::PostgresBackend\">PostgresBackend</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

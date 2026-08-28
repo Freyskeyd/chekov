@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EventStoreError"],"fn":["append","read"],"mod":["prelude","storage","versions"],"struct":["EventStore","InMemoryStorage","PostgresStorage","PubSub"],"trait":["Event"]};

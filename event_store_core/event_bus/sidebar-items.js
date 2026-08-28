@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EventBusMessage"],"mod":["error"],"struct":["EventNotification"],"trait":["EventBus"],"type":["BoxedStream"]};

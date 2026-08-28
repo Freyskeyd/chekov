@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Consistency"],"struct":["CommandMetadatas","NoHandler"],"trait":["Command","CommandExecutor","CommandHandler","Handler"],"type":["ExecutionResult"]};

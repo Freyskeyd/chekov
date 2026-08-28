@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AccountStatus"],"mod":["aggregate","projector","repository"],"struct":["ACCOUNT_STATIC_EVENT_RESOLVER","Account","AccountEventResolverRegistry"]};

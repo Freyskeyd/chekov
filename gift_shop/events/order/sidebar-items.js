@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["GiftCardAdded","OrderCanceled","OrderCreated","OrderValidated"]};
