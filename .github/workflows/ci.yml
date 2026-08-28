@@ -8,67 +8,54 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: stable
-          override: true
 
-
-      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all
+        run: cargo check --all
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: stable
-          override: true
 
-      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all
+        run: cargo test --all
 
   doc:
     name: Doc - build the documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: stable
-          override: true
 
-      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
       - run: cargo doc --no-deps --all --exclude bank
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v4
         with:
           name: doc
           path: target/doc
@@ -78,10 +65,10 @@ jobs:
     needs: [doc, check, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
 
       - name: Download doc
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: doc
 
@@ -96,47 +83,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly
-          override: true
+          components: llvm-tools-preview
 
-      - run: docker-compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
+      - uses: taiki-e/install-action@cargo-llvm-cov
+
+      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --no-fail-fast --all --exclude bank --exclude gift_shop
-        env:
-          CARGO_INCREMENTAL: '0'
-          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests'
-          RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests'
-
-      - id: coverage
-        uses: actions-rs/grcov@v0.1
+      - name: Generate coverage report
+        run: cargo llvm-cov --all-features --workspace --exclude bank --exclude gift_shop --no-fail-fast --lcov --output-path lcov.info
 
       - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@v1.1.1
+        uses: coverallsapp/github-action@v2
         continue-on-error: true
         with:
           github-token: ${{ secrets.github_token }}
-          path-to-lcov: ${{ steps.coverage.outputs.report }}
+          file: lcov.info
 
   sonarcloud:
     name: SonarCloud and Linter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.77.1
           components: clippy rustfmt llvm-tools-preview
 
       - uses: taiki-e/install-action@grcov
@@ -174,4 +152,4 @@ jobs:
         with:
           args: >
             -Dsonar.externalIssuesReportPaths=sonar-issues.json
-            -Dcommunity.rust.lcov.reportPaths=lcov.info
+            -Dcommunity.rust.lcov.reportPaths=coverage.lcov
