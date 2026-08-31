@@ -19,7 +19,7 @@ jobs:
       - run: sleep 10
 
       - name: Run cargo check
-        run: cargo check --all
+        run: cargo check --locked --all
 
   test:
     name: Test Suite
@@ -37,7 +37,7 @@ jobs:
       - run: sleep 10
 
       - name: Run cargo test
-        run: cargo test --all
+        run: cargo test --locked --all
 
   doc:
     name: Doc - build the documentation
@@ -54,7 +54,7 @@ jobs:
       - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
       - run: sleep 10
 
-      - run: cargo doc --no-deps --all --exclude bank
+      - run: cargo doc --locked --no-deps --all --exclude bank
       - uses: actions/upload-artifact@v4
         with:
           name: doc
@@ -95,7 +95,7 @@ jobs:
       - run: sleep 10
 
       - name: Generate coverage report
-        run: cargo llvm-cov --all-features --workspace --exclude bank --exclude gift_shop --no-fail-fast --lcov --output-path lcov.info
+        run: cargo llvm-cov --locked --all-features --workspace --exclude bank --exclude gift_shop --no-fail-fast --lcov --output-path lcov.info
 
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2
