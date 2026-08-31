@@ -54,6 +54,7 @@ jobs:
   publish:
     name: Publish
     needs: [doc, check, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -62,6 +63,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: doc
+          path: doc
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
