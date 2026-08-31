@@ -15,9 +15,6 @@ jobs:
         with:
           toolchain: stable
 
-      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
-      - run: sleep 10
-
       - name: Run cargo check
         run: cargo check --locked --all
 
@@ -33,9 +30,6 @@ jobs:
         with:
           toolchain: stable
 
-      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
-      - run: sleep 10
-
       - name: Run cargo test
         run: cargo test --locked --all
 
@@ -50,9 +44,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-
-      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
-      - run: sleep 10
 
       - run: cargo doc --locked --no-deps --all --exclude bank
       - uses: actions/upload-artifact@v4
@@ -91,9 +82,6 @@ jobs:
 
       - uses: taiki-e/install-action@cargo-llvm-cov
 
-      - run: docker compose -f scripts/tests/docker-compose.yml run -d -p 5432:5432 postgres
-      - run: sleep 10
-
       - name: Generate coverage report
         run: cargo llvm-cov --locked --all-features --workspace --exclude bank --exclude gift_shop --no-fail-fast --lcov --output-path lcov.info
 
@@ -101,5 +89,5 @@ jobs:
         uses: coverallsapp/github-action@v2
         continue-on-error: true
         with:
-          github-token: ${{ secrets.github_token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           file: lcov.info
