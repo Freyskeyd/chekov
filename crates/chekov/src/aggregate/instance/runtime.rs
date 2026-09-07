@@ -4,8 +4,8 @@ use crate::error::CommandExecutorError;
 use crate::message::{AggregateState, Dispatch, ShutdownAggregate};
 use crate::message::{AggregateVersion, ResolveAndApply, ResolveAndApplyMany};
 use crate::{Aggregate, Application};
-use actix::prelude::*;
 use actix::Handler as ActixHandler;
+use actix::prelude::*;
 use event_store::prelude::SubscriptionNotification;
 use tracing::trace;
 

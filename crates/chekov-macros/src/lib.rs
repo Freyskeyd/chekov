@@ -104,6 +104,7 @@ pub(crate) struct ImplArgs {
 }
 
 pub(crate) enum Input {
+    #[allow(dead_code)]
     Trait(ItemTrait),
     Impl(ItemImpl),
 }
@@ -172,6 +173,7 @@ fn expand(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -207,12 +209,10 @@ pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let event = event.unwrap();
     expanded.extend(quote! {
             chekov::inventory::submit! {
-                #![crate = chekov]
-                use chekov::event_store::Event;
                 #aggregate_event_resolver {
-                    names: #event::all_event_types(),
-                    type_id: std::any::TypeId::of::<#event>(),
-                    applier: |aggregate: &mut #apply_to, event: chekov::RecordedEvent| -> Result<(), ApplyError> {
+                    names: || <#event as chekov::event_store::Event>::all_event_types(),
+                    type_id: || std::any::TypeId::of::<#event>(),
+                    applier: |aggregate: &mut #apply_to, event: chekov::RecordedEvent| -> Result<(), chekov::prelude::ApplyError> {
                         use chekov::Event;
                         use std::convert::TryFrom;
                         use futures::TryFutureExt;
@@ -257,6 +257,7 @@ fn expand_command_handler(args: TokenStream, input: TokenStream) -> TokenStream 
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -293,11 +294,9 @@ pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> Token
     let event = event.unwrap();
     expanded.extend(quote! {
         chekov::inventory::submit! {
-            #![crate = chekov]
-            use chekov::event_store::Event;
             #aggregate_event_resolver {
-                names: #event::all_event_types(),
-                type_id: std::any::TypeId::of::<#event>(),
+                names: || <#event as chekov::event_store::Event>::all_event_types(),
+                type_id: || std::any::TypeId::of::<#event>(),
                 handler: |handler: &mut #apply_to, event: chekov::RecordedEvent|  -> BoxFuture<Result<(), chekov::error::HandleError>> {
                     use chekov::Event;
                     use chekov::event::Handler;

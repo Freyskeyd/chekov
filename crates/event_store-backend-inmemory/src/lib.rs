@@ -26,6 +26,7 @@ pub struct InMemoryBackend {
 }
 
 impl InMemoryBackend {
+    #[allow(clippy::result_unit_err)]
     pub async fn initiate(
         notifier: Option<mpsc::UnboundedSender<EventBusMessage>>,
     ) -> Result<Self, ()> {
@@ -283,19 +284,21 @@ mod test {
         let mut storage = InMemoryBackend::default();
 
         let identifier = Uuid::new_v4().to_string();
-        assert!(storage
-            .create_stream(
-                Stream {
-                    stream_id: 1,
-                    stream_uuid: identifier.clone(),
-                    stream_version: 0,
-                    created_at: Utc::now(),
-                    deleted_at: None,
-                },
-                Uuid::new_v4(),
-            )
-            .await
-            .is_ok());
+        assert!(
+            storage
+                .create_stream(
+                    Stream {
+                        stream_id: 1,
+                        stream_uuid: identifier.clone(),
+                        stream_version: 0,
+                        created_at: Utc::now(),
+                        deleted_at: None,
+                    },
+                    Uuid::new_v4(),
+                )
+                .await
+                .is_ok()
+        );
 
         let result = storage.read_stream_info(identifier, Uuid::new_v4()).await;
 

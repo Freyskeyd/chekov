@@ -46,7 +46,7 @@ async fn can_recover_from_fail_execution() -> Result<(), Box<dyn std::error::Err
     )
     .await;
 
-    assert!(matches!(result, Err(_)));
+    assert!(result.is_err());
 
     let result = AggregateInstance::execute(
         instance.create_mutable_state(),
@@ -58,7 +58,7 @@ async fn can_recover_from_fail_execution() -> Result<(), Box<dyn std::error::Err
     )
     .await;
 
-    assert!(matches!(result, Ok(_)));
+    assert!(result.is_ok());
     Ok(())
 }
 
@@ -76,7 +76,7 @@ fn can_apply_event() {
         &MyEvent { id: Uuid::new_v4() },
     );
 
-    assert!(matches!(result, Ok(_)));
+    assert!(result.is_ok());
 }
 
 #[test(actix::test)]

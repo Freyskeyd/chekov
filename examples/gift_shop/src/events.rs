@@ -14,6 +14,7 @@ pub(crate) mod account {
 
     #[derive(Clone, chekov::Event, Deserialize, Serialize)]
     #[event(event_type = "MoneyMovement")]
+    #[allow(dead_code)]
     pub enum MoneyMovementEvent {
         Deposited { account_id: Uuid, amount: u64 },
         Withdrawn { account_id: Uuid, amount: u64 },
@@ -32,6 +33,7 @@ pub(crate) mod gift_card {
     }
 
     #[derive(Clone, chekov::Event, Deserialize, Serialize)]
+    #[allow(dead_code)]
     pub struct GiftCardUsed {
         pub gift_card_id: Uuid,
         pub account_id: Uuid,

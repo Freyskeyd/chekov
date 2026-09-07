@@ -23,7 +23,7 @@ impl AccountRepository {
             status: AccountStatus::Active,
             balance: row.get::<i64, _>(2),
         })
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;

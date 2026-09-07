@@ -42,8 +42,8 @@ async fn should_persist_pending_events_in_order_applied() -> Result<(), Box<dyn 
 }
 
 #[test(actix::test)]
-async fn should_not_persist_events_when_command_returns_no_events(
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn should_not_persist_events_when_command_returns_no_events()
+-> Result<(), Box<dyn std::error::Error>> {
     let identifier = Uuid::new_v4();
     start_application().await;
     let _ = start_aggregate(&identifier).await;
@@ -73,8 +73,8 @@ async fn should_persist_event_metadata() -> Result<(), Box<dyn std::error::Error
 }
 
 #[test(actix::test)]
-async fn should_reload_persisted_events_when_restarting_aggregate_process(
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn should_reload_persisted_events_when_restarting_aggregate_process()
+-> Result<(), Box<dyn std::error::Error>> {
     let identifier = Uuid::new_v4();
     start_application().await;
     let addr = start_aggregate(&identifier).await;
@@ -116,8 +116,8 @@ async fn should_reload_persisted_events_when_restarting_aggregate_process(
 }
 
 #[test(actix::test)]
-async fn should_reload_persisted_events_in_batches_when_restarting_aggregate_process(
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn should_reload_persisted_events_in_batches_when_restarting_aggregate_process()
+-> Result<(), Box<dyn std::error::Error>> {
     let identifier = Uuid::new_v4();
     start_application().await;
     let addr = start_aggregate(&identifier).await;

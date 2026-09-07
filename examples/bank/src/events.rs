@@ -23,6 +23,7 @@ pub enum AccountUpdated {
 
 #[derive(Clone, chekov::Event, Deserialize, Serialize)]
 #[event(event_type = "Elixir.Conduit.Accounts.Events.UserRegistered")]
+#[allow(dead_code)]
 pub struct UserRegistered {
     pub email: String,
     pub hashed_password: String,
@@ -32,6 +33,7 @@ pub struct UserRegistered {
 
 #[derive(Clone, chekov::Event, Deserialize, Serialize)]
 #[event(event_type = "MoneyMovement")]
+#[allow(dead_code)]
 pub enum MoneyMovementEvent {
     Deposited {
         account_id: Uuid,

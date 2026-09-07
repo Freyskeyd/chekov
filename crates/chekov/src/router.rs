@@ -1,6 +1,6 @@
 use crate::{
-    command::Command, command::CommandMetadatas, message::Dispatch, Application,
-    CommandExecutorError,
+    Application, CommandExecutorError, command::Command, command::CommandMetadatas,
+    message::Dispatch,
 };
 use actix::{ResponseFuture, SystemService};
 use futures::TryFutureExt;

@@ -98,7 +98,7 @@
 mod instance;
 mod registry;
 
-use crate::{prelude::ApplyError, Application};
+use crate::{Application, prelude::ApplyError};
 use event_store::prelude::RecordedEvent;
 
 #[doc(hidden)]

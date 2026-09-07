@@ -174,14 +174,14 @@ use message::Dispatch;
 use router::Router;
 pub use subscriber::SubscriberManager;
 
-pub use chekov_macros::applier;
-pub use chekov_macros::command_handler;
-pub use chekov_macros::event_handler;
 pub use chekov_macros::Aggregate;
 pub use chekov_macros::Command;
 pub use chekov_macros::CommandHandler;
 pub use chekov_macros::Event;
 pub use chekov_macros::EventHandler;
+pub use chekov_macros::applier;
+pub use chekov_macros::command_handler;
+pub use chekov_macros::event_handler;
 
 #[doc(hidden)]
 pub use async_trait;

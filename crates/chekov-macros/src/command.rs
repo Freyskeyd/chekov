@@ -57,14 +57,7 @@ pub fn generate_command(
     let attrs = data
         .fields
         .iter()
-        .filter_map(|i| {
-            let v: Option<CommandFieldAttrs> = match FromField::from_field(i) {
-                Ok(v) => Some(v),
-                Err(_) => None,
-            };
-
-            v
-        })
+        .filter_map(|i| FromField::from_field(i).ok())
         .collect::<Vec<CommandFieldAttrs>>();
 
     let identifiers: Vec<&CommandFieldAttrs> =

@@ -1,8 +1,8 @@
-use crate::aggregate::StaticState;
-use crate::event::Event;
 use crate::Aggregate;
 use crate::CommandExecutorError;
-use crate::{event::*, message::Dispatch, Application};
+use crate::aggregate::StaticState;
+use crate::event::Event;
+use crate::{Application, event::*, message::Dispatch};
 use actix::SystemService;
 
 mod consistency;
@@ -11,8 +11,8 @@ mod metadata;
 
 pub use consistency::Consistency;
 use futures::future::BoxFuture;
-pub(crate) use handler::instance::CommandHandlerInstance;
 pub use handler::NoHandler;
+pub(crate) use handler::instance::CommandHandlerInstance;
 pub use metadata::CommandMetadatas;
 
 /// Define a Command which can be dispatch

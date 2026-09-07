@@ -1,7 +1,7 @@
 use std::pin::Pin;
 
 use event_store_core::event_bus::{
-    error::EventBusError, BoxedStream, EventBus, EventBusMessage, EventNotification,
+    BoxedStream, EventBus, EventBusMessage, EventNotification, error::EventBusError,
 };
 use futures::{FutureExt, Stream, StreamExt};
 use sqlx::postgres::PgListener;
@@ -18,6 +18,7 @@ impl Default for PostgresEventBus {
 }
 
 impl PostgresEventBus {
+    #[allow(clippy::result_unit_err)]
     pub async fn initiate(url: String) -> Result<Self, ()> {
         let listener = sqlx::postgres::PgListener::connect(&url).await.unwrap();
 

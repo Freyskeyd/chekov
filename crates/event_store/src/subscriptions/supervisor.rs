@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use crate::EventStore;
 
+use super::SubscriptionOptions;
 use super::error::SubscriptionError;
 use super::subscription::Subscription;
-use super::SubscriptionOptions;
 use actix::prelude::*;
 use event_store_core::event::RecordedEvent;
 use event_store_core::storage::Storage;

@@ -2,8 +2,8 @@ use self::support::subscriber::SubscriberFactory;
 
 use super::{StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions};
 use crate::{
-    prelude::ExpectedVersion, subscriptions::tests::support::event::MyEvent, EventStore,
-    InMemoryStorage,
+    EventStore, InMemoryStorage, prelude::ExpectedVersion,
+    subscriptions::tests::support::event::MyEvent,
 };
 use actix::Actor;
 use serde_json::json;
@@ -108,8 +108,8 @@ async fn should_subscribe_to_single_stream_from_origin() {
 }
 
 #[test(actix::test)]
-async fn should_subscribe_to_single_stream_from_given_stream_version_should_only_receive_later_events(
-) {
+async fn should_subscribe_to_single_stream_from_given_stream_version_should_only_receive_later_events()
+ {
     let es = EventStore::builder()
         .storage(InMemoryStorage::default())
         .build()

@@ -1,5 +1,4 @@
 use crate::connection::Connection;
-pub use crate::event::Event;
 use actix::prelude::*;
 use event_store_core::{error::EventStoreError, storage::Storage};
 use tracing::{instrument, trace};

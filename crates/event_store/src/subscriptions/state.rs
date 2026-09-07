@@ -1,8 +1,8 @@
 use std::{collections::VecDeque, sync::Arc};
 
-use crate::{event::RecordedEvent, EventStore};
+use crate::{EventStore, event::RecordedEvent};
 
-use super::{subscriber::Subscriber, StartFrom};
+use super::{StartFrom, subscriber::Subscriber};
 use actix::prelude::*;
 use event_store_core::storage::Storage;
 

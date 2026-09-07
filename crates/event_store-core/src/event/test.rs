@@ -57,7 +57,7 @@ mod unsaved {
 
     #[test]
     fn must_have_a_valide_event_type() {
-        let source_events = vec![
+        let source_events = [
             MyEnumEvent::Created { id: 1 },
             MyEnumEvent::Updated("Updated".into()),
             MyEnumEvent::Deleted,
@@ -65,9 +65,7 @@ mod unsaved {
 
         let mut produces_events: Vec<UnsavedEvent> = source_events
             .iter()
-            .map(UnsavedEvent::try_from)
-            .filter(Result::is_ok)
-            .map(Result::unwrap)
+            .flat_map(UnsavedEvent::try_from)
             .collect();
 
         let next = MyStructEvent {};

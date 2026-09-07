@@ -1,9 +1,9 @@
 use std::marker::PhantomData;
 
+use crate::Application;
 use crate::command::{CommandExecutor, CommandMetadatas};
 use crate::message::{GetAggregateAddr, ShutdownAggregate, StartAggregate};
-use crate::Application;
-use crate::{aggregate::AggregateInstance, Aggregate, Command, CommandExecutorError, Dispatch};
+use crate::{Aggregate, Command, CommandExecutorError, Dispatch, aggregate::AggregateInstance};
 use actix::registry::SystemService;
 use actix::{ActorFutureExt, ActorTryFutureExt, Addr, Handler, ResponseActFuture, WrapFuture};
 use tracing::Instrument;
@@ -46,7 +46,7 @@ impl<A: Aggregate> ::actix::Actor for AggregateInstanceRegistry<A> {
 }
 
 impl<A: Aggregate> AggregateInstanceRegistry<A> {
-    pub async fn execute<APP: Application, C: Command>(
+    pub async fn execute<APP: Application, C>(
         command: C,
     ) -> Result<Vec<C::Event>, CommandExecutorError>
     where

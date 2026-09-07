@@ -16,10 +16,12 @@ mod creation {
         let uuid = Uuid::new_v4().to_string();
         let c_id = Uuid::new_v4();
 
-        assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
-            .await
-            .is_ok());
+        assert!(
+            storage
+                .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
+                .await
+                .is_ok()
+        );
     }
 
     #[tokio::test]
@@ -29,10 +31,12 @@ mod creation {
         let uuid = Uuid::new_v4().to_string();
         let c_id = Uuid::new_v4();
 
-        assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
-            .await
-            .is_ok());
+        assert!(
+            storage
+                .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
+                .await
+                .is_ok()
+        );
         assert!(matches!(
             storage
                 .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
@@ -54,14 +58,18 @@ mod deletion {
         let uuid = Uuid::new_v4().to_string();
         let c_id = Uuid::new_v4();
 
-        assert!(storage
-            .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
-            .await
-            .is_ok());
-        assert!(storage
-            .delete_stream(&Stream::from_str(&uuid).unwrap(), c_id)
-            .await
-            .is_ok());
+        assert!(
+            storage
+                .create_stream(Stream::from_str(&uuid).unwrap(), c_id)
+                .await
+                .is_ok()
+        );
+        assert!(
+            storage
+                .delete_stream(&Stream::from_str(&uuid).unwrap(), c_id)
+                .await
+                .is_ok()
+        );
     }
 
     #[tokio::test]

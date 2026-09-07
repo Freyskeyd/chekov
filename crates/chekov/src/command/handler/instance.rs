@@ -2,8 +2,8 @@ use std::time::Duration;
 
 use crate::command::{CommandExecutor, Handler};
 use crate::{
-    command::CommandHandler, message::DispatchWithState, prelude::CommandExecutorError, Aggregate,
-    Application, Command,
+    Aggregate, Application, Command, command::CommandHandler, message::DispatchWithState,
+    prelude::CommandExecutorError,
 };
 use actix::prelude::Handler as ActixHandler;
 use actix::prelude::*;

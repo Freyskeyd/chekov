@@ -3,10 +3,10 @@ use event_store_core::event::RecordedEvent;
 use event_store_core::event::UnsavedEvent;
 use event_store_core::stream::Stream;
 use futures::StreamExt;
-use sqlx::pool::PoolConnection;
-use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 use sqlx::Row;
+use sqlx::pool::PoolConnection;
+use sqlx::postgres::PgRow;
 use std::convert::TryInto;
 use tracing::trace;
 use uuid::Uuid;
@@ -49,7 +49,7 @@ pub fn stream_forward(
             let inner = q.bind(&stream_uuid).bind(offset).bind(batch_size).fetch_all(&mut *conn).await;
 
             match inner {
-                Ok(events) if events.len() > 0 => yield events,
+                Ok(events) if !events.is_empty() => yield events,
                 _ => break,
             }
 
@@ -189,7 +189,7 @@ FROM
   inserted_events;
   "#,
         create_append_indexes(events.len()),
-        &stream_uuid,
+        stream_uuid,
         event_number = events.len(),
         events = create_event_id_stream_version_indexes(events.len() * 7 + 1, events.len()),
     );

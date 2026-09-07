@@ -1,15 +1,15 @@
 use crate::{
+    InMemoryStorage,
     prelude::ExpectedVersion,
     subscriptions::{
+        StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions,
         fsm::{InternalFSMState, SubscriptionFSM},
         tests::support::{
+            EventStoreHelper,
             event::{EventFactory, MyEvent},
             subscriber::SubscriberFactory,
-            EventStoreHelper,
         },
-        StartFrom, SubscriptionNotification, SubscriptionOptions, Subscriptions,
     },
-    InMemoryStorage,
 };
 use serde_json::json;
 use test_log::test;
@@ -38,12 +38,12 @@ async fn transient_subscription() {
     let mut fsm = SubscriptionFSM::with_options(&opts, es.get_addr());
 
     assert_eq!(fsm.state, InternalFSMState::Initial);
-    assert!(matches!(fsm.data.subscriber, None));
+    assert!(fsm.data.subscriber.is_none());
 
     fsm.connect_subscriber(addr.recipient()).await;
 
     assert_eq!(fsm.state, InternalFSMState::Initial);
-    assert!(matches!(fsm.data.subscriber, Some(_)));
+    assert!(fsm.data.subscriber.is_some());
 
     fsm.subscribe().await;
 

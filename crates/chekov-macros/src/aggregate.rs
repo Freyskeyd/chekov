@@ -38,14 +38,14 @@ pub fn generate_aggregate(
     Ok(quote! {
 
         pub struct #aggregate_event_resolver {
-            names: Vec<&'static str>,
-            type_id: std::any::TypeId,
+            names: fn() -> Vec<&'static str>,
+            type_id: fn() -> std::any::TypeId,
             applier: chekov::aggregate::resolver::EventApplierFn<#struct_name>
         }
 
         impl chekov::aggregate::resolver::EventResolverItem<#struct_name> for #aggregate_event_resolver {
-            fn get_names(&self) -> &[&'static str] {
-                self.names.as_ref()
+            fn get_names(&self) -> Vec<&'static str> {
+                (self.names)()
             }
         }
 
@@ -58,10 +58,10 @@ pub fn generate_aggregate(
                 let mut names = std::collections::BTreeMap::new();
 
                 for registered in chekov::inventory::iter::<#aggregate_event_resolver> {
-                    appliers.insert(registered.type_id, registered.applier);
+                    appliers.insert((registered.type_id)(), registered.applier);
 
-                    registered.names.iter().for_each(|name|{
-                        names.insert(name.clone(), registered.type_id);
+                    (registered.names)().iter().for_each(|name|{
+                        names.insert(name.clone(), (registered.type_id)());
                     });
                 }
 

@@ -1,19 +1,19 @@
+use crate::EventStoreError;
 use crate::core::event::RecordedEvent;
 use crate::core::stream::Stream;
 use crate::subscriptions::pub_sub::{PubSub, PubSubNotification};
-use crate::EventStoreError;
 use actix::{Actor, Addr, AsyncContext, Context, Handler, ResponseFuture, SystemService};
 use actix::{ActorFutureExt, Message};
 use actix::{StreamHandler, WrapFuture};
 use event_store_core::backend::Backend;
-use event_store_core::event_bus::error::EventBusError;
 use event_store_core::event_bus::EventBusMessage;
+use event_store_core::event_bus::error::EventBusError;
 use event_store_core::storage::Storage;
 use futures::{FutureExt, StreamExt, TryFutureExt, TryStreamExt};
 use std::str::FromStr;
 use tokio::sync::mpsc;
-use tracing::trace;
 use tracing::Instrument;
+use tracing::trace;
 use uuid::Uuid;
 
 mod messaging;
@@ -216,9 +216,9 @@ mod test {
     use crate::core::event::Event;
     use crate::core::stream::Stream;
 
+    use crate::ExpectedVersion;
     use crate::event::UnsavedEvent;
     use crate::storage::InMemoryStorage;
-    use crate::ExpectedVersion;
     use serde::Deserialize;
     use serde::Serialize;
 

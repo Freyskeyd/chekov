@@ -1,24 +1,69 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 default-members = ["crates/*"]
 members = ["crates/*", "examples/*"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.88.0"
+authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/freyskeyd/chekov"
 
 [workspace.dependencies]
 uuid = { version = "1.3.0", features = ["serde", "v4"] }
 serde = { version = "1.0.117", features = ["derive"] }
-sqlx = { version = "0.6.2", features = [
+sqlx = { version = "0.8.1", default-features = false, features = [
     "chrono",
-    "time",
-    "uuid",
     "json",
-    "offline",
-    "runtime-actix-native-tls",
+    "macros",
+    "postgres",
+    "runtime-tokio-native-tls",
+    "uuid",
 ] }
 async-trait = "0.1.51"
+async-stream = "0.3"
 serde_json = "1.0.68"
-actix = "0.12.0"
+actix = "0.13.5"
+actix-web = "4"
+chrono = { version = "0.4.19", features = ["serde"] }
+darling = "0.13.0"
+fnv = "1.0.7"
 futures = "0.3.17"
+inventory = "0.2.3"
+lazy_static = "1.4.0"
 log = "0.4.14"
-tokio = { version = "1.12.0", features = ["full"] }
+proc-macro2 = "1.0.29"
+quote = "1.0.9"
+syn = { version = "1.0.78", features = ["full"] }
+thiserror = "1.0"
+tokio = { version = "1.12.0", default-features = false, features = [
+    "macros",
+    "rt-multi-thread",
+    "signal",
+    "sync",
+    "time",
+] }
 tracing = "0.1.28"
 tracing-futures = "0.2.5"
+typetag = "0.1.7"
+pretty_assertions = "1.0.0"
+test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+] }
+tui = { package = "ratatui", version = "0.20.1", default-features = false, features = [
+    "crossterm",
+] }
+crossterm = "0.23"
+
+chekov-macros = { version = "0.1.0", path = "crates/chekov-macros" }
+event_store = { version = "0.1.1", path = "crates/event_store" }
+event_store-backend-inmemory = { version = "0.1.0", path = "crates/event_store-backend-inmemory" }
+event_store-backend-postgres = { version = "0.1.0", path = "crates/event_store-backend-postgres" }
+event_store-core = { version = "0.1.0", path = "crates/event_store-core" }
+event_store-eventbus-inmemory = { version = "0.1.0", path = "crates/event_store-eventbus-inmemory" }
+event_store-eventbus-postgres = { version = "0.1.0", path = "crates/event_store-eventbus-postgres" }
+event_store-storage-inmemory = { version = "0.1.0", path = "crates/event_store-storage-inmemory" }
+event_store-storage-postgres = { version = "0.1.0", path = "crates/event_store-storage-postgres" }

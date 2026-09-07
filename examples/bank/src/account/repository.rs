@@ -23,7 +23,7 @@ impl AccountRepository {
             name: row.get(1),
             status: AccountStatus::Initialized,
         })
-        .fetch_all(&mut pool)
+        .fetch_all(&mut *pool)
         .await
     }
 
@@ -42,7 +42,7 @@ impl AccountRepository {
             name: row.get(1),
             status: AccountStatus::Active,
         })
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -65,7 +65,7 @@ impl AccountRepository {
             name: row.get(1),
             status: AccountStatus::Active,
         })
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;

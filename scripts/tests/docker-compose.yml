@@ -1,9 +1,6 @@
-version: "3"
-
 services:
-
   postgres:
-    image: postgres:13-beta1-alpine
+    image: postgres:16-alpine
     container_name: chekov-pg
     environment:
       # POSTGRES_DB: event_store
@@ -14,3 +11,10 @@ services:
     volumes:
       - "./postgres/setup.sh:/docker-entrypoint-initdb.d/setup.sh"
       - "./postgres:/tmp"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

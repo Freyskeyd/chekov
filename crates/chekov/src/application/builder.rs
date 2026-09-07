@@ -1,9 +1,9 @@
-use crate::event::handler::EventHandlerBuilder;
-use crate::event::EventHandler;
-use crate::message::StartListening;
 use crate::Application;
 use crate::Router;
 use crate::SubscriberManager;
+use crate::event::EventHandler;
+use crate::event::handler::EventHandlerBuilder;
+use crate::message::StartListening;
 use actix::Actor;
 use actix::SystemService;
 use event_store::core::storage::Storage;

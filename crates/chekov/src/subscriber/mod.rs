@@ -1,5 +1,4 @@
 use actix::prelude::*;
-use sqlx::postgres::PgNotification;
 use std::{convert::TryFrom, str::FromStr};
 
 mod listener;
@@ -8,11 +7,6 @@ mod subscriber;
 
 pub use listener::Listener;
 pub use manager::SubscriberManager;
-pub use subscriber::Subscriber;
-
-#[derive(Debug, Message)]
-#[rtype(result = "()")]
-struct Notif(PgNotification);
 
 #[derive(Clone, Debug, Message)]
 #[rtype(result = "()")]

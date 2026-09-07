@@ -1,6 +1,6 @@
 use crate::{
-    core::stream::Stream, event::RecordedEvent, event::UnsavedEvent, EventStoreError,
-    ExpectedVersion,
+    EventStoreError, ExpectedVersion, core::stream::Stream, event::RecordedEvent,
+    event::UnsavedEvent,
 };
 use actix::Message;
 use uuid::Uuid;

@@ -1,5 +1,5 @@
-use crate::message::ResolveAndApplyMany;
 use crate::Application;
+use crate::message::ResolveAndApplyMany;
 use crate::{error::HandleError, event_store::EventStore};
 use actix::prelude::*;
 use event_store::prelude::{StartFrom, SubscriptionNotification};
@@ -159,7 +159,6 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
 
             SubscriptionNotification::Events(events) => {
                 let mut handler = self.handler.clone();
-                let events = events;
                 Box::pin(async move {
                     for event in events.iter() {
                         // TODO: Deal with handle error

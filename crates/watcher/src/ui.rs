@@ -1,10 +1,10 @@
 use tui::{
+    Frame,
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, List, ListItem, ListState, Tabs},
-    Frame,
 };
 
 use crate::app::App;

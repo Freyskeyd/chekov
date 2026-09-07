@@ -25,5 +25,5 @@ pub trait EventApplier<E: Event> {
 
 /// Receive an immutable event to handle
 pub trait Handler<E: crate::event::Event> {
-    fn handle(&mut self, event: &E) -> BoxFuture<Result<(), HandleError>>;
+    fn handle(&mut self, event: &E) -> BoxFuture<'_, Result<(), HandleError>>;
 }

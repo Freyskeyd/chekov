@@ -1,5 +1,5 @@
-use crate::event::RecordedEvent;
 use crate::EventStore;
+use crate::event::RecordedEvent;
 use actix::Addr;
 use actix::Message;
 use actix::Recipient;
@@ -56,8 +56,9 @@ impl Default for SubscriptionOptions {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub enum StartFrom {
+    #[default]
     Origin,
     Version(u64),
 }
@@ -68,11 +69,6 @@ impl From<StartFrom> for u64 {
             StartFrom::Origin => 0,
             StartFrom::Version(i) => i,
         }
-    }
-}
-impl Default for StartFrom {
-    fn default() -> Self {
-        Self::Origin
     }
 }
 
