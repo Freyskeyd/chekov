@@ -1,11 +1,11 @@
 use actix::Context;
 use futures::future::BoxFuture;
 
+use crate::Command;
 use crate::aggregate::StaticState;
 use crate::command::Handler;
 use crate::prelude::CommandExecutor;
 use crate::prelude::CommandExecutorError;
-use crate::Command;
 
 use super::CommandHandler;
 

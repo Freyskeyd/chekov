@@ -1,7 +1,7 @@
 use crate::{assert_aggregate_state, assert_aggregate_version, message::ResolveAndApply};
 
 use super::support::*;
-use event_store::{prelude::RecordedEvent, Event, PubSub};
+use event_store::{Event, PubSub, prelude::RecordedEvent};
 use test_log::test;
 use uuid::Uuid;
 
@@ -129,8 +129,8 @@ async fn should_ignore_already_seen_events() -> Result<(), Box<dyn std::error::E
 }
 
 #[test(actix::test)]
-async fn should_stop_aggregate_process_when_unexpected_event_received(
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn should_stop_aggregate_process_when_unexpected_event_received()
+-> Result<(), Box<dyn std::error::Error>> {
     let identity = Uuid::new_v4();
     let addr = start_context(&identity).await;
 

@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::runtime::Handle;
-use tui::{backend::Backend, Terminal};
+use tui::{Terminal, backend::Backend};
 use uuid::Uuid;
 
 use event_store::{
@@ -15,7 +15,7 @@ use event_store::{
 };
 use futures::TryStreamExt;
 
-use crate::{ui::ui, Message};
+use crate::{Message, ui::ui};
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -96,8 +96,9 @@ async fn run_stream(tx: Sender<Message>) -> Result<(), ()> {
     Ok(())
 }
 
-pub(crate) async fn run_app<'a, B: Backend>(
-    terminal: &'a mut Terminal<B>,
+#[allow(clippy::collapsible_if)]
+pub(crate) async fn run_app<B: Backend>(
+    terminal: &mut Terminal<B>,
     mut app: App<'_>,
 ) -> io::Result<()> {
     let (tx, rx) = mpsc::channel();

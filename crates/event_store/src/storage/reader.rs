@@ -1,8 +1,8 @@
-use crate::core::event::RecordedEvent;
-use crate::core::stream::Stream;
 use crate::EventStore;
 use crate::EventStoreError;
 use crate::ReadVersion;
+use crate::core::event::RecordedEvent;
+use crate::core::stream::Stream;
 use event_store_core::storage::Storage;
 use tracing::trace;
 use uuid::Uuid;

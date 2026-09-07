@@ -1,7 +1,11 @@
 [package]
 name = "watcher"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,6 +15,6 @@ futures.workspace = true
 sqlx.workspace = true
 tokio.workspace = true
 
-event_store = { version = "0.1", path = "../event_store" }
-tui = "0.18"
-crossterm = "0.23"
+event_store.workspace = true
+tui.workspace = true
+crossterm.workspace = true

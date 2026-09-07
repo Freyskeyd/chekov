@@ -1,7 +1,7 @@
 use chekov::aggregate::StaticState;
 use chekov::prelude::*;
-use futures::future::BoxFuture;
 use futures::FutureExt;
+use futures::future::BoxFuture;
 use serde::Deserialize;
 use serde::Serialize;
 use uuid::Uuid;

@@ -4,12 +4,12 @@ use tokio::sync::Mutex;
 
 use crate::EventStore;
 
+use super::{SubscriptionNotification, SubscriptionOptions};
 use super::{
     error::SubscriptionError,
     fsm::{InternalFSMState, SubscriptionFSM},
     supervisor::{Down, GoingDown, NotifySubscribers, Started, SubscriptionsSupervisor},
 };
-use super::{SubscriptionNotification, SubscriptionOptions};
 use actix::prelude::*;
 use tracing::debug;
 
@@ -188,7 +188,7 @@ impl<S: Storage> Subscription<S> {
 mod test {
 
     use super::*;
-    use crate::{event::RecordedEvents, subscriptions::StartFrom, InMemoryStorage};
+    use crate::{InMemoryStorage, event::RecordedEvents, subscriptions::StartFrom};
 
     struct Dummy {}
     impl Actor for Dummy {

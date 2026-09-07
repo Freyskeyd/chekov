@@ -1,6 +1,11 @@
-on: [push, pull_request]
-
 name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   check:
@@ -9,14 +14,40 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
-
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-
       - name: Run cargo check
-        run: cargo check --locked --all
+        run: cargo check --workspace --all-targets --locked
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 
   test:
     name: Test Suite
@@ -24,28 +55,53 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
-
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Run tests with nextest
+        run: cargo nextest run --workspace --all-features --locked --no-fail-fast
+      - name: Run doctests
+        run: cargo test --doc --workspace --all-features --locked
 
-      - name: Run cargo test
-        run: cargo test --locked --all
-
-  doc:
-    name: Doc - build the documentation
+  docs:
+    name: Documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
-
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --all-features --no-deps --locked
 
-      - run: cargo doc --locked --no-deps --all --exclude bank
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Install MSRV toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+      - name: Check MSRV
+        run: cargo check --workspace --all-targets --locked
+
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Check dependencies
+        uses: EmbarkStudios/cargo-deny-action@v2
 
   coverage:
     name: Coverage
@@ -53,17 +109,21 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
-
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: stable
           components: llvm-tools-preview
-
-      - uses: taiki-e/install-action@cargo-llvm-cov
-
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate coverage report
-        run: cargo llvm-cov --locked --all-features --workspace --exclude bank --exclude gift_shop --no-fail-fast --lcov --output-path lcov.info
-
-      - name: Coveralls GitHub Action
+        run: cargo llvm-cov --workspace --all-features --locked --no-fail-fast --lcov --output-path lcov.info
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: lcov.info
+      - name: Publish coverage report
         uses: coverallsapp/github-action@v2
         continue-on-error: true
         with:

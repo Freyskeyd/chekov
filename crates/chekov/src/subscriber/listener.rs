@@ -10,6 +10,7 @@ use tracing::trace;
 pub struct Listener<A: Application> {
     _phantom: std::marker::PhantomData<A>,
     pub manager: Addr<SubscriberManager<A>>,
+    #[allow(dead_code)]
     pub listening: String,
 }
 
@@ -42,6 +43,7 @@ impl<A: Application> Listener<A> {
 }
 
 impl<A: Application> actix::StreamHandler<Result<PgNotification, sqlx::Error>> for Listener<A> {
+    #[allow(clippy::collapsible_if)]
     fn handle(&mut self, item: Result<PgNotification, sqlx::Error>, _ctx: &mut Self::Context) {
         if let Ok(m) = item {
             if let Ok(event) = EventNotification::try_from(m.payload()) {

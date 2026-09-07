@@ -1,32 +1,27 @@
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+use crate::EventStore;
 use crate::event::RecordedEvent;
 use crate::prelude::ReadVersion;
 use crate::storage::reader::Reader;
-use crate::EventStore;
 
+use super::SubscriptionNotification;
 use super::pub_sub::PubSub;
 use super::subscriber::Subscriber;
-use super::SubscriptionNotification;
-use super::{state::SubscriptionState, SubscriptionOptions};
+use super::{SubscriptionOptions, state::SubscriptionState};
 use actix::prelude::*;
 use event_store_core::storage::Storage;
 use tracing::debug;
 
 /// `connect_subscriber` -> subscribe
 #[allow(clippy::upper_case_acronyms)]
-#[derive(PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug)]
 enum FSM {
+    #[default]
     Initialized,
     Terminated,
     RequestCatchUp,
-}
-
-impl std::default::Default for FSM {
-    fn default() -> Self {
-        Self::Initialized
-    }
 }
 
 #[derive(Debug)]
@@ -287,8 +282,9 @@ impl<S: Storage> SubscriptionFSM<S> {
     }
 }
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[derive(Default, PartialEq, Eq, Copy, Clone, Debug)]
 pub enum InternalFSMState {
+    #[default]
     Initial,
     RequestCatchUp,
     CatchingUp,
@@ -296,10 +292,4 @@ pub enum InternalFSMState {
     MaxCapacity,
     Disconnected,
     Unsubscribed,
-}
-
-impl Default for InternalFSMState {
-    fn default() -> Self {
-        Self::Initial
-    }
 }

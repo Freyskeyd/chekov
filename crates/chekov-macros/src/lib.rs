@@ -104,6 +104,7 @@ pub(crate) struct ImplArgs {
 }
 
 pub(crate) enum Input {
+    #[allow(dead_code)]
     Trait(ItemTrait),
     Impl(ItemImpl),
 }
@@ -172,6 +173,7 @@ fn expand(args: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) fn expand_applier(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;
@@ -257,6 +259,7 @@ fn expand_command_handler(args: TokenStream, input: TokenStream) -> TokenStream 
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) fn expand_event_handler_do(_args: ImplArgs, input: ItemImpl) -> TokenStream {
     let object = &input.trait_.as_ref().unwrap().1;
     let this = &input.self_ty;

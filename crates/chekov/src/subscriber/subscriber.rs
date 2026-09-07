@@ -1,6 +1,7 @@
 use super::EventNotification;
 use actix::{Actor, Context, Handler};
 
+#[allow(dead_code)]
 pub struct Subscriber {
     _stream: String,
 }

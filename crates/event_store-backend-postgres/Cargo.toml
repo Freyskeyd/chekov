@@ -1,7 +1,11 @@
 [package]
 name = "event_store-backend-postgres"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,17 +17,12 @@ tracing.workspace = true
 sqlx.workspace = true
 futures.workspace = true
 
-event_store-core = { version = "0.1.0", path = "../event_store-core" }
-thiserror = "1.0"
-async-stream = "0.3"
+event_store-core.workspace = true
+thiserror.workspace = true
+async-stream.workspace = true
 
 [dev-dependencies]
-pretty_assertions = "1.0.0"
-test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
-test-span = "0.1.1"
-tracing-subscriber = { version = "0.3", default-features = false, features = [
-    "env-filter",
-    "fmt",
-] }
-
-
+pretty_assertions.workspace = true
+test-log.workspace = true
+test-span.workspace = true
+tracing-subscriber.workspace = true

@@ -9,8 +9,8 @@ use test_log::test;
 use uuid::Uuid;
 
 #[actix::test]
-async fn should_rebuild_his_state_from_previously_append_events(
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn should_rebuild_his_state_from_previously_append_events()
+-> Result<(), Box<dyn std::error::Error>> {
     start_application().await;
 
     let identifier = Uuid::new_v4();

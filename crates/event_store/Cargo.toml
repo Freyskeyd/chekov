@@ -1,8 +1,10 @@
 [package]
 name = "event_store"
 version = "0.1.1"
-authors = ["Freyskeyd <simon.paitrault@gmail.com>"]
-edition = "2018"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
 description = "Crate to deal with every aspect of an eventstore"
 license = "MIT"
 
@@ -17,24 +19,21 @@ tracing.workspace = true
 tokio.workspace = true
 futures.workspace = true
 
-event_store-core = { version = "0.1.0", path = "../event_store-core" }
+event_store-core.workspace = true
 
-event_store-storage-inmemory = { version = "0.1.0", path = "../event_store-storage-inmemory", optional = true }
-event_store-backend-inmemory = { version = "0.1.0", path = "../event_store-backend-inmemory", optional = true }
-event_store-eventbus-inmemory = { version = "0.1.0", path = "../event_store-eventbus-inmemory", optional = true }
+event_store-storage-inmemory = { workspace = true, optional = true }
+event_store-backend-inmemory = { workspace = true, optional = true }
+event_store-eventbus-inmemory = { workspace = true, optional = true }
 
-event_store-storage-postgres = { version = "0.1.0", path = "../event_store-storage-postgres", optional = true }
-event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres", optional = true }
-event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres", optional = true }
+event_store-storage-postgres = { workspace = true, optional = true }
+event_store-backend-postgres = { workspace = true, optional = true }
+event_store-eventbus-postgres = { workspace = true, optional = true }
 
 [dev-dependencies]
-pretty_assertions = "1.0.0"
-test-log = { version = "0.2.8", default-features = false, features = ["trace"] }
-test-span = "0.1.1"
-tracing-subscriber = { version = "0.3", default-features = false, features = [
-    "env-filter",
-    "fmt",
-] }
+pretty_assertions.workspace = true
+test-log.workspace = true
+test-span.workspace = true
+tracing-subscriber.workspace = true
 
 [features]
 default = ["postgres", "inmemory"]

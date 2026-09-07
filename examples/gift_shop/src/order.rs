@@ -4,8 +4,8 @@ use std::fmt::{self};
 
 use chekov::error::HandleError;
 use chekov::prelude::*;
-use futures::future::BoxFuture;
 use futures::FutureExt;
+use futures::future::BoxFuture;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
 use sqlx::types::Json;
@@ -15,20 +15,15 @@ use uuid::Uuid;
 use crate::commands::*;
 use crate::events::order::{GiftCardAdded, OrderCanceled, OrderCreated, OrderValidated};
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub enum OrderStatus {
+    #[default]
     Unknown,
     Created,
     Canceled,
     #[allow(dead_code)]
     Paid,
     Validated,
-}
-
-impl Default for OrderStatus {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 #[derive(Clone, Debug, Serialize, serde::Deserialize)]
@@ -186,7 +181,7 @@ pub struct OrderProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<OrderCreated> for OrderProjector {
-    fn handle(&mut self, event: &OrderCreated) -> BoxFuture<Result<(), HandleError>> {
+    fn handle(&mut self, event: &OrderCreated) -> BoxFuture<'_, Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {
@@ -201,7 +196,7 @@ impl chekov::event::Handler<OrderCreated> for OrderProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<GiftCardAdded> for OrderProjector {
-    fn handle(&mut self, event: &GiftCardAdded) -> BoxFuture<Result<(), HandleError>> {
+    fn handle(&mut self, event: &GiftCardAdded) -> BoxFuture<'_, Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {

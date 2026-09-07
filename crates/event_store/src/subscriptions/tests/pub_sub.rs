@@ -1,7 +1,7 @@
 use crate::subscriptions::{
-    pub_sub::{PubSub, PubSubNotification},
-    tests::support::{event::EventFactory, subscriber::SubscriberFactory, EventStoreHelper},
     SubscriptionNotification,
+    pub_sub::{PubSub, PubSubNotification},
+    tests::support::{EventStoreHelper, event::EventFactory, subscriber::SubscriberFactory},
 };
 use actix::SystemService;
 use event_store_core::versions::ExpectedVersion;
@@ -45,7 +45,7 @@ async fn should_only_notify_subscribers() {
 
     let notif_2 = tracker_2.lock().await.pop_front();
     assert!(
-        matches!(notif_2, None),
+        notif_2.is_none(),
         "expected no notifications received: {:?}",
         notif_2
     );
@@ -69,7 +69,7 @@ async fn ignore_events_persisted_before_subscription() {
 
     let notif_1 = tracker.lock().await.pop_front();
     assert!(
-        matches!(notif_1, None),
+        notif_1.is_none(),
         "expected no notifications received: {:?}",
         notif_1
     );
@@ -127,7 +127,7 @@ async fn ignore_events_persisted_to_another_stream() {
 
     let notif_1 = tracker.lock().await.pop_front();
     assert!(
-        matches!(notif_1, None),
+        notif_1.is_none(),
         "expected no notifications received: {:?}",
         notif_1
     );

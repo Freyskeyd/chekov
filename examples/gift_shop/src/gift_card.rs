@@ -1,7 +1,7 @@
 use chekov::error::HandleError;
 use chekov::prelude::*;
-use futures::future::BoxFuture;
 use futures::FutureExt;
+use futures::future::BoxFuture;
 use serde::Serialize;
 use sqlx::postgres::PgRow;
 use sqlx::{Acquire, PgPool, Row};
@@ -10,8 +10,9 @@ use uuid::Uuid;
 use crate::commands::*;
 use crate::events::gift_card::GiftCardCreated;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub enum GiftCardState {
+    #[default]
     Unknown,
     Created,
 }
@@ -24,12 +25,6 @@ pub struct GiftCard {
     pub price: i64,
     pub count: i32,
     pub gift_card_state: GiftCardState,
-}
-
-impl Default for GiftCardState {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl CommandExecutor<CreateGiftCard> for GiftCard {
@@ -69,7 +64,7 @@ pub struct GiftCardProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<GiftCardCreated> for GiftCardProjector {
-    fn handle(&mut self, event: &GiftCardCreated) -> BoxFuture<Result<(), HandleError>> {
+    fn handle(&mut self, event: &GiftCardCreated) -> BoxFuture<'_, Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {

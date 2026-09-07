@@ -14,6 +14,7 @@ pub struct InMemoryStorage {
 }
 
 impl InMemoryStorage {
+    #[allow(clippy::result_unit_err)]
     pub async fn initiate() -> Result<Self, ()> {
         Ok(Self::default())
     }

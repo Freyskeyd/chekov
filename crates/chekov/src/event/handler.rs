@@ -1,5 +1,5 @@
-use crate::message::ResolveAndApplyMany;
 use crate::Application;
+use crate::message::ResolveAndApplyMany;
 use crate::{error::HandleError, event_store::EventStore};
 use actix::prelude::*;
 use event_store::prelude::{StartFrom, SubscriptionNotification};

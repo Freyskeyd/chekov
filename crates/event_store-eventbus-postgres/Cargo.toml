@@ -1,12 +1,16 @@
 [package]
 name = "event_store-eventbus-postgres"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 uuid.workspace = true
 serde.workspace = true
-sqlx = { workspace = true, features = ["postgres"] }
+sqlx.workspace = true
 futures.workspace = true
 
-event_store-core = { version = "0.1.0", path = "../event_store-core" }
+event_store-core.workspace = true

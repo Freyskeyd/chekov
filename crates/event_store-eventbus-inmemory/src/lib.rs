@@ -1,6 +1,6 @@
 use actix::prelude::*;
 use async_stream::try_stream;
-use event_store_core::event_bus::{error::EventBusError, BoxedStream, EventBus, EventBusMessage};
+use event_store_core::event_bus::{BoxedStream, EventBus, EventBusMessage, error::EventBusError};
 use futures::FutureExt;
 use std::pin::Pin;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -23,6 +23,7 @@ impl Default for InMemoryEventBus {
 }
 
 impl InMemoryEventBus {
+    #[allow(clippy::result_unit_err)]
     pub async fn initiate() -> Result<Self, ()> {
         Ok(Self::default())
     }

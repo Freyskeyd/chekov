@@ -2,8 +2,8 @@ use actix::Addr;
 use uuid::Uuid;
 
 use crate::{
-    aggregate::{AggregateInstance, AggregateInstanceRegistry},
     Application,
+    aggregate::{AggregateInstance, AggregateInstanceRegistry},
 };
 
 use super::{ExampleAggregate, MyApplication};

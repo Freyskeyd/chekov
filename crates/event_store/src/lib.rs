@@ -1,7 +1,5 @@
 #![warn(
     clippy::all,
-    clippy::pedantic,
-    clippy::nursery,
     // clippy::cargo
 )]
 #![allow(clippy::module_name_repetitions)]
@@ -12,8 +10,8 @@
 //!
 //! The `EventStore` will allow you to deal with every aspects of the event sourcing part of Chekov.
 //!
-//! An `EventStore` needs a [`Storage`] that can be used to `append` and `read` events from.
-//! [`Storage`] is using a `Backend` to talk to the underlying component and an `EventBus` to
+//! An `EventStore` needs an [`event_store_core::storage::Storage`] that can be used to `append` and
+//! `read` events from. [`event_store_core::storage::Storage`] is using a `Backend` to talk to the underlying component and an `EventBus` to
 //! notify and listen for events.
 //!
 //! Currently only two `Storage` are available:
@@ -25,7 +23,8 @@
 //! ## Construct the `EventStore`
 //!
 //! An `EventStore` is an actor that receive messages to interact with the storage. To create an
-//! `EventStore` you need to provide a valid struct that implement [`Storage`].
+//! `EventStore` you need to provide a valid struct that implements
+//! [`event_store_core::storage::Storage`].
 //!
 //! ```rust
 //!

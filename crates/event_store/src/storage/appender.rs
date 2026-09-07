@@ -1,11 +1,11 @@
-use crate::core::event::UnsavedEvent;
-use crate::core::event::UnsavedEventError;
-use crate::core::stream::Stream;
-use crate::versions::ExpectedVersionResult;
 use crate::Event;
 use crate::EventStore;
 use crate::EventStoreError;
 use crate::ExpectedVersion;
+use crate::core::event::UnsavedEvent;
+use crate::core::event::UnsavedEventError;
+use crate::core::stream::Stream;
+use crate::versions::ExpectedVersionResult;
 use actix::prelude::*;
 use event_store_core::storage::Storage;
 use event_store_core::storage::StorageError;

@@ -1,9 +1,8 @@
 use std::env;
 
 use actix_web::{
-    middleware,
+    App, HttpServer, middleware,
     web::{self, Data},
-    App, HttpServer,
 };
 use chekov::prelude::*;
 use sqlx::PgPool;

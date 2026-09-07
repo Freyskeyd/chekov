@@ -1,14 +1,18 @@
 [package]
 name = "event_store-storage-postgres"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-event_store-core = { version = "0.1.0", path = "../event_store-core" }
-event_store-backend-postgres = { version = "0.1.0", path = "../event_store-backend-postgres" }
-event_store-eventbus-postgres = { version = "0.1.0", path = "../event_store-eventbus-postgres" }
+event_store-core.workspace = true
+event_store-backend-postgres.workspace = true
+event_store-eventbus-postgres.workspace = true
 
 sqlx.workspace = true
 tracing.workspace = true

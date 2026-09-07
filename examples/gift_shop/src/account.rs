@@ -9,7 +9,6 @@ mod aggregate;
 mod projector;
 mod repository;
 
-pub use aggregate::*;
 pub use projector::*;
 pub use repository::*;
 

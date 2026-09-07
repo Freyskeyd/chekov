@@ -1,7 +1,7 @@
 use super::*;
 use crate::events::account::*;
 use chekov::error::HandleError;
-use futures::{future::BoxFuture, FutureExt};
+use futures::{FutureExt, future::BoxFuture};
 
 #[derive(chekov::EventHandler, Clone)]
 pub struct AccountProjector {
@@ -10,7 +10,7 @@ pub struct AccountProjector {
 
 #[chekov::event_handler]
 impl chekov::event::Handler<AccountOpened> for AccountProjector {
-    fn handle(&mut self, event: &AccountOpened) -> BoxFuture<Result<(), HandleError>> {
+    fn handle(&mut self, event: &AccountOpened) -> BoxFuture<'_, Result<(), HandleError>> {
         let event = event.clone();
         let pool = self.pool.acquire();
         async move {

@@ -49,22 +49,16 @@ impl<'a> TryFrom<&'a str> for EventNotification {
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         let mut through = value.splitn(4, ',');
 
-        let stream_uuid = if let Ok(stream_uuid) = through
+        let stream_uuid = through
             .next()
             .ok_or(EventNotificationError::ParsingError {
                 field: "stream_uuid",
             })?
-            .parse::<String>()
-        {
-            if stream_uuid.is_empty() {
-                return Err(EventNotificationError::InvalidStreamUUID);
-            }
-            stream_uuid
-        } else {
-            return Err(EventNotificationError::ParsingError {
-                field: "stream_uuid",
-            });
-        };
+            .to_owned();
+
+        if stream_uuid.is_empty() {
+            return Err(EventNotificationError::InvalidStreamUUID);
+        }
 
         let stream_id = through
             .next()

@@ -1,9 +1,12 @@
 [package]
 name = "event_store-core"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "Core struct and trait used to build event_store runtime/storage"
-license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,13 +19,11 @@ sqlx.workspace = true
 tokio.workspace = true
 uuid.workspace = true
 
-chrono = { version = "0.4.19", features = ["serde"] }
-thiserror = "1.0"
+chrono.workspace = true
+thiserror.workspace = true
 
 [features]
 default = ["actix-rt"]
 verbose = []
 
 actix-rt = ["actix"]
-
-

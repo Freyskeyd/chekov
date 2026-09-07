@@ -9,7 +9,7 @@ use crate::{
 use super::EventStore;
 use actix::prelude::*;
 use event_store_core::{event_bus::EventBusMessage, storage::Storage};
-use tracing::{debug, Instrument};
+use tracing::{Instrument, debug};
 use uuid::Uuid;
 
 impl<S: Storage> Supervised for EventStore<S> {}

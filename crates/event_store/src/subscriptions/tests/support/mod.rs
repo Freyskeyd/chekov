@@ -8,7 +8,7 @@ use futures::Future;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::{subscriptions::SubscriptionNotification, EventStore};
+use crate::{EventStore, subscriptions::SubscriptionNotification};
 
 pub mod event;
 pub mod subscriber;
