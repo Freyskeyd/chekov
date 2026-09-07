@@ -34,8 +34,8 @@ pub fn generate_event_handler(
     Ok(quote! {
 
         pub struct #aggregate_event_resolver {
-            names: Vec<&'static str>,
-            type_id: std::any::TypeId,
+            names: fn() -> Vec<&'static str>,
+            type_id: fn() -> std::any::TypeId,
             handler: fn(&mut #struct_name, chekov::RecordedEvent)  -> BoxFuture<Result<(), chekov::error::HandleError>>
         }
 
@@ -48,10 +48,10 @@ pub fn generate_event_handler(
                 let mut names = std::collections::BTreeMap::new();
 
                 for registered in chekov::inventory::iter::<#aggregate_event_resolver> {
-                    handlers.insert(registered.type_id, registered.handler);
+                    handlers.insert((registered.type_id)(), registered.handler);
 
-                    registered.names.iter().for_each(|name|{
-                        names.insert(name.clone(), registered.type_id);
+                    (registered.names)().iter().for_each(|name|{
+                        names.insert(name.clone(), (registered.type_id)());
                     });
                 }
 

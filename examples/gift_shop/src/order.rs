@@ -229,7 +229,7 @@ impl OrderRepository {
             total_price: row.get(3),
             status: OrderStatus::Created
         })
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -258,7 +258,7 @@ impl OrderRepository {
                 total_price: row.get(3),
                 status: OrderStatus::Created
             })
-            .fetch_one(&mut tx)
+            .fetch_one(&mut *tx)
             .await?;
 
         tx.commit().await?;

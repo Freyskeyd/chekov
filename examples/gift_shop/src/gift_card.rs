@@ -96,7 +96,7 @@ impl GiftCardRepository {
     //         status: GiftCardStatus::Initialized,
     //         balance: row.get(2),
     //     })
-    //     .fetch_all(&mut pool)
+    //     .fetch_all(&mut *pool)
     //     .await
     // }
 
@@ -119,7 +119,7 @@ impl GiftCardRepository {
             count: row.get::<i32, _>(3),
             gift_card_state: GiftCardState::Created
         })
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
 
         tx.commit().await?;
@@ -143,7 +143,7 @@ impl GiftCardRepository {
     //             status: GiftCardStatus::Active,
     //             balance: row.get(2),
     //         })
-    //         .fetch_one(&mut tx)
+    //         .fetch_one(&mut *tx)
     //         .await?;
 
     //         tx.commit().await?;

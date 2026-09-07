@@ -32,7 +32,6 @@ event_store-eventbus-postgres = { workspace = true, optional = true }
 [dev-dependencies]
 pretty_assertions.workspace = true
 test-log.workspace = true
-test-span.workspace = true
 tracing-subscriber.workspace = true
 
 [features]

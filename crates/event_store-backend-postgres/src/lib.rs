@@ -66,7 +66,7 @@ impl Backend for PostgresBackend {
 
         Box::pin(
             async move {
-                let s = sql::create_stream(&mut pool, &stream_uuid).await?;
+                let s = sql::create_stream(&mut *pool, &stream_uuid).await?;
 
                 info!("Created stream {}", stream_uuid);
                 Ok(s)
@@ -103,11 +103,11 @@ impl Backend for PostgresBackend {
                 let mut conn = pool
                     .map_err(PostgresBackendError::PoolAcquisitionError)
                     .await?;
-                let stream = sql::stream_info(&mut conn, &stream_uuid)
+                let stream = sql::stream_info(&mut *conn, &stream_uuid)
                     .map_err(PostgresBackendError::SQLError)
                     .await?;
 
-                match sql::read_stream(&mut conn, stream.stream_id, version, limit).await {
+                match sql::read_stream(&mut *conn, stream.stream_id, version, limit).await {
                     Err(e) => {
                         tracing::error!("{:?}", e);
                         Err(StorageError::StreamAlreadyExists)
@@ -148,7 +148,7 @@ impl Backend for PostgresBackend {
                     .map_err(PostgresBackendError::PoolAcquisitionError)
                     .await?;
 
-                let events = sql::insert_events(&mut conn, &stream_uuid, &events)
+                let events = sql::insert_events(&mut *conn, &stream_uuid, &events)
                     .map_err(|error| match error {
                         sqlx::Error::RowNotFound => StorageError::StreamDoesntExists,
                         e => PostgresBackendError::SQLError(e).into(),
@@ -177,7 +177,7 @@ impl Backend for PostgresBackend {
 
         Box::pin(
             async move {
-                sql::stream_info(&mut pool, &stream_uuid)
+                sql::stream_info(&mut *pool, &stream_uuid)
                     .map_err(|error| match error {
                         sqlx::Error::RowNotFound => StorageError::StreamDoesntExists,
                         e => PostgresBackendError::SQLError(e).into(),

@@ -159,7 +159,6 @@ impl<A: Application, E: EventHandler> ::actix::Handler<SubscriptionNotification>
 
             SubscriptionNotification::Events(events) => {
                 let mut handler = self.handler.clone();
-                let events = events;
                 Box::pin(async move {
                     for event in events.iter() {
                         // TODO: Deal with handle error

@@ -2,7 +2,7 @@ use super::*;
 use std::{any::TypeId, collections::BTreeMap};
 
 pub trait EventResolverItem<A: Aggregate> {
-    fn get_names(&self) -> &[&'static str];
+    fn get_names(&self) -> Vec<&'static str>;
 }
 
 pub type EventApplierFn<A> = fn(&mut A, RecordedEvent) -> std::result::Result<(), ApplyError>;

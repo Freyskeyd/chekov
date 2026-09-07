@@ -1,5 +1,8 @@
 [advisories]
 version = 2
+# actix-http 3.x currently requires h2 0.3.x; the advisory fix is only
+# available in h2 0.4.x, which is not compatible with the supported Actix line.
+ignore = ["RUSTSEC-2026-0258"]
 
 [bans]
 multiple-versions = "warn"
