@@ -15,16 +15,16 @@ pub use chekov_core::{
 
 static NEXT_JOURNAL_ID: AtomicU64 = AtomicU64::new(1);
 
-/// An affine token identifying one open checkpoint.
+/// A non-cloneable token identifying one open checkpoint.
 ///
-/// A token is consumed by [`Journal::commit`] or [`Journal::revert`]. Tokens
-/// must be closed in last-in, first-out order; this matches the call-tree
-/// structure needed by nested execution and prevents a parent from being
-/// closed while a child overlay is still active.
+/// A token is marked closed by [`Journal::commit`] or [`Journal::revert`].
+/// Tokens must be closed in last-in, first-out order; rejected operations leave
+/// the token open so the caller can retry after closing a child checkpoint.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Checkpoint {
     journal_id: u64,
     id: u64,
+    closed: bool,
 }
 
 #[derive(Debug)]
@@ -59,6 +59,16 @@ impl Frame {
     }
 }
 
+fn make_mutation(
+    key: StateKey,
+    expected_revision: Revision,
+    before: Option<StateValue>,
+    after: Option<StateValue>,
+) -> Option<Mutation> {
+    (before.as_ref() != after.as_ref())
+        .then(|| Mutation::new(key, expected_revision, before, after))
+}
+
 /// Errors caused by closing a checkpoint out of order or on the wrong journal.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CheckpointError {
@@ -66,6 +76,8 @@ pub enum CheckpointError {
     ForeignCheckpoint,
     /// The token is not the currently active (top) checkpoint.
     NotTopCheckpoint,
+    /// The checkpoint was already committed or reverted.
+    AlreadyClosed,
 }
 
 /// A transactional overlay over a deterministic canonical state view.
@@ -107,16 +119,17 @@ impl<S> Journal<S> {
         Checkpoint {
             journal_id: self.journal_id,
             id,
+            closed: false,
         }
     }
 
     /// Commits the top checkpoint into its parent overlay.
-    pub fn commit(&mut self, checkpoint: Checkpoint) -> Result<(), CheckpointError> {
+    pub fn commit(&mut self, checkpoint: &mut Checkpoint) -> Result<(), CheckpointError> {
         self.close(checkpoint, true)
     }
 
     /// Reverts the top checkpoint and discards only its tentative writes.
-    pub fn revert(&mut self, checkpoint: Checkpoint) -> Result<(), CheckpointError> {
+    pub fn revert(&mut self, checkpoint: &mut Checkpoint) -> Result<(), CheckpointError> {
         self.close(checkpoint, false)
     }
 
@@ -206,14 +219,12 @@ impl<S> Journal<S> {
             .iter()
             .filter_map(|key| {
                 root.writes.get(key).and_then(|write| {
-                    (write.before != write.after).then(|| {
-                        Mutation::new(
-                            key.clone(),
-                            write.expected_revision,
-                            write.before.clone(),
-                            write.after.clone(),
-                        )
-                    })
+                    make_mutation(
+                        key.clone(),
+                        write.expected_revision,
+                        write.before.clone(),
+                        write.after.clone(),
+                    )
                 })
             })
             .collect();
@@ -247,8 +258,7 @@ impl<S> Journal<S> {
                 } = writes
                     .remove(&key)
                     .expect("write order matches the write map");
-                (before.as_ref() != after.as_ref())
-                    .then(|| Mutation::new(key, expected_revision, before, after))
+                make_mutation(key, expected_revision, before, after)
             })
             .collect();
 
@@ -262,9 +272,13 @@ impl<S> Journal<S> {
             .find_map(|frame| frame.writes.get(key))
     }
 
-    fn close(&mut self, checkpoint: Checkpoint, commit: bool) -> Result<(), CheckpointError> {
+    fn close(&mut self, checkpoint: &mut Checkpoint, commit: bool) -> Result<(), CheckpointError> {
         if checkpoint.journal_id != self.journal_id {
             return Err(CheckpointError::ForeignCheckpoint);
+        }
+
+        if checkpoint.closed {
+            return Err(CheckpointError::AlreadyClosed);
         }
 
         let active = self.frames.last().and_then(|frame| frame.checkpoint_id);
@@ -272,6 +286,7 @@ impl<S> Journal<S> {
             return Err(CheckpointError::NotTopCheckpoint);
         }
 
+        checkpoint.closed = true;
         let mut child = self.frames.pop().expect("active checkpoint has a frame");
         if commit {
             let parent = self.frames.last_mut().expect("checkpoint has a parent");
@@ -341,23 +356,23 @@ mod tests {
         let base = MemoryState::with([("a", 7, "canonical")]);
         let mut journal = Journal::new(base);
 
-        let outer = journal.checkpoint();
+        let mut outer = journal.checkpoint();
         journal.set("a", value("outer")).unwrap();
-        let inner = journal.checkpoint();
+        let mut inner = journal.checkpoint();
         journal.set("a", value("inner")).unwrap();
         journal.set("b", value("discarded")).unwrap();
         assert_eq!(
             journal.read(&StateKey::from("a")).unwrap().value,
             Some(value("inner"))
         );
-        journal.revert(inner).unwrap();
+        journal.revert(&mut inner).unwrap();
 
         assert_eq!(
             journal.read(&StateKey::from("a")).unwrap().value,
             Some(value("outer"))
         );
         assert_eq!(journal.read(&StateKey::from("b")).unwrap().value, None);
-        journal.commit(outer).unwrap();
+        journal.commit(&mut outer).unwrap();
 
         let batch = journal.transition().unwrap();
         assert_eq!(batch.mutations.len(), 1);
@@ -368,13 +383,13 @@ mod tests {
     #[test]
     fn reads_from_reverted_scopes_are_retained() {
         let mut journal = Journal::new(MemoryState::with([("read", 12, "value")]));
-        let checkpoint = journal.checkpoint();
+        let mut checkpoint = journal.checkpoint();
 
         assert_eq!(
             journal.read(&StateKey::from("read")).unwrap().revision,
             Revision::new(12)
         );
-        journal.revert(checkpoint).unwrap();
+        journal.revert(&mut checkpoint).unwrap();
 
         assert_eq!(
             journal.observations().get(&StateKey::from("read")),
@@ -390,31 +405,31 @@ mod tests {
             ("b", 2, "b"),
             ("c", 3, "c"),
         ]));
-        let outer = journal.checkpoint();
+        let mut outer = journal.checkpoint();
         assert_eq!(
             journal.read(&StateKey::from("a")).unwrap().value,
             Some(value("a"))
         );
-        let middle = journal.checkpoint();
+        let mut middle = journal.checkpoint();
         journal.set("b", value("b-next")).unwrap();
-        let inner = journal.checkpoint();
+        let mut inner = journal.checkpoint();
         assert_eq!(
             journal.read(&StateKey::from("c")).unwrap().revision,
             Revision::new(3)
         );
         journal.set("c", value("c-next")).unwrap();
 
-        journal.commit(inner).unwrap();
+        journal.commit(&mut inner).unwrap();
         assert_eq!(
             journal.read(&StateKey::from("c")).unwrap().value,
             Some(value("c-next"))
         );
-        journal.commit(middle).unwrap();
+        journal.commit(&mut middle).unwrap();
         assert_eq!(
             journal.read(&StateKey::from("b")).unwrap().value,
             Some(value("b-next"))
         );
-        journal.commit(outer).unwrap();
+        journal.commit(&mut outer).unwrap();
 
         let batch = journal.transition().unwrap();
         assert_eq!(batch.mutations.len(), 2);
@@ -463,12 +478,12 @@ mod tests {
     #[test]
     fn child_commit_preserves_parent_before_value() {
         let mut journal = Journal::new(MemoryState::with([("key", 4, "base")]));
-        let parent = journal.checkpoint();
+        let mut parent = journal.checkpoint();
         journal.set("key", value("parent")).unwrap();
-        let child = journal.checkpoint();
+        let mut child = journal.checkpoint();
         journal.set("key", value("child")).unwrap();
-        journal.commit(child).unwrap();
-        journal.commit(parent).unwrap();
+        journal.commit(&mut child).unwrap();
+        journal.commit(&mut parent).unwrap();
 
         let mutation = &journal.transition().unwrap().mutations[0];
         assert_eq!(mutation.expected_revision, Revision::new(4));
@@ -491,12 +506,52 @@ mod tests {
     #[test]
     fn checkpoint_tokens_are_stack_checked() {
         let mut journal = Journal::new(MemoryState::default());
-        let parent = journal.checkpoint();
-        let child = journal.checkpoint();
+        let mut parent = journal.checkpoint();
+        let mut child = journal.checkpoint();
         assert_eq!(
-            journal.commit(parent),
+            journal.commit(&mut parent),
             Err(CheckpointError::NotTopCheckpoint)
         );
-        journal.revert(child).unwrap();
+        journal.revert(&mut child).unwrap();
+        journal.revert(&mut parent).unwrap();
+        assert_eq!(
+            journal.revert(&mut parent),
+            Err(CheckpointError::AlreadyClosed)
+        );
+    }
+
+    #[test]
+    fn rejected_parent_commit_can_be_retried_after_committing_child() {
+        let mut journal = Journal::new(MemoryState::default());
+        let mut parent = journal.checkpoint();
+        journal.set("parent", value("value")).unwrap();
+        let mut child = journal.checkpoint();
+        journal.set("child", value("value")).unwrap();
+
+        assert_eq!(
+            journal.commit(&mut parent),
+            Err(CheckpointError::NotTopCheckpoint)
+        );
+        journal.commit(&mut child).unwrap();
+        journal.commit(&mut parent).unwrap();
+
+        let batch = journal.into_transition().unwrap();
+        assert_eq!(batch.mutations.len(), 2);
+        assert_eq!(batch.mutations[0].key, StateKey::from("parent"));
+        assert_eq!(batch.mutations[1].key, StateKey::from("child"));
+    }
+
+    #[test]
+    fn foreign_checkpoint_rejection_does_not_close_the_handle() {
+        let mut first = Journal::new(MemoryState::default());
+        let mut second = Journal::new(MemoryState::default());
+        let mut checkpoint = first.checkpoint();
+
+        assert_eq!(
+            second.revert(&mut checkpoint),
+            Err(CheckpointError::ForeignCheckpoint)
+        );
+        first.revert(&mut checkpoint).unwrap();
+        assert!(first.transition().unwrap().mutations.is_empty());
     }
 }
