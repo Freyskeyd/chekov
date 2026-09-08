@@ -47,7 +47,7 @@ impl From<Arc<[u8]>> for StateKey {
 
 impl From<Vec<u8>> for StateKey {
     fn from(bytes: Vec<u8>) -> Self {
-        Self::new(bytes)
+        Self::from_arc(Arc::from(bytes))
     }
 }
 
@@ -103,7 +103,7 @@ impl From<Arc<[u8]>> for StateValue {
 
 impl From<Vec<u8>> for StateValue {
     fn from(bytes: Vec<u8>) -> Self {
-        Self::new(bytes)
+        Self::from_arc(Arc::from(bytes))
     }
 }
 
