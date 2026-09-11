@@ -83,17 +83,17 @@ impl VersionedStorage for MemoryStorage {
     fn apply(&self, batch: &TransitionBatch) -> Result<AppliedBatch, Self::Error> {
         let mut cells = self.cells.write().map_err(|_| StorageError::LockPoisoned)?;
 
-        // Validate against a private working copy first. Nothing in the
+        // Validate against a batch-local overlay first. Nothing in the
         // canonical map is changed until every read and mutation succeeds.
-        let mut planned = cells.clone();
+        let mut overlay = BTreeMap::new();
         for (key, expected_revision) in &batch.reads {
-            let current = cell_at(&planned, key);
+            let current = cell_at(&cells, &overlay, key);
             ensure_revision(key, *expected_revision, current.revision)?;
         }
 
         let mut applied = Vec::with_capacity(batch.mutations.len());
         for mutation in &batch.mutations {
-            let current = cell_at(&planned, &mutation.key);
+            let current = cell_at(&cells, &overlay, &mutation.key);
             ensure_revision(&mutation.key, mutation.expected_revision, current.revision)?;
 
             if current.value != mutation.before {
@@ -113,21 +113,26 @@ impl VersionedStorage for MemoryStorage {
                         revision: current.revision,
                     })?;
             let cell = StateCell::new(revision, mutation.after.clone());
-            planned.insert(mutation.key.clone(), cell.clone());
+            overlay.insert(mutation.key.clone(), cell.clone());
             applied.push(AppliedMutation {
                 key: mutation.key.clone(),
                 cell,
             });
         }
 
-        *cells = planned;
+        cells.extend(overlay);
         Ok(AppliedBatch { mutations: applied })
     }
 }
 
-fn cell_at(cells: &BTreeMap<StateKey, StateCell>, key: &StateKey) -> StateCell {
-    cells
+fn cell_at(
+    cells: &BTreeMap<StateKey, StateCell>,
+    overlay: &BTreeMap<StateKey, StateCell>,
+    key: &StateKey,
+) -> StateCell {
+    overlay
         .get(key)
+        .or_else(|| cells.get(key))
         .cloned()
         .unwrap_or_else(|| StateCell::absent(Revision::ZERO))
 }
