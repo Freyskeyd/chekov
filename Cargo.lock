@@ -491,6 +491,13 @@ name = "chekov-core"
 version = "0.1.0"
 
 [[package]]
+name = "chekov-journal"
+version = "0.1.0"
+dependencies = [
+ "chekov-core",
+]
+
+[[package]]
 name = "chekov-macros"
 version = "0.1.0"
 dependencies = [

@@ -59,6 +59,8 @@ tui = { package = "ratatui", version = "0.20.1", default-features = false, featu
 crossterm = "0.23"
 
 chekov-macros = { version = "0.1.0", path = "crates/chekov-macros" }
+chekov-core = { version = "0.1.0", path = "crates/chekov-core" }
+chekov-journal = { version = "0.1.0", path = "crates/chekov-journal" }
 event_store = { version = "0.1.1", path = "crates/event_store" }
 event_store-backend-inmemory = { version = "0.1.0", path = "crates/event_store-backend-inmemory" }
 event_store-backend-postgres = { version = "0.1.0", path = "crates/event_store-backend-postgres" }
