@@ -1,0 +1,12 @@
+[package]
+name = "chekov-storage"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Atomic versioned storage contracts and memory backend for Chekov"
+
+[dependencies]
+chekov-core = { path = "../chekov-core" }
